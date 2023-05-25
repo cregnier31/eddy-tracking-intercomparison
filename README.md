@@ -90,3 +90,4 @@ Note that it is possible to use only part of the code for a single dataset eddy 
 The output shoul look like this : 
 
 ![detection](IMAGES_EXAMPLES/glo12.jpeg)
+<img src="IMAGES_EXAMPLES/glo12.jpeg"  width="120" height="120">
