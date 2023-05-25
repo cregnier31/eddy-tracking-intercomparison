@@ -89,4 +89,4 @@ Note that it is possible to use only part of the code for a single dataset eddy 
 
 The output shoul look like this : 
 
-![detection](IMAGES_EXAMPLES/glo12.jpg)
+![detection](IMAGES_EXAMPLES/glo12.jpeg)
