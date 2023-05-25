@@ -86,3 +86,7 @@ Note that it is possible to use only part of the code for a single dataset eddy 
 ```sh
  python Analysis_Eddy_1model.py Config_Analysis.ini
 ```
+
+The output shoul look like this : 
+
+![detection](IMAGES_EXAMPLES/glo12.jpg)
