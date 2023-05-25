@@ -34,7 +34,6 @@ conda install install numpy scipy netCDF4 matplotlib opencv-python pyyaml pint p
 
 # Usage
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
 
 ## 1. Preprocessing the data (/PREPROCESS): extract the region and variables needed for the study
 
@@ -51,7 +50,7 @@ requires editing for specifying inout and output locations
 
 Once all daily files with surface velocities and SSH for the region of interest are in one repository you can procceed to the identification. 
 
-Modify the Config_Detect.ini file for detection parameters, variables & input and output directories.
+Edit the Config_Detect.ini file for detection parameters, variables & input and output directories.
 ```sh
 python Detect_Eddies.py Config_Detect.ini
 ```
@@ -88,6 +87,43 @@ Note that it is possible to use only part of the code for a single dataset eddy 
 ```
 
 The output shoul look like this : 
+Here the example is the study of the GLO12V4 Mercator product for the IBI area for the year 2019. The reference used is AVISO at the 1/8° resolution. 
 
+
+- Detection for one day with ADT 
 
 <img src="IMAGES_EXAMPLES/glo12.jpeg"  width="200" height="220">
+
+- Cyclonic and Anticyclonic tracks 
+
+<img src="IMAGES_EXAMPLES/GLO12_TRACKS_2019.jpeg"  width="200" height="220">
+
+- Number of eddies detected through time
+
+<img src="IMAGES_EXAMPLES/NB_EDDIES_GLO12_2019.jpeg"  width="450" height="200">
+
+- Histogram 2D Amplitude VS Radius 
+
+<img src="IMAGES_EXAMPLES/HIST2D_AMP_RAD_GLO12_2019.jpeg"  width="230" height="200">
+
+RESULTS MATCHING 
+
+- Histogram hits, misses & false alarms by radius (km)
+
+<img src="IMAGES_EXAMPLES/HIST_MATCHING_GLO12_2019.jpeg"  width="230" height="200">
+
+- Evolution of POD and FAR with amplitude (cm)
+
+<img src="IMAGES_EXAMPLES/POD_FAR_AMP_GLO12_2019.jpeg"  width="500" height="200">
+
+- Evolution of POD and FAR with time
+
+<img src="IMAGES_EXAMPLES/FAR_TEMP_GLO12_2019.jpeg"  width="800" height="200">
+
+- Performance Diagram 
+
+<img src="IMAGES_EXAMPLES/PERFORMANCE_DIAG_GLO12_2019.jpeg"  width="250" height="250"> 
+
+
+
+
