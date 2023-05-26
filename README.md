@@ -91,39 +91,46 @@ Here the example is the study of the GLO12V4 Mercator product for the IBI area f
 
 
 - Detection for one day with ADT 
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/glo12.jpeg"  width="200" height="220">
+</div>
+
 
 - Cyclonic and Anticyclonic tracks 
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/GLO12_TRACKS_2019.jpeg"  width="200" height="220">
+</div>
 
 - Number of eddies detected through time
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/NB_EDDIES_GLO12_2019.jpeg"  width="450" height="200">
+</div>
 
 - Histogram 2D Amplitude VS Radius 
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/HIST2D_AMP_RAD_GLO12_2019.jpeg"  width="230" height="200">
-
+</div>
 RESULTS MATCHING 
 
 - Histogram hits, misses & false alarms by radius (km)
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/HIST_MATCHING_GLO12_2019.jpeg"  width="230" height="200">
+</div>
 
 - Evolution of POD and FAR with amplitude (cm)
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/POD_FAR_AMP_GLO12_2019.jpeg"  width="500" height="200">
+</div>
 
 - Evolution of POD and FAR with time
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/FAR_TEMP_GLO12_2019.jpeg"  width="800" height="200">
+</div>
 
 - Performance Diagram 
-
+<div align="center">
 <img src="IMAGES_EXAMPLES/PERFORMANCE_DIAG_GLO12_2019.jpeg"  width="250" height="250"> 
-
+</div>
 
 
 
