@@ -105,9 +105,12 @@ LAT_MAX         = int(general_info["LAT_MAX"])
 
 plot_info=config_object["PLOT_INFO"]
 
+
 PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
 var_adt	       = str(plot_info["var_adt"])
 DIR_PLOT       = str(plot_info["PATH_PLOT"])
+DX 	       = int(plot_info["DX"])
+DY 	       = int(plot_info["DY"])
 #AC_DETECTION   = str(plot_info["AC_DETECTION"])
 #CC_DETECTION   = str(plot_info["CC_DETECTION"])
 
