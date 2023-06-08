@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 pyeddytracker = {git = "https://github.com/svangennip/py-eddy-tracker.git"}
+pandas = "1.4.0"
 
 
 [tool.poetry.group.dev.dependencies]
