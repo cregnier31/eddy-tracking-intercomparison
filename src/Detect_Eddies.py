@@ -24,11 +24,7 @@ def reg_date(string_to_find_date_in):
     # really handonline regex finder: https://regex101.com/#python
     # pour OSSE
 
-    exp = re.search(r"[0-9]{8}", string_to_find_date_in)
-
-    exp = exp.group()
-
-    return exp
+    return re.search(r"[0-9]{8}", string_to_find_date_in).group()
 
 
 def compute_eddy(file, general_info):
