@@ -13,9 +13,6 @@
 # environment with py-eddy-tracker
 # Mason et al.
 
-import os
-import sys
-import re
 import glob
 from configparser import ConfigParser
 import argparse
@@ -67,26 +64,13 @@ def analysis_eddies():
     general_info = config_object["GENERAL_INFO"]
     MODEL = str(general_info["MODEL"])
     REFERENCE = str(general_info["REFERENCE"])
-    YEAR = int(general_info["YEAR"])
-    DATE_START = str(general_info["DATE_START"])
-    PERIODS = int(general_info["PERIODS"])
     PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
     PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
     PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
 
-    # Geographical extend
-    LON_MIN = int(general_info["LON_MIN"])
-    LON_MAX = int(general_info["LON_MAX"])
-    LAT_MIN = int(general_info["LAT_MIN"])
-    LAT_MAX = int(general_info["LAT_MAX"])
-
     plot_info = config_object["PLOT_INFO"]
-
     PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
     var_adt = str(plot_info["var_adt"])
-    DIR_PLOT = str(plot_info["PATH_PLOT"])
-    # AC_DETECTION   = str(plot_info["AC_DETECTION"])
-    # CC_DETECTION   = str(plot_info["CC_DETECTION"])
 
     ##ONE DAY
     AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20190101.nc"
