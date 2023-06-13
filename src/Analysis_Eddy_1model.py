@@ -206,20 +206,24 @@ if __name__ == "__main__":
         reference_ac_junk = reference_ac.index(reference_id_junk)
         model_ac_junk = model_ac.index(model_id_junk)
         model_ac = model_ac.index(model_id)
-        for item in model_ac.obs["radius_e"] / 1000:
-            radius_AR_hits.append(item)
 
-        for item in reference_ac_junk.obs["radius_e"] / 1000:
-            radius_AR_misses.append(item)
-        for item in model_ac_junk.obs["radius_e"] / 1000:
-            radius_AR_falarm.append(item)
+        radius_AR_hits = np.append(radius_AR_hits, model_ac.obs["radius_e"] / 1000)
+        radius_AR_misses = np.append(
+            radius_AR_misses, reference_ac_junk.obs["radius_e"] / 1000
+        )
+        radius_AR_falarm = np.append(
+            radius_AR_falarm, model_ac_junk.obs["radius_e"] / 1000
+        )
 
-        for item in model_ac.obs["amplitude"] * 100:
-            amplitude_AR_hits.append(item)
-        for item in reference_ac_junk.obs["amplitude"] * 100:
-            amplitude_AR_misses.append(item)
-        for item in model_ac_junk.obs["amplitude"] * 100:
-            amplitude_AR_falarm.append(item)
+        amplitude_AR_hits = np.append(
+            amplitude_AR_hits, model_ac.obs["amplitude"] * 100
+        )
+        amplitude_AR_misses = np.append(
+            amplitude_AR_misses, reference_ac_junk.obs["amplitude"] * 100
+        )
+        amplitude_AR_falarm = np.append(
+            amplitude_AR_falarm, model_ac_junk.obs["amplitude"] * 100
+        )
 
         ### Cyclonic
         reference_id, model_id, cost = reference_cc.tracking(model_cc)
@@ -236,19 +240,25 @@ if __name__ == "__main__":
         reference_cc_junk = reference_cc.index(reference_id_junk)
         model_cc_junk = model_cc.index(model_id_junk)
         model_cc = model_cc.index(model_id)
-        for item in model_cc.obs["radius_e"] / 1000:
-            radius_AR_hits.append(item)
-        for item in reference_cc_junk.obs["radius_e"] / 1000:
-            radius_AR_misses.append(item)
-        for item in model_cc_junk.obs["radius_e"] / 1000:
-            radius_AR_falarm.append(item)
 
-        for item in model_cc.obs["amplitude"] * 100:
-            amplitude_AR_hits.append(item)
-        for item in reference_cc_junk.obs["amplitude"] * 100:
-            amplitude_AR_misses.append(item)
-        for item in model_cc_junk.obs["amplitude"] * 100:
-            amplitude_AR_falarm.append(item)
+        radius_AR_hits = np.append(radius_AR_hits, model_cc.obs["radius_e"] / 1000)
+        radius_AR_misses = np.append(
+            radius_AR_misses, reference_cc_junk.obs["radius_e"] / 1000
+        )
+        radius_AR_falarm = np.append(
+            radius_AR_falarm, model_cc_junk.obs["radius_e"] / 1000
+        )
+
+        amplitude_AR_hits = np.append(
+            amplitude_AR_hits, model_cc.obs["amplitude"] * 100
+        )
+        amplitude_AR_misses = np.append(
+            amplitude_AR_misses, reference_cc_junk.obs["amplitude"] * 100
+        )
+        amplitude_AR_falarm = np.append(
+            amplitude_AR_falarm, model_cc_junk.obs["amplitude"] * 100
+        )
+
         i += 1
 
     bins = np.arange(0, 400, 1)
@@ -472,7 +482,7 @@ if __name__ == "__main__":
     # 						PLOTS							       #
     ################################################################################################################
 
-    plots = Plots(config_object)
+    plots = Plots(config_object, True)
 
     ### PLOT ONE DAY DETECTION WITH ADT ###
 
