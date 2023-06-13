@@ -82,8 +82,7 @@ def compute_eddy(file, general_info):
         c.to_netcdf(h)
 
 
-if __name__ == "__main__":
-
+def detect_eddies():
     # Read in config file name
     parser = argparse.ArgumentParser(description="Script that reads in a config file")
     # default drifting time 90 days
@@ -117,3 +116,7 @@ if __name__ == "__main__":
     pool.join()
 
     print("Eddy detection done")
+
+
+if __name__ == "__main__":
+    detect_eddies()

@@ -43,7 +43,7 @@ def reverse_index(index, nb):
     return np.where(m)[0]
 
 
-if __name__ == "__main__":
+def analysis_eddies():
 
     # Read in config file name
     parser = argparse.ArgumentParser(description="Script that reads in a config file")
@@ -516,3 +516,7 @@ if __name__ == "__main__":
 
     ### PERFORMANCE DIAGRAM ###
     plots.perf_diag(SR, AR_POD)
+
+
+if __name__ == "__main__":
+    analysis_eddies()

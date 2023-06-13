@@ -4,15 +4,25 @@ version = "0.1.0"
 description = "Eddy Tracking Intercomparison"
 authors = ["Flavie Dubost <fdubost@mercator-ocean.fr>"]
 readme = "README.md"
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pyeddytracker = {git = "https://github.com/svangennip/py-eddy-tracker.git"}
 pandas = "1.4.0"
+matplotlib-label-lines = "^0.6.0"
+cartopy = "^0.21.1"
 
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
+
+[tool.poetry.scripts]
+detect_eddies = 'src.Detect_Eddies:detect_eddies'
+analysis_eddies = 'src.Analysis_Eddy_1model:analysis_eddies'
+
+
+
 
 [build-system]
 requires = ["poetry-core"]
