@@ -2,30 +2,33 @@
 
 #Activate environment
 
-#Run eddy tracking command from py_eddy_tracker
-eddy_type=Cyclonic  #Cyclonic or anticyclonic (Careful works only if file named $eddy_type.nc)
-#eddy_type=Anticyclonic  #Cyclonic or anticyclonic (Careful works only if file named $eddy_type.nc)
-tracking_method=overlap   #or conf.yaml  #overlap or cost method 
+DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12V4/Detect_eddies_2019_SE55/
+DIR_OUT=/home/fdubost/DEV/Eddy_DetectAndTrack/scr/tracking_test/
 
-DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/ibi36/Detect_2019_IBItoGLO12/
-DIR_OUT=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/ibi36/Tracking_2019_IBItoGLO12/
-#Prepare config .yaml file for eddy tracking
-cp ${tracking_method}_template.yaml ${tracking_method}.yaml  #create a copy
-sed -i 's+DIR_IN+'${DIR_IN}'+g' ${tracking_method}.yaml  #replace with correct DIR_IN path, 
-                                                         #note "+" replaces '/' delimiter character
-sed -i 's+DIR_OUT+'${DIR_OUT}'+g' ${tracking_method}.yaml #Same for dir_out
-sed -i 's+EDDY_TYPE+'$eddy_type'+g' ${tracking_method}.yaml #Same for dir_out
-#print out config file
-echo "Configuration for tracking:"
-cat ${tracking_method}.yaml
+eddy_types=("Cyclonic" "Anticyclonic")
+tracking_method="overlap"
 
-echo "nb of " ${eddy_type} "files:"
-ls -l ${DIR_IN}/${eddy_type}*.nc | wc -l
+for eddy_type in "${eddy_types[@]}"
+do
+    # Prepare config .yaml file for eddy tracking
+    cp ${tracking_method}_template.yaml ${tracking_method}.yaml
+    sed -i 's+DIR_IN+'${DIR_IN}'+g' ${tracking_method}.yaml
+    sed -i 's+DIR_OUT+'${DIR_OUT}'+g' ${tracking_method}.yaml
+    sed -i 's+EDDY_TYPE+'$eddy_type'+g' ${tracking_method}.yaml
+    
+    # Print out config file
+    echo "Configuration for tracking:"
+    cat ${tracking_method}.yaml
 
-echo "\ntrack eddies:"
-EddyTracking ${tracking_method}.yaml -v DEBUG 
-#set verbose add  -v DEBUG
+    # Count the number of eddy files
+    echo "Number of ${eddy_type} files:"
+    ls -l ${DIR_IN}/${eddy_type}*.nc | wc -l
 
-echo ".oO Eddy Tracking Done Oo."
+    echo "Track eddies:"
+    EddyTracking ${tracking_method}.yaml -v DEBUG
+
+    echo ".oO Eddy Tracking Done Oo."
+done
 
 
+     
