@@ -49,10 +49,7 @@ class Plots:
 
         self.dir_plot = str(info["PLOT_INFO"]["PATH_PLOT"])
 
-        if show:
-            self.show = plt.show()
-        else:
-            self.show = None
+        self.show = show
 
     def plot_one_day_adt(self, h, var_adt, a, c):
 
@@ -93,7 +90,8 @@ class Plots:
             self.dir_plot + self.model + "_Detection.jpeg", bbox_inches="tight", dpi=600
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def plot_all_tracks_period(self, at, ct):
         fig, ax = plt.subplots(subplot_kw=dict(projection=data_crs))
@@ -123,7 +121,8 @@ class Plots:
             dpi=600,
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def plot_number_detection_time_mean(self, NB_EDDIES):
         t_data = pd.date_range(self.date_start, periods=self.periods, freq="D")
@@ -143,7 +142,8 @@ class Plots:
             bbox_inches="tight",
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def plot_2d_histo(self, at):
         fig, ax = plt.subplots()
@@ -169,7 +169,8 @@ class Plots:
             bbox_inches="tight",
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def plot_histo_hits_false(self, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
         bins = np.arange(0, 400, 3)
@@ -216,7 +217,8 @@ class Plots:
             bbox_inches="tight",
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def plot_pod_far_amplitude(self, POD_AR, FAR_AR):
         bins = np.arange(0, 400, 1)
@@ -255,7 +257,8 @@ class Plots:
             bbox_inches="tight",
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def plot_pod_far_time(self, AR_POD, AR_FAR):
         t_data = pd.date_range(self.date_start, periods=self.periods - 1, freq="D")
@@ -285,7 +288,8 @@ class Plots:
             bbox_inches="tight",
         )
 
-        self.show
+        if self.show:
+            plt.show()
 
     def perf_diag(self, SR, AR_POD):
         plt.subplots(figsize=(10, 10))
@@ -349,4 +353,5 @@ class Plots:
             dpi=600,
         )
 
-        self.show
+        if self.show:
+            plt.show()
