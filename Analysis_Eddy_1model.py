@@ -31,8 +31,7 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
 
-from src.plots import Plots
-
+from plots import Plots
 
 def reverse_index(index, nb):
     m = np.ones(nb, dtype="bool")
