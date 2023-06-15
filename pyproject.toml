@@ -22,8 +22,6 @@ detect_eddies = 'src.Detect_Eddies:detect_eddies'
 analysis_eddies = 'src.Analysis_Eddy_1model:analysis_eddies'
 
 
-
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -153,6 +153,7 @@ def analysis_eddies():
     radius_AR_hits = []
     radius_AR_falarm = []
     radius_AR_misses = []
+
     ### Amplitude
     amplitude_AR_hits = []
     amplitude_AR_falarm = []
@@ -190,14 +191,6 @@ def analysis_eddies():
         reference_ac_junk = reference_ac.index(reference_id_junk)
         model_ac_junk = model_ac.index(model_id_junk)
         model_ac = model_ac.index(model_id)
-
-        radius_AR_hits = np.append(radius_AR_hits, model_ac.obs["radius_e"] / 1000)
-        radius_AR_misses = np.append(
-            radius_AR_misses, reference_ac_junk.obs["radius_e"] / 1000
-        )
-        radius_AR_falarm = np.append(
-            radius_AR_falarm, model_ac_junk.obs["radius_e"] / 1000
-        )
 
         amplitude_AR_hits = np.append(
             amplitude_AR_hits, model_ac.obs["amplitude"] * 100
@@ -268,37 +261,53 @@ def analysis_eddies():
     print("GENREAL DETECTION ADN TRACKING INFO")
     print("AC stands for AntiCyclonic & CC for CyClonic")
     print("---------------------------------------------------------")
-    print("Number of AC eddies in the period = ", sum(NB_AC))
-    print("Minimum number of AC eddies detected in one day = ", min(NB_AC))
-    print("Maximum number of AC eddies detected in one day = ", max(NB_AC))
-    print("So on average ", np.round(np.mean(NB_AC), 0), "AC eddies per day")
+
+    # Print information for AC eddies
+    print("Number of AC eddies in the period =", sum(NB_AC))
+    print("Minimum number of AC eddies detected in one day =", min(NB_AC))
+    print("Maximum number of AC eddies detected in one day =", max(NB_AC))
+    print("So on average {} AC eddies per day".format(round(np.mean(NB_AC), 0)))
     print("---------------------------------------------------------")
+
+    # Print information for CC eddies
     print("Number of CC eddies in the period =", sum(NB_CC))
-    print("Minimum number of CC eddies detected in one day = ", min(NB_CC))
-    print("Maximum number of CC eddies detected in one day = ", max(NB_CC))
-    print("So on average", np.round(np.mean(NB_CC), 0), "CC eddies per day")
+    print("Minimum number of CC eddies detected in one day =", min(NB_CC))
+    print("Maximum number of CC eddies detected in one day =", max(NB_CC))
+    print("So on average {} CC eddies per day".format(round(np.mean(NB_CC), 0)))
     print("---------------------------------------------------------")
+
+    # Print information for all eddies
     print("Number of eddies in the period =", sum(NB_EDDIES))
-    print("Minimum number of eddies detected in one day = ", min(NB_EDDIES))
-    print("Maximum number of eddies detected in one day = ", max(NB_EDDIES))
-    print("So on average", round(np.mean(NB_EDDIES)), "eddies per day")
+    print("Minimum number of eddies detected in one day =", min(NB_EDDIES))
+    print("Maximum number of eddies detected in one day =", max(NB_EDDIES))
+    print("So on average {} eddies per day".format(round(np.mean(NB_EDDIES))))
     print("---------------------------------------------------------")
+
+    # Print information for tracks
     print("Number of AC tracks =", at.nb_tracks)
     print("Number of CC tracks =", ct.nb_tracks)
     print("Number of tracks =", at.nb_tracks + ct.nb_tracks)
     print("---------------------------------------------------------")
-    print("Average AC track duration =", round(np.mean((at.nb_obs_by_track))), "jours")
-    print("Average CC track duration =", round(np.mean((ct.nb_obs_by_track))), "jours")
-    print("Average track duration =", round(np.mean((eddies.nb_obs_by_track))), "jours")
+
+    # Print information for average track duration
+    print("Average AC track duration =", round(np.mean(at.nb_obs_by_track)), "jours")
+    print("Average CC track duration =", round(np.mean(ct.nb_obs_by_track)), "jours")
+    print("Average track duration =", round(np.mean(eddies.nb_obs_by_track)), "jours")
     print("---------------------------------------------------------")
+
+    # Print information for mean amplitude
     print("Mean AC amplitude =", round(np.mean(at.amplitude * 100), 2), "cm")
     print("Mean AC amplitude =", round(np.mean(ct.amplitude * 100), 2), "cm")
     print("Mean eddy amplitude =", round(np.mean(eddies.amplitude * 100), 2), "cm")
     print("---------------------------------------------------------")
+
+    # Print information for mean radius
     print("Mean AC radius =", round(np.mean(at.effective_radius / 1000), 2), "km")
     print("Mean CC radius =", round(np.mean(ct.effective_radius / 1000), 2), "km")
     print("Mean eddy radius =", round(np.mean(eddies.effective_radius / 1000), 2), "km")
     print("---------------------------------------------------------")
+
+    # Print information for mean surface occupied
     print(
         "Mean surface occupied by AC eddies =",
         round(np.mean(at.effective_area / (1000 * 1000)), 2),
@@ -315,10 +324,14 @@ def analysis_eddies():
         "km^2",
     )
     print("---------------------------------------------------------")
+
+    # Print information for tracks too short
     print("Number of AC tracks too short =", ats.nb_tracks)
     print("Number of CC tracks too short =", cts.nb_tracks)
     print("Number of tracks too short =", ats.nb_tracks + cts.nb_tracks)
     print("---------------------------------------------------------")
+
+    # Print information for average track duration of tracks too short
     print(
         "Average AC track too short duration =",
         round(np.mean((ats.nb_obs_by_track))),
@@ -335,6 +348,8 @@ def analysis_eddies():
         "jours",
     )
     print("---------------------------------------------------------")
+
+    # Print information for mean amplitude of tracks too short
     print(
         "Mean AC amplitude track too short =",
         round(np.mean(ats.amplitude * 100), 2),
@@ -351,6 +366,8 @@ def analysis_eddies():
         "cm",
     )
     print("---------------------------------------------------------")
+
+    # Print information for mean radius of tracks too short
     print(
         "Mean AC radius track too short =",
         round(np.mean(ats.effective_radius / 1000), 2),
@@ -367,6 +384,8 @@ def analysis_eddies():
         "km",
     )
     print("---------------------------------------------------------")
+
+    # Print information for mean surface occupied by tracks too short
     print(
         "Mean surface occupied by AC eddies from tracks too short =",
         round(np.mean(ats.effective_area / (1000 * 1000)), 2),
@@ -383,9 +402,13 @@ def analysis_eddies():
         "km^2",
     )
     print("---------------------------------------------------------")
+
+    # Print information for untracked eddies
     print("Number of untracked AC eddies =", len(ata))
     print("Number of untracked CC eddies  =", len(cta))
     print("---------------------------------------------------------")
+
+    # Print information for mean amplitude of untracked eddies
     print(
         "Mean amplitude of untracked AC eddies =",
         round(np.mean(ata.amplitude * 100), 2),
@@ -402,6 +425,8 @@ def analysis_eddies():
         "cm",
     )
     print("---------------------------------------------------------")
+
+    # Print information for mean radius of untracked eddies
     print(
         "Mean radius of untracked AC eddies =",
         round(np.mean(ata.effective_radius / 1000), 2),
@@ -418,6 +443,8 @@ def analysis_eddies():
         "km",
     )
     print("---------------------------------------------------------")
+
+    # Print information for mean surface occupied by untracked eddies
     print(
         "Mean surface occupied by untracked AC eddies =",
         round(np.mean(ata.effective_area / (1000 * 1000)), 2),
@@ -434,29 +461,39 @@ def analysis_eddies():
         "km^2",
     )
     print("---------------------------------------------------------")
+
+    # Print matching results
     print("MATCHING RESULTS")
     print("---------------------------------------------------------")
     print("Number of hits =", len(amplitude_AR_hits))
     print("Number of misses =", len(amplitude_AR_misses))
     print("Number of false alarms =", len(amplitude_AR_falarm))
     print("---------------------------------------------------------")
+
+    # Print average number of hits, misses, and false alarms per day
     print("Average number of hits per day =", round(np.mean(Hits)))
     print("Average number of misses per day =", round(np.mean(Misses)))
     print("Average number of false alarms per day =", round(np.mean(Falarms)))
     print("---------------------------------------------------------")
+
+    # Print mean amplitude of hits, misses, and false alarms
     print("Mean hits amplitude =", round(np.mean(amplitude_AR_hits), 2), "cm")
     print("Mean misses amplitude =", round(np.mean(amplitude_AR_misses), 2), "cm")
     print("Mean false alarms amplitude =", round(np.mean(amplitude_AR_falarm), 2), "cm")
     print("---------------------------------------------------------")
+
+    # Print mean radius of hits, misses, and false alarms
     print("Mean hits radius =", round(np.mean(radius_AR_hits), 2), "km")
     print("Mean misses radius =", round(np.mean(radius_AR_misses), 2), "km")
-    print("Mean false alarms radius=", round(np.mean(radius_AR_falarm), 2), "km")
+    print("Mean false alarms radius =", round(np.mean(radius_AR_falarm), 2), "km")
     print("---------------------------------------------------------")
-    print("The mean probablitity of detection (POD) is", round(np.mean(AR_POD), 3))
+
+    # Print mean probability of detection (POD), false alarm ratio (FAR), success ratio (SR), F-Score, and critical success index (CSI)
+    print("The mean probability of detection (POD) is", round(np.mean(AR_POD), 3))
     print(
         "The mean false alarm ratio (FAR) is",
         round(np.mean(AR_FAR), 3),
-        "soit un sucess ratio de",
+        "so a success ratio of",
         round(np.mean(SR), 3),
     )
     print("The F_Score is", round(np.mean(F_SCORE), 3))

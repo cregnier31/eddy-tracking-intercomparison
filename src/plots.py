@@ -1,20 +1,14 @@
 import pandas as pd
 import numpy as np
-
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from labellines import labelLine, labelLines
 import matplotlib.ticker as mticker
-import matplotlib
-
-font = {"family": "serif", "weight": "bold", "size": 14}
-matplotlib.rc("font", **font)
 import matplotlib.dates as mdates
 import cartopy.crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
 data_crs = ccrs.PlateCarree()
-import cartopy.feature as cfeature
 
 
 def plt_cartopy_ibi(ax, labels=True):
@@ -52,31 +46,18 @@ class Plots:
         self.show = show
 
     def plot_one_day_adt(self, h, var_adt, a, c):
-
         fig, ax = plt.subplots(subplot_kw=dict(projection=data_crs))
         ax.set_extent([self.lon_min, self.lon_max, self.lat_min, self.lat_max])
 
         AC_x, AC_y = a.effective_contour_longitude, a.effective_contour_latitude
         CC_x, CC_y = c.effective_contour_longitude, c.effective_contour_latitude
 
-        for i in range(len(AC_x)):
-            ax.plot(
-                AC_x[i, :],
-                AC_y[i, :],
-                color="k",
-                linestyle="-",
-                linewidth=1,
-                transform=data_crs,
-            )
-        for i in range(len(CC_y)):
-            ax.plot(
-                CC_x[i, :],
-                CC_y[i, :],
-                color="k",
-                linestyle=":",
-                linewidth=1.5,
-                transform=data_crs,
-            )
+        ax.plot(
+            AC_x.T, AC_y.T, color="k", linestyle="-", linewidth=1, transform=data_crs
+        )
+        ax.plot(
+            CC_x.T, CC_y.T, color="k", linestyle=":", linewidth=1.5, transform=data_crs
+        )
 
         ax.set_title(self.model)
         im = h.display(ax, var_adt, vmin=-0.15, vmax=0.15)
@@ -92,6 +73,8 @@ class Plots:
 
         if self.show:
             plt.show()
+        else:
+            pass
 
     def plot_all_tracks_period(self, at, ct):
         fig, ax = plt.subplots(subplot_kw=dict(projection=data_crs))
@@ -126,7 +109,7 @@ class Plots:
 
     def plot_number_detection_time_mean(self, NB_EDDIES):
         t_data = pd.date_range(self.date_start, periods=self.periods, freq="D")
-        NB_mean = [np.mean(NB_EDDIES)] * len(t_data)
+        NB_mean = np.full(len(t_data), np.mean(NB_EDDIES))
 
         fig, ax = plt.subplots(figsize=(12, 6))
         # ax = fig.add_axes([.03,.03,.94,.94])
@@ -138,7 +121,7 @@ class Plots:
         ax.legend()
 
         plt.savefig(
-            self.dir_plot + "NB_EDDIES_" + self.model + "_" + str(self.year) + ".jpeg",
+            f"{self.dir_plot}NB_EDDIES_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
 
@@ -160,12 +143,7 @@ class Plots:
         fig.colorbar(im, ax=ax)
         plt.title(self.model)
         plt.savefig(
-            self.dir_plot
-            + "HIST2D_AMP_RAD_"
-            + self.model
-            + "_"
-            + str(self.year)
-            + ".jpeg",
+            f"{self.dir_plot}HIST2D_AMP_RAD_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
 
@@ -175,8 +153,8 @@ class Plots:
     def plot_histo_hits_false(self, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
         bins = np.arange(0, 400, 3)
 
-        plt.subplots(figsize=(6, 4))
-        plt.hist(
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.hist(
             radius_AR_hits,
             bins=bins,
             fill=False,
@@ -185,7 +163,7 @@ class Plots:
             label="hits",
             color="green",
         )
-        plt.hist(
+        ax.hist(
             radius_AR_misses,
             bins=bins,
             fill=False,
@@ -194,7 +172,7 @@ class Plots:
             label="misses",
             color="red",
         )
-        plt.hist(
+        ax.hist(
             radius_AR_falarm,
             bins=bins,
             fill=False,
@@ -204,59 +182,48 @@ class Plots:
             color="orange",
         )
 
-        plt.gca().set(ylim=(0, 4500), xlim=(0, 100), xlabel="Radius (km)")
-        plt.legend()
-        plt.suptitle(self.model + " Reference " + self.reference)
+        ax.set_ylim(0, 4500)
+        ax.set_xlim(0, 100)
+        ax.set_xlabel("Radius (km)")
+        ax.legend()
+        ax.set_title(f"{self.model} Reference {self.reference}")
         plt.savefig(
-            self.dir_plot
-            + "HIST_MATCHING_"
-            + self.model
-            + "_"
-            + str(self.year)
-            + ".jpeg",
+            f"{self.dir_plot}HIST_MATCHING_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
-
         if self.show:
             plt.show()
 
     def plot_pod_far_amplitude(self, POD_AR, FAR_AR):
         bins = np.arange(0, 400, 1)
-        plt.subplots(figsize=(10, 4))
-        plt.subplot(121)
-        plt.step(bins[:-1], POD_AR, color="black", linewidth=2)
-        plt.gca().set(
+        fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+        axes[0].step(bins[:-1], POD_AR, color="black", linewidth=2)
+        axes[0].set(
             ylim=(np.nanmin(POD_AR) - 0.2, 1.05),
             ylabel="Probability of Detection",
             xlim=(0, 20),
             xlabel="Amplitude (cm)",
+            xticks=np.arange(0, 20, 5),
         )
-        plt.xticks(np.arange(0, 20, 5))
-        plt.grid()
+        axes[0].grid()
 
-        plt.subplot(122)
-        plt.step(bins[:-1], FAR_AR, color="black", linewidth=2)
-        plt.gca().set(
+        axes[1].step(bins[:-1], FAR_AR, color="black", linewidth=2)
+        axes[1].set(
             ylim=(0, np.nanmax(FAR_AR) + 0.2),
             ylabel="False Alarm Ratio",
             xlim=(0, 20),
             xlabel="Amplitude (cm)",
+            xticks=np.arange(0, 20, 5),
         )
-        plt.xticks(np.arange(0, 20, 5))
+        axes[1].grid()
 
-        plt.grid()
-        plt.suptitle(self.model + " Reference " + self.reference)
+        fig.suptitle(f"{self.model} Reference {self.reference}")
         plt.tight_layout()
         plt.savefig(
-            self.dir_plot
-            + "POD_FAR_AMP_"
-            + self.model
-            + "_"
-            + str(self.year)
-            + ".jpeg",
+            f"{self.dir_plot}POD_FAR_AMP_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
-
         if self.show:
             plt.show()
 
@@ -279,76 +246,51 @@ class Plots:
         axes[1].set_title("False Alarm Ratio")
 
         plt.savefig(
-            self.dir_plot
-            + "POD_FAR_TEMP_"
-            + self.model
-            + "_"
-            + str(self.year)
-            + ".jpeg",
+            f"{self.dir_plot}POD_FAR_TEMP_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
-
         if self.show:
             plt.show()
 
     def perf_diag(self, SR, AR_POD):
-        plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=(10, 10))
 
-        i = np.arange(0, 1.1, 0.01)
         CSI = np.arange(0.1, 1, 0.1)
+        xvals = [0.57, 0.62, 0.77, 0.79, 0.85, 0.9, 0.95, 0.935, 0.96]
+        labels = ["0.3", "0.5", "0.8", "1", "1.3", "1.5", "2", "3", "5", "10"]
+
         for c in CSI:
+            i = np.arange(0, 1.1, 0.01)
             y = (c * i) / (c * i - c + i)
             indices = np.where(y <= 0.0)
             y = np.delete(y, indices)
             i = np.delete(i, indices)
-            plt.plot(i, y, color="k", linewidth=1.8, label=str(np.round(c, 2)))
+            ax.plot(i, y, color="k", linewidth=1.8, label=str(np.round(c, 2)))
 
-        xvals = [0.57, 0.62, 0.77, 0.79, 0.85, 0.9, 0.95, 0.935, 0.96]
-
-        labelLines(plt.gca().get_lines(), xvals=xvals, fontsize=15)
+        labelLines(ax.get_lines(), xvals=xvals, fontsize=15)
 
         x = np.arange(0, 1.1, 0.1)
+        y_offsets = [0.295, 0.495, 0.795, 1, 1.01, 1.01, 1.01, 1.01, 1.01, 1.01]
 
-        plt.plot(x, x * 0.3, linestyle="--", color="k", linewidth=1.8)
-        plt.text(1.01, 0.295, "0.3", size=13)
-        plt.plot(x, x * 0.5, linestyle="--", color="k", linewidth=1.8)
-        plt.text(1.01, 0.495, "0.5", size=13)
-        plt.plot(x, x * 0.8, linestyle="--", color="k", linewidth=1.8)
-        plt.text(1.01, 0.795, "0.8", size=13)
-        plt.plot(x, x, linestyle="--", color="k", linewidth=1.8)
-        plt.text(1, 1, "1", size=13)
-        plt.plot(x, x * 1.3, linestyle="--", color="k", linewidth=1.8)
-        plt.text(0.76, 1.01, "1.3", size=13)
-        plt.plot(x, x * 1.5, linestyle="--", color="k", linewidth=1.8)
-        plt.text(0.65, 1.01, "1.5", size=13)
-        plt.plot(x, x * 2, linestyle="--", color="k", linewidth=1.8)
-        plt.text(0.5, 1.01, "2", size=13)
-        plt.plot(x, x * 3, linestyle="--", color="k", linewidth=1.8)
-        plt.text(0.327, 1.01, "3", size=13)
-        plt.plot(x, x * 5, linestyle="--", color="k", linewidth=1.8)
-        plt.text(0.2, 1.01, "5", size=13)
-        plt.plot(x, x * 10, linestyle="--", color="k", linewidth=1.8)
-        plt.text(0.09, 1.01, "10", size=13)
+        for i, label in enumerate(labels):
+            ax.plot(x, x * float(label), linestyle="--", color="k", linewidth=1.8)
+            ax.text(1.01, y_offsets[i], label, size=13)
 
-        plt.title("Performance Diagram " + self.model + " " + str(self.year), y=1.08)
-        plt.scatter(np.mean(SR), np.mean(AR_POD), color="blue", s=200)
-        plt.scatter(0.995, 0.995, color="orange", s=200, marker="D")
-        plt.text(0.8, 0.96, "Perfect match", size=15)
-        plt.xlabel("Success Ratio (1-FAR)", fontsize=20)
-        plt.ylabel("Probability of detection (POD)", fontsize=20)
-        plt.xlim(0, 1)
-        plt.xticks((np.arange(0, 1.1, step=0.1)), fontsize=20)
-        plt.yticks((np.arange(0, 1.1, step=0.1)), fontsize=20)
-        plt.minorticks_on()
-        plt.ylim(0, 1)
+        ax.set_title("Performance Diagram " + self.model + " " + str(self.year), y=1.08)
+        ax.scatter(np.mean(SR), np.mean(AR_POD), color="blue", s=200)
+        ax.scatter(0.995, 0.995, color="orange", s=200, marker="D")
+        ax.text(0.8, 0.96, "Perfect match", size=15)
+        ax.set_xlabel("Success Ratio (1-FAR)", fontsize=20)
+        ax.set_ylabel("Probability of detection (POD)", fontsize=20)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_xticks(np.arange(0, 1.1, step=0.1))
+        ax.set_yticks(np.arange(0, 1.1, step=0.1))
+        ax.tick_params(axis="both", which="both", labelsize=20)
+        ax.minorticks_on()
 
         plt.savefig(
-            self.dir_plot
-            + "PERFORMANCE_DIAG_"
-            + self.model
-            + "_"
-            + str(self.year)
-            + ".jpeg",
+            f"{self.dir_plot}PERFORMANCE_DIAG_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
             dpi=600,
         )
