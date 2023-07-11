@@ -1,3 +1,6 @@
+import os
+import fnmatch
+
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
@@ -29,7 +32,10 @@ class Plots:
         self.reference = str(general_info["REFERENCE"])
         self.year = int(general_info["YEAR"])
         self.date_start = str(general_info["DATE_START"])
-        self.periods = int(general_info["PERIODS"])
+        self.periods = (
+            len(fnmatch.filter(os.listdir(general_info["PATH_DETECT_FILES"]), "*.*"))
+            // 2
+        )
 
         PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
         PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
