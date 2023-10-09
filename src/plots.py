@@ -151,7 +151,7 @@ class Plots:
             plt.show()
 
     def plot_histo_hits_false(self, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
-        bins = np.arange(0, 400, 3)
+        bins = np.arange(0, 250, 5)
 
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.hist(
@@ -182,7 +182,7 @@ class Plots:
             color="orange",
         )
 
-        ax.set_ylim(0, 4500)
+        ax.set_ylim(0, 200)
         ax.set_xlim(0, 100)
         ax.set_xlabel("Radius (km)")
         ax.legend()
@@ -202,9 +202,9 @@ class Plots:
         axes[0].set(
             ylim=(np.nanmin(POD_AR) - 0.2, 1.05),
             ylabel="Probability of Detection",
-            xlim=(0, 20),
+            xlim=(0, 15),
             xlabel="Amplitude (cm)",
-            xticks=np.arange(0, 20, 5),
+            xticks=np.arange(0, 15, 5),
         )
         axes[0].grid()
 
@@ -212,9 +212,9 @@ class Plots:
         axes[1].set(
             ylim=(0, np.nanmax(FAR_AR) + 0.2),
             ylabel="False Alarm Ratio",
-            xlim=(0, 20),
+            xlim=(0, 15),
             xlabel="Amplitude (cm)",
-            xticks=np.arange(0, 20, 5),
+            xticks=np.arange(0, 15, 5),
         )
         axes[1].grid()
 

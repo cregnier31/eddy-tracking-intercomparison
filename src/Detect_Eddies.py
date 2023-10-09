@@ -14,6 +14,8 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from netCDF4 import Dataset
 import pandas as pd
 
+import warnings 
+warnings.filterwarnings("ignore")
 
 def reg_date(string_to_find_date_in):
     """function that uses regular expressions to find start and end date from file.
@@ -46,7 +48,7 @@ def compute_eddy(file, general_info):
     date = pd.to_datetime(
         date_file, format="%Y%m%d"
     )  #### define date for eddy detection
-
+    print(date)
     lon_name, lat_name = (
         "longitude",
         "latitude",
@@ -55,11 +57,11 @@ def compute_eddy(file, general_info):
     h = RegularGridDataset(
         grid_name, lon_name, lat_name
     )  #### centered pixel position of grid
-
+  
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
 
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
-
+    print("h filtered")
     a, c = h.eddy_identification(
         var_adt,
         VAR_U,
@@ -69,7 +71,7 @@ def compute_eddy(file, general_info):
         pixel_limit=(PIXEL_MIN, PIXEL_MAX),  # Min and max pixel count for valid contour
         shape_error=SHAPE_ERROR,  # Error max (%) between ratio of circle fit and contour
     )
-
+    print("a and c ok")
     ################# save eddy detcted in netcdf files
     with Dataset(
         date.strftime(OUTPUT_DIR + "Anticyclonic_" + MODEL + "_" + date_file + ".nc"),
@@ -83,6 +85,7 @@ def compute_eddy(file, general_info):
 
 
 def detect_eddies():
+    
     # Read in config file name
     parser = argparse.ArgumentParser(description="Script that reads in a config file")
     # default drifting time 90 days
@@ -103,7 +106,7 @@ def detect_eddies():
     general_info = config_object["GENERAL_INFO"]
     INPUT_FILES = str(general_info["INPUT_FILES"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
-
+    print(OUTPUT_DIR)
     if not os.path.exists(OUTPUT_DIR):
         print("\ncreate directory : ", OUTPUT_DIR)
         os.makedirs(OUTPUT_DIR)
@@ -114,7 +117,7 @@ def detect_eddies():
     pool.imap(partial(compute_eddy, general_info=general_info), INPUT_FILES)
     pool.close()
     pool.join()
-
+    print(OUTPUT_DIR)
     print("Eddy detection done")
 
 

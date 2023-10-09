@@ -31,7 +31,7 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
 
-from src.plots import Plots
+from plots import Plots
 
 
 def reverse_index(index, nb):
@@ -509,13 +509,13 @@ def analysis_eddies():
 
     # Make sure the filtering parameters are the same as in the detection script
 
-    h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
-    h.bessel_high_filter(var_adt, 500, order=1)
+    #h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
+    #h.bessel_high_filter(var_adt, 500, order=1)
 
-    a = EddiesObservations.load_file(AC_DETECTION)
-    c = EddiesObservations.load_file(CC_DETECTION)
+    #a = EddiesObservations.load_file(AC_DETECTION)
+    #c = EddiesObservations.load_file(CC_DETECTION)
 
-    plots.plot_one_day_adt(h, var_adt, a, c)
+    #plots.plot_one_day_adt(h, var_adt, a, c)
 
     ### PLOT ALL TRACKS FOR THE PERIOD ###
     plots.plot_all_tracks_period(at, ct)
