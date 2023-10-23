@@ -106,54 +106,54 @@ class Plots:
         latitude_min = self.lat_min
         latitude_max = self.lat_max
         
-        # Définissez la taille de la grille (2x2 degrés dans cet exemple)
+        # Define grid size (ex 2 degrees * 2 degrees) 
         grid_size = 2.0
         
-        # Calculez le nombre de cellules en latitude et longitude
+        # Compute the number of cells 
         lat_cells = int((latitude_max - latitude_min) / grid_size)
         lon_cells = int((longitude_max - longitude_min) / grid_size)
         
-        # Créez une grille vide pour stocker les compteurs de cellules
+        # Create an empty grid
         cell_counters = np.zeros((lat_cells, lon_cells), dtype=int)
         
-        # Parcourez tous les fichiers dans le dossier
+        
         for fichier in os.listdir(dossier_data):
             with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
-                # Obtenez les coordonnées des tourbillons (x, y) à partir du fichier NetCDF
+                # Find the coordinates of the eddies 
                 latitudes = ds.variables['latitude'][:]
                 longitudes = ds.variables['longitude'][:]
                 
-                # Parcourez chaque coordonnée du tourbillon
+                # For each coordinate 
                 for i in range(len(latitudes)):
                     x, y = latitudes[i], longitudes[i]  # Coordonnées du tourbillon
-                    # Vérifiez si les coordonnées sont dans la plage spécifiée
+                    # Check if the eddy is in the domain of study 
                     if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
                         
-                        # Calculez les indices de cellule correspondants tout en maintenant les valeurs dans les limites
+                        # Compute the index 
                         lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
                         lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
                  
         
-                        # Incrémentez le compteur de la cellule appropriée
+                        # Add to the counter of the appropriate cell
                         cell_counters[lat_index, lon_index] += 1
         
-        # Créez une carte en utilisant la projection PlateCarree
+        # Create a map
         fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
         
-        # Ajoutez les côtes
+        # Add coasts
         ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
         
-        # Créez un masque pour les valeurs égales à zéro (océan)
+        # Create a mask 
         mask = cell_counters == 0
         
-        # Remplacez les valeurs égales à zéro par NaN
+        
         cell_counters = np.ma.masked_array(cell_counters, mask=mask)
         
-        # Créez une heatmap à partir des compteurs de cellules
+        # Create the heatmap
         heatmap = ax.imshow(cell_counters/181, vmin=0,vmax=5,cmap='jet', origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
         cbar = plt.colorbar(heatmap,orientation='horizontal', label='Daily number of eddies')
         
-        # Ajoutez des titres et des labels d'axe
+        # Add a title and labels 
         plt.title('Heatmap of eddies ' + str(self.model))
         
         ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
@@ -162,7 +162,9 @@ class Plots:
         gl.xlabel_style = {'color': 'k', 'size': 'medium'}
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False ; gl.top_labels = False
-        
+
+
+        #Save and show
         plt.savefig(
                 self.dir_plot + self.model + "_HEATMAP" + ".jpeg",
                 bbox_inches="tight",
@@ -183,56 +185,57 @@ class Plots:
         latitude_min = self.lat_min
         latitude_max = self.lat_max
         
-        # Définissez la taille de la grille (2x2 degrés dans cet exemple)
+        # Define grid size (ex 2 degrees * 2 degrees) 
         grid_size = 2.0
         
-        # Calculez le nombre de cellules en latitude et longitude
+        # Compute the number of cells 
         lat_cells = int((latitude_max - latitude_min) / grid_size)
         lon_cells = int((longitude_max - longitude_min) / grid_size)
         
-        # Créez une grille vide pour stocker les sommes des rayons des tourbillons dans chaque cellule
+        # Create empty grids
         radius_sums = np.zeros((lat_cells, lon_cells), dtype=float)
         cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)  # Compteur de tourbillons dans chaque cellule
         
-        # Parcourez tous les fichiers dans le dossier
+        
         for fichier in os.listdir(dossier_data):
             with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
-                # Obtenez les coordonnées des tourbillons (latitude, longitude) et les rayons
+                # Get eddies coordinates and radius
                 latitudes = ds.variables['latitude'][:]
                 longitudes = ds.variables['longitude'][:]
                 radii = ds.variables['effective_radius'][:] /1000
                 
-                # Parcourez chaque tourbillon
+                # For each eddy 
                 for i in range(len(latitudes)):
                     x, y, radius = latitudes[i], longitudes[i], radii[i]
                     
-                    # Vérifiez si les coordonnées sont dans la plage spécifiée
+                    #  Check if the eddy is in the domain of study 
                     if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
-                        # Calculez les indices de cellule correspondants
+                        # Compute the index
                         lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
                         lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
                         
-                        # Ajoutez le rayon à la somme de rayons de la cellule
+                        # Add the radius to the sum 
                         radius_sums[lat_index, lon_index] += radius
-                        # Incrémentez le compteur de tourbillons dans la cellule
+
+                        #Compute the number of eddies
                         cell_counts[lat_index, lon_index] += 1
         
-        # Calculez la moyenne des rayons pour chaque cellule (en évitant la division par zéro)
+        # Compute the average radius for each cell (avoiding division by zero)
         average_radii = np.divide(radius_sums, cell_counts, where=cell_counts != 0)
         
-        # Créez une carte en utilisant la projection PlateCarree
+        #Create a map
         fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
-        #ax.set_extent([longitude_min, longitude_max, latitude_min, latitude_max])
         
-        # Ajoutez les côtes
+        # Add coasts
         ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
         
-        # Create a masque for values = 0 Créez un masque pour les valeurs égales à zéro (océan)
+        # Create a masque for values = 0 
         mask = cell_counts == 0
         
-        # Replace 0 values by NaN 
-        average_radii = np.ma.masked_array(average_radii, mask=mask)
         
+        average_radii = np.ma.masked_array(average_radii, mask=mask)
+
+        #Create heatmap
         heatmap = ax.imshow(average_radii, cmap='jet',vmax=80 ,origin='lower',
                             extent=[longitude_min, longitude_max, latitude_min, latitude_max])
         
@@ -250,6 +253,7 @@ class Plots:
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False ; gl.top_labels = False
 
+        #Save and show
         plt.savefig(
             self.dir_plot + self.model + "_HEATMAP_RADIUS" + ".jpeg",
             bbox_inches="tight",
