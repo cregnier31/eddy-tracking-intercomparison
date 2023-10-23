@@ -73,8 +73,8 @@ def analysis_eddies():
     var_adt = str(plot_info["var_adt"])
 
     ##ONE DAY
-    AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20190101.nc"
-    CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20190101.nc"
+    AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
+    CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20230101.nc"
 
     ########################################################################################################################
 
@@ -509,16 +509,21 @@ def analysis_eddies():
 
     # Make sure the filtering parameters are the same as in the detection script
 
-    #h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
-    #h.bessel_high_filter(var_adt, 500, order=1)
+    h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
+    h.bessel_high_filter(var_adt, 500, order=1)
 
-    #a = EddiesObservations.load_file(AC_DETECTION)
-    #c = EddiesObservations.load_file(CC_DETECTION)
+    a = EddiesObservations.load_file(AC_DETECTION)
+    c = EddiesObservations.load_file(CC_DETECTION)
 
-    #plots.plot_one_day_adt(h, var_adt, a, c)
+    plots.plot_one_day_adt(h, var_adt, a, c)
 
     ### PLOT ALL TRACKS FOR THE PERIOD ###
     plots.plot_all_tracks_period(at, ct)
+
+    ### PLOT HEATMAP FOR MODEL 
+    plots.plot_heatmap()
+
+    plots.plot_heatmap_radius()
 
     ### NUMBER OF DETECTION BY TIME WITH MEAN ###
     plots.plot_number_detection_time_mean(NB_EDDIES)

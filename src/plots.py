@@ -8,17 +8,17 @@ from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 from labellines import labelLine, labelLines
 import matplotlib.ticker as mticker
 import matplotlib.dates as mdates
+import cartopy
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-
+import netCDF4 as nc
 data_crs = ccrs.PlateCarree()
 
 
-def plt_cartopy_ibi(ax, labels=True):
+def plt_cartopy(ax, labels=True):
     # ax.set_aspect('auto') # The figure will follow the ratio of the figsize
     ax.coastlines()  # Plot the coastlines
-    ax.set_xticks([-15, -5, 5], crs=data_crs)  # Set ticks for longitude
-    ax.set_yticks([30, 40, 50], crs=data_crs)  # Set ticks for latitude
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax.xaxis.set_major_formatter(lon_formatter)
@@ -37,9 +37,9 @@ class Plots:
             // 2
         )
 
-        PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
-        PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
-        PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
+        self.PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
+        self.PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
+        self.PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
 
         # Geographical extend
         self.lon_min = int(general_info["LON_MIN"])
@@ -53,7 +53,7 @@ class Plots:
 
     def plot_one_day_adt(self, h, var_adt, a, c):
         fig, ax = plt.subplots(subplot_kw=dict(projection=data_crs))
-        ax.set_extent([self.lon_min, self.lon_max, self.lat_min, self.lat_max])
+        
 
         AC_x, AC_y = a.effective_contour_longitude, a.effective_contour_latitude
         CC_x, CC_y = c.effective_contour_longitude, c.effective_contour_latitude
@@ -67,27 +67,203 @@ class Plots:
 
         ax.set_title(self.model)
         im = h.display(ax, var_adt, vmin=-0.15, vmax=0.15)
-        plt_cartopy_ibi(ax, labels=False)
+        plt_cartopy(ax, labels=False)
         plt.suptitle("Detection Cyclonic (Dotted) & Anticyclonic (Solid)")
-        cbar = fig.colorbar(im, ticks=[-0.1, 0, 0.1])
-        cbar.ax.set_ylabel("ADT (m) Filtered (500 km)")  # Colorbar label
+        cbar = fig.colorbar(im, orientation='horizontal', ticks=[-0.1, 0, 0.1, 0.2], pad=0.08, shrink=0.8, extend='both')
+        cbar.ax.set_xlabel("ADT (m) Filtered (500 km)")
+        
+        
+        # Pour rendre l'étiquette de la colorbar centrée
+        cbar.ax.xaxis.set_label_coords(0.5, 1.5)
+        
+        # Pour ajuster la taille de la police de l'étiquette
+        cbar.ax.xaxis.label.set_fontsize(12)
 
+        
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30), ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False ; gl.top_labels = False
         # Save or show
-        plt.savefig(
-            self.dir_plot + self.model + "_Detection.jpeg", bbox_inches="tight", dpi=600
-        )
+        plt.savefig(self.dir_plot + self.model + "_Detection.jpeg", bbox_inches="tight", dpi=500)
 
         if self.show:
             plt.show()
         else:
             pass
 
+
+    def plot_heatmap(self):
+
+
+        dossier_data = self.PATH_DETECT_FILES
+        
+        # Geographical extent
+        longitude_min = self.lon_min
+        longitude_max = self.lon_max
+        latitude_min = self.lat_min
+        latitude_max = self.lat_max
+        
+        # Définissez la taille de la grille (2x2 degrés dans cet exemple)
+        grid_size = 2.0
+        
+        # Calculez le nombre de cellules en latitude et longitude
+        lat_cells = int((latitude_max - latitude_min) / grid_size)
+        lon_cells = int((longitude_max - longitude_min) / grid_size)
+        
+        # Créez une grille vide pour stocker les compteurs de cellules
+        cell_counters = np.zeros((lat_cells, lon_cells), dtype=int)
+        
+        # Parcourez tous les fichiers dans le dossier
+        for fichier in os.listdir(dossier_data):
+            with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
+                # Obtenez les coordonnées des tourbillons (x, y) à partir du fichier NetCDF
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                
+                # Parcourez chaque coordonnée du tourbillon
+                for i in range(len(latitudes)):
+                    x, y = latitudes[i], longitudes[i]  # Coordonnées du tourbillon
+                    # Vérifiez si les coordonnées sont dans la plage spécifiée
+                    if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
+                        
+                        # Calculez les indices de cellule correspondants tout en maintenant les valeurs dans les limites
+                        lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
+                 
+        
+                        # Incrémentez le compteur de la cellule appropriée
+                        cell_counters[lat_index, lon_index] += 1
+        
+        # Créez une carte en utilisant la projection PlateCarree
+        fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
+        
+        # Ajoutez les côtes
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        
+        # Créez un masque pour les valeurs égales à zéro (océan)
+        mask = cell_counters == 0
+        
+        # Remplacez les valeurs égales à zéro par NaN
+        cell_counters = np.ma.masked_array(cell_counters, mask=mask)
+        
+        # Créez une heatmap à partir des compteurs de cellules
+        heatmap = ax.imshow(cell_counters/181, vmin=0,vmax=5,cmap='jet', origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+        cbar = plt.colorbar(heatmap,orientation='horizontal', label='Daily number of eddies')
+        
+        # Ajoutez des titres et des labels d'axe
+        plt.title('Heatmap of eddies ' + str(self.model))
+        
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30), ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False ; gl.top_labels = False
+        
+        plt.savefig(
+                self.dir_plot + self.model + "_HEATMAP" + ".jpeg",
+                bbox_inches="tight",
+                dpi=500,)
+    
+        if self.show:
+            plt.show()
+
+
+
+    def plot_heatmap_radius(self):    
+                    
+        dossier_data = self.PATH_DETECT_FILES
+        
+        ## Geographical extent
+        longitude_min = self.lon_min
+        longitude_max = self.lon_max
+        latitude_min = self.lat_min
+        latitude_max = self.lat_max
+        
+        # Définissez la taille de la grille (2x2 degrés dans cet exemple)
+        grid_size = 2.0
+        
+        # Calculez le nombre de cellules en latitude et longitude
+        lat_cells = int((latitude_max - latitude_min) / grid_size)
+        lon_cells = int((longitude_max - longitude_min) / grid_size)
+        
+        # Créez une grille vide pour stocker les sommes des rayons des tourbillons dans chaque cellule
+        radius_sums = np.zeros((lat_cells, lon_cells), dtype=float)
+        cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)  # Compteur de tourbillons dans chaque cellule
+        
+        # Parcourez tous les fichiers dans le dossier
+        for fichier in os.listdir(dossier_data):
+            with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
+                # Obtenez les coordonnées des tourbillons (latitude, longitude) et les rayons
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                radii = ds.variables['effective_radius'][:] /1000
+                
+                # Parcourez chaque tourbillon
+                for i in range(len(latitudes)):
+                    x, y, radius = latitudes[i], longitudes[i], radii[i]
+                    
+                    # Vérifiez si les coordonnées sont dans la plage spécifiée
+                    if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
+                        # Calculez les indices de cellule correspondants
+                        lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
+                        
+                        # Ajoutez le rayon à la somme de rayons de la cellule
+                        radius_sums[lat_index, lon_index] += radius
+                        # Incrémentez le compteur de tourbillons dans la cellule
+                        cell_counts[lat_index, lon_index] += 1
+        
+        # Calculez la moyenne des rayons pour chaque cellule (en évitant la division par zéro)
+        average_radii = np.divide(radius_sums, cell_counts, where=cell_counts != 0)
+        
+        # Créez une carte en utilisant la projection PlateCarree
+        fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
+        #ax.set_extent([longitude_min, longitude_max, latitude_min, latitude_max])
+        
+        # Ajoutez les côtes
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        
+        # Create a masque for values = 0 Créez un masque pour les valeurs égales à zéro (océan)
+        mask = cell_counts == 0
+        
+        # Replace 0 values by NaN 
+        average_radii = np.ma.masked_array(average_radii, mask=mask)
+        
+        heatmap = ax.imshow(average_radii, cmap='jet',vmax=80 ,origin='lower',
+                            extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+        
+        cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.7,label='Mean radius of eddies (km)')
+        
+        # Add title and labels
+        plt.title('Radius of eddies ' + str(self.model))
+        ax.set_xlabel('Longitude')
+        ax.set_ylabel('Latitude')
+        
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30), ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False ; gl.top_labels = False
+
+        plt.savefig(
+            self.dir_plot + self.model + "_HEATMAP_RADIUS" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,)
+
+        if self.show:
+            plt.show()
+
+    
     def plot_all_tracks_period(self, at, ct):
         fig, ax = plt.subplots(subplot_kw=dict(projection=data_crs))
-        ax.set_extent([self.lon_min, self.lon_max, self.lat_min, self.lat_max])
         at.plot(
             ax,
-            ref=-10,
+            # ref=-10,
             label="Anticyclonic {nb_tracks} tracks",
             color="r",
             lw=0.9,
@@ -95,19 +271,27 @@ class Plots:
         )
         ct.plot(
             ax,
-            ref=-10,
+            # ref=-10,
             label="Cyclonic {nb_tracks} tracks",
             color="b",
             lw=0.9,
             transform=data_crs,
         )
+
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30), ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False ; gl.top_labels = False
         ax.legend()
+    
         ax.set_title("Tracks " + str(self.model) + " " + str(self.year))
-        plt_cartopy_ibi(ax, labels=False)
+        plt_cartopy(ax, labels=False)
         plt.savefig(
             self.dir_plot + self.model + "_TRACKS_" + str(self.year) + ".jpeg",
             bbox_inches="tight",
-            dpi=600,
+            dpi=500,
         )
 
         if self.show:
@@ -159,6 +343,18 @@ class Plots:
     def plot_histo_hits_false(self, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
         bins = np.arange(0, 250, 5)
 
+
+        hits_histogram = np.histogram(radius_AR_hits, bins=bins)
+        misses_histogram = np.histogram(radius_AR_misses, bins=bins)
+        falarm_histogram = np.histogram(radius_AR_falarm, bins=bins)
+
+    
+        max_value = max(
+        	max(hits_histogram[0]),
+        	max(misses_histogram[0]),
+    		max(falarm_histogram[0])
+	    	)
+        
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.hist(
             radius_AR_hits,
@@ -188,7 +384,7 @@ class Plots:
             color="orange",
         )
 
-        ax.set_ylim(0, 200)
+        ax.set_ylim(0, max_value + 1000 )
         ax.set_xlim(0, 100)
         ax.set_xlabel("Radius (km)")
         ax.legend()
@@ -206,7 +402,7 @@ class Plots:
 
         axes[0].step(bins[:-1], POD_AR, color="black", linewidth=2)
         axes[0].set(
-            ylim=(np.nanmin(POD_AR) - 0.2, 1.05),
+            ylim=(0, 1.05),
             ylabel="Probability of Detection",
             xlim=(0, 15),
             xlabel="Amplitude (cm)",
@@ -275,12 +471,12 @@ class Plots:
 
         labelLines(ax.get_lines(), xvals=xvals, fontsize=15)
 
-        x = np.arange(0, 1.1, 0.1)
+        x = [ 1.01, 1.01, 1.01, 1.01, 0.76,0.65,0.5,0.327,0.2,0.09]
         y_offsets = [0.295, 0.495, 0.795, 1, 1.01, 1.01, 1.01, 1.01, 1.01, 1.01]
-
+        pente = np.arange(0, 1.1, 0.1)
         for i, label in enumerate(labels):
-            ax.plot(x, x * float(label), linestyle="--", color="k", linewidth=1.8)
-            ax.text(1.01, y_offsets[i], label, size=13)
+            ax.plot(pente, pente * float(label), linestyle="--", color="k", linewidth=1)
+            ax.text(x[i], y_offsets[i], label, size=10)
 
         ax.set_title("Performance Diagram " + self.model + " " + str(self.year), y=1.08)
         ax.scatter(np.mean(SR), np.mean(AR_POD), color="blue", s=200)
@@ -298,7 +494,7 @@ class Plots:
         plt.savefig(
             f"{self.dir_plot}PERFORMANCE_DIAG_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
-            dpi=600,
+            dpi=500,
         )
 
         if self.show:
