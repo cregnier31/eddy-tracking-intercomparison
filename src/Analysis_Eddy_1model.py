@@ -71,6 +71,7 @@ def analysis_eddies():
     plot_info = config_object["PLOT_INFO"]
     PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
     var_adt = str(plot_info["var_adt"])
+    GRID_SIZE=int(plot_info["GRID_SIZE"])
 
     ##ONE DAY
     AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"

@@ -48,7 +48,7 @@ class Plots:
         self.lat_max = int(general_info["LAT_MAX"])
 
         self.dir_plot = str(info["PLOT_INFO"]["PATH_PLOT"])
-
+        self.GRID_SIZE =int(plot_info["GRID_SIZE"])
         self.show = show
 
     def plot_one_day_adt(self, h, var_adt, a, c):
@@ -150,7 +150,7 @@ class Plots:
         cell_counters = np.ma.masked_array(cell_counters, mask=mask)
         
         # Create the heatmap
-        heatmap = ax.imshow(cell_counters/181, vmin=0,vmax=5,cmap='jet', origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+        heatmap = ax.imshow(cell_counters/periods, vmin=0,vmax=5,cmap='jet', origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
         cbar = plt.colorbar(heatmap,orientation='horizontal', label='Daily number of eddies')
         
         # Add a title and labels 
@@ -306,7 +306,6 @@ class Plots:
         NB_mean = np.full(len(t_data), np.mean(NB_EDDIES))
 
         fig, ax = plt.subplots(figsize=(12, 6))
-        # ax = fig.add_axes([.03,.03,.94,.94])
         ax.plot(t_data, NB_EDDIES, color="black")
         ax.xaxis.set_major_locator(mdates.MonthLocator([1, 4, 7, 10]))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
