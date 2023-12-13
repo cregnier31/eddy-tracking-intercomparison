@@ -239,7 +239,7 @@ class Plots:
         heatmap = ax.imshow(average_radii, cmap='jet',vmax=80 ,origin='lower',
                             extent=[longitude_min, longitude_max, latitude_min, latitude_max])
         
-        cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.7,label='Mean radius of eddies (km)')
+        cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.5,label='Mean radius of eddies (km)')
         
         # Add title and labels
         plt.title('Radius of eddies ' + str(self.model))
