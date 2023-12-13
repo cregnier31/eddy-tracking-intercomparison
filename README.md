@@ -29,7 +29,7 @@ git clone git@github.com:svangennip/py-eddy-tracker.git
 python setup.py install
 ```
 conda install install numpy scipy netCDF4 matplotlib opencv-python pyyaml pint polygon3 pandas scikit-image xarray cmocean cartopy
-!! Need to change version f numpy to <1.21
+
 ***
 
 # Usage
