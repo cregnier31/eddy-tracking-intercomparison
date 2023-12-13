@@ -34,6 +34,12 @@ conda install install numpy scipy netCDF4 matplotlib opencv-python pyyaml pint p
 
 # Usage
 
+## 0. General workflow 
+
+<div align="center">
+<img src="IMAGES_EXAMPLES/flow_chart2.png"  width="600" height="220">
+</div>
+
 
 ## 1. Preprocessing the data (/PREPROCESS): extract the region and variables needed for the study
 
@@ -99,6 +105,16 @@ Here the example is the study of the GLO12V4 Mercator product for the IBI area f
 - Cyclonic and Anticyclonic tracks 
 <div align="center">
 <img src="IMAGES_EXAMPLES/GLO12_TRACKS_2019.jpeg"  width="200" height="220">
+</div>
+
+-Number of eddies by days by 1°*1° cells
+<div align="center">
+<img src="IMAGES_EXAMPLES/GLO12_IBI.jpeg"  width="300" height="330">
+</div>
+
+-Mean radius of eddies by 1°*1° cells
+<div align="center">
+<img src="IMAGES_EXAMPLES/GLO12_IBI_RAD.jpeg"  width="200" height="330">
 </div>
 
 - Number of eddies detected through time
