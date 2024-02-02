@@ -3,7 +3,7 @@ PATHS:
   FILES_PATTERN: DIR_IN/EDDY_TYPE*.nc
   SAVE_DIR: DIR_OUT
 # Number of timestep for missing detection
-VIRTUAL_LENGTH_MAX: 3
+VIRTUAL_LENGTH_MAX: 1
 # Minimal time to consider as a full track
 TRACK_DURATION_MIN: 10
 

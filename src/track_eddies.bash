@@ -2,8 +2,8 @@
 
 #Activate environment
 
-DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/AVISO_JAN_DETECT/
-DIR_OUT=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/AVISO_JAN_TRACKING/
+DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_GLOBAL_DETECT/
+DIR_OUT=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_GLO_TRACK_2/
 
 eddy_types=("Cyclonic" "Anticyclonic")
 tracking_method="overlap"
