@@ -71,7 +71,7 @@ def analysis_eddies():
     plot_info = config_object["PLOT_INFO"]
     PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
     var_adt = str(plot_info["var_adt"])
-    GRID_SIZE=int(plot_info["GRID_SIZE"])
+    GRID_SIZE=int(general_info["GRID_SIZE"])
 
     ##ONE DAY
     AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
@@ -525,12 +525,17 @@ def analysis_eddies():
     plots.plot_heatmap()
 
     plots.plot_heatmap_radius()
-
+    
     ### NUMBER OF DETECTION BY TIME WITH MEAN ###
     plots.plot_number_detection_time_mean(NB_EDDIES)
 
     ### 2D HISTOGRAM RADIUS AMPLITUDE ###
     plots.plot_2d_histo(at)
+
+    ### COUNT 
+    plots.plot_count_log_amp(at,ct,a_ref,c_ref) 
+    plots.plot_count_speed_radius(at,ct,a_ref,c_ref)
+    plots.plot_count_lifetime(at,ct,a_ref,c_ref)
 
     ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
     plots.plot_histo_hits_false(radius_AR_hits, radius_AR_misses, radius_AR_falarm)

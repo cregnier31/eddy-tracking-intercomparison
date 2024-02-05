@@ -48,7 +48,7 @@ class Plots:
         self.lat_max = int(general_info["LAT_MAX"])
 
         self.dir_plot = str(info["PLOT_INFO"]["PATH_PLOT"])
-        self.GRID_SIZE =int(plot_info["GRID_SIZE"])
+        self.GRID_SIZE =int(general_info["GRID_SIZE"])
         self.show = show
 
     def plot_one_day_adt(self, h, var_adt, a, c):
@@ -150,7 +150,7 @@ class Plots:
         cell_counters = np.ma.masked_array(cell_counters, mask=mask)
         
         # Create the heatmap
-        heatmap = ax.imshow(cell_counters/periods, vmin=0,vmax=5,cmap='jet', origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+        heatmap = ax.imshow(cell_counters/self.periods, vmin=0,vmax=5,cmap='jet', origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
         cbar = plt.colorbar(heatmap,orientation='horizontal', label='Daily number of eddies')
         
         # Add a title and labels 
@@ -321,11 +321,11 @@ class Plots:
         if self.show:
             plt.show()
 
-    def plot_2d_histo(self, at):
+    def plot_2d_histo(self, eddies):
         fig, ax = plt.subplots()
         counts, xedges, yedges, im = ax.hist2d(
-            at["effective_radius"] / 1000,
-            at["amplitude"] * 100,
+            eddies["effective_radius"] / 1000,
+            eddies["amplitude"] * 100,
             bins=200,
             cmap=plt.cm.jet,
             cmin=1,
@@ -343,6 +343,154 @@ class Plots:
         if self.show:
             plt.show()
 
+    def plot_count_log_amp(self,at,ct,a_ref,c_ref):
+        
+        kwargs_a = dict(label="Anticyclonic", color="r")
+        kwargs_c = dict(label="Cyclonic", color="b")
+        kwargs_eddies = dict(label="Eddies " + str(self.model), color="k")
+        kwargs_eddies_ref = dict(label="Eddies "+ str(self.reference), color="g")
+        
+        fig, ax = plt.subplots(figsize=(6, 4))
+        
+        name = "amplitude"
+        title = "Amplitude (cm)"
+        
+        data_a = at[name] * 100
+        data_c = ct[name] * 100
+        bins = np.arange(0.0005, 1000, 0.2)
+        
+        hist_a, bins = np.histogram(data_a, bins=bins)
+        hist_c, _ = np.histogram(data_c, bins=bins)
+        
+        hist_eddies = hist_a + hist_c
+        
+        
+        data_a_ref = a_ref[name] * 100
+        data_c_ref = c_ref[name] * 100
+        bins_ref = np.arange(0.0005, 1000, 0.2)
+        
+        hist_a_ref, bins_ref = np.histogram(data_a_ref, bins=bins_ref)
+        hist_c_ref, _ = np.histogram(data_c_ref, bins=bins_ref)
+        
+        
+        hist_eddies_ref = hist_a_ref + hist_c_ref
+        
+        
+        ax.semilogy(bins[:-1], hist_eddies, **kwargs_eddies)
+        ax.semilogy(bins_ref[:-1], hist_eddies_ref, **kwargs_eddies_ref)
+        ax.grid()
+        ax.set_title(title)
+        ax.set_xlabel("Amplitude Value (cm)")
+        ax.set_ylabel("Count (log scale)")
+        ax.set_xlim(0, 20)  # Limite de l'axe des abscisses
+        ax.legend()
+        plt.savefig(
+            f"{self.dir_plot}COUNT_AMP_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight",
+        )
+        if self.show:
+            plt.show()
+
+
+    def plot_count_speed_radius(self,at,ct,a_ref,c_ref):
+        fig, ax = plt.subplots(figsize=(6, 4))
+        kwargs_a = dict(label="Anticyclonic", color="r")
+        kwargs_c = dict(label="Cyclonic", color="b")
+        kwargs_eddies = dict(label="Eddies "+ str(self.model), color="k")
+        kwargs_eddies_ref = dict(label="Eddies " + str(self.reference), color="g")
+        name = "speed_radius"
+        title = "Speed Radius (km)"
+        
+        data_a = at[name] * 0.001
+        data_c = ct[name] * 0.001
+        bins = np.arange(0, 2000, 1)
+        
+        hist_a, bins = np.histogram(data_a, bins=bins)
+        hist_c, _ = np.histogram(data_c, bins=bins)
+        
+        hist_eddies = hist_a + hist_c
+        
+        #### REF
+        data_a_ref = a_ref[name] * 0.001
+        data_c_ref = c_ref[name] * 0.001
+        bins_ref = np.arange(0, 2000, 1)
+        
+        hist_a_ref, bins_ref = np.histogram(data_a_ref, bins=bins_ref)
+        hist_c_ref, _ = np.histogram(data_c_ref, bins=bins_ref)
+  
+        hist_eddies_ref = hist_a_ref + hist_c_ref
+        
+        
+        ax.semilogy(bins[:-1], hist_eddies, **kwargs_eddies)
+        ax.semilogy(bins[:-1], hist_eddies_ref, **kwargs_eddies_ref)
+        ax.grid()
+        ax.set_title(title)
+        ax.set_xlabel("Speed Radius Value (km)")
+        ax.set_ylabel("Count (log scale)")
+        ax.set_xlim(0, 100)  
+        ax.legend()
+        
+        plt.savefig(
+            f"{self.dir_plot}COUNT_RADIUS_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight",
+        )
+        if self.show:
+            plt.show()
+            
+    def plot_count_lifetime(self,at,ct,a_ref,c_ref):
+        
+        fig, ax = plt.subplots(figsize=(6, 4))
+
+        # Select the variable nb_obs-by_track which is the lifetime of eddies
+        name = "nb_obs_by_track"
+        title = "Eddy lifetime (days)"
+        x = np.arange(0, 2000, 1)
+        
+        data_a = at.nb_obs_by_track
+        data_c = ct.nb_obs_by_track
+        
+        # Delete nul values
+        data_a = data_a[data_a != 0]
+        data_c = data_c[data_c != 0]
+        
+        data_a_ref = a_ref.nb_obs_by_track
+        data_c_ref = c_ref.nb_obs_by_track
+    
+        data_a_ref = data_a_ref[data_a_ref != 0]
+        data_c_ref = data_c_ref[data_c_ref != 0]
+        
+        kwargs_a = dict(label="Anticyclonic", color="r", bins=x)
+        kwargs_c = dict(label="Cyclonic", color="b", bins=x)
+        
+       
+        hist_a, x = np.histogram(data_a, bins=x)
+        hist_c, _ = np.histogram(data_c, bins=x)
+        hist_eddies = hist_a + hist_c
+        
+        hist_a_ref, x = np.histogram(data_a_ref, bins=x)
+        hist_c_ref, _ = np.histogram(data_c_ref, bins=x)
+        hist_eddies_ref = hist_a_ref + hist_c_ref
+        
+        # Log scale 
+        ax.semilogy(x[:-1], hist_eddies, color="k",label='Eddies ' + str(self.model))
+        ax.semilogy(x[:-1], hist_eddies_ref, color="g",label='Eddies ' + str(self.reference))
+                    
+        # Add legend and label
+        ax.set_xlabel(title)
+        ax.set_ylabel("Count (log scale)")
+        ax.legend()
+        ax.set_xlim(0, 150)
+        ax.grid()
+
+        #Show and save
+        plt.savefig(
+            f"{self.dir_plot}COUNT_LIFETIME_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight",
+        )
+        if self.show:
+            plt.show()
+
+    
     def plot_histo_hits_false(self, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
         bins = np.arange(0, 250, 5)
 

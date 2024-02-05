@@ -7,8 +7,8 @@
 eddy_type=Anticyclonic  #Cyclonic or anticyclonic (Careful works only if file named $eddy_type.nc)
 tracking_method=overlap   #or conf.yaml  #overlap or cost method 
 
-DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_NA/DETECT_MASKED/
-DIR_OUT=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_NA/TRACK_MASKED/
+DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/AVISO_GLOBAL_DETECT/
+DIR_OUT=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/AVISO_GLOBAL_TRACKING/
 #Prepare config .yaml file for eddy tracking
 cp ${tracking_method}_template.yaml ${tracking_method}.yaml  #create a copy
 sed -i 's+DIR_IN+'${DIR_IN}'+g' ${tracking_method}.yaml  #replace with correct DIR_IN path, 
