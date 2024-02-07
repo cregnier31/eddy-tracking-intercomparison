@@ -62,6 +62,7 @@ def compute_eddy(file, general_info):
 
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
     print("h filtered")
+    print(var_adt)
     a, c = h.eddy_identification(
         var_adt,
         VAR_U,
