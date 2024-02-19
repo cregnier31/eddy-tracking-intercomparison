@@ -1,0 +1,19 @@
+#!/bin/ksh
+typeset -i day month year tmpday centuries
+typeset -Z2 day month
+
+
+((tmpday = $1 + 712164))
+((centuries = (4 * tmpday - 1) / 146097))
+((tmpday += centuries - centuries/4))
+((year = (4 * tmpday - 1) / 1461))
+((tmpday -= (1461 * year) / 4))
+((month = (10 * tmpday - 5) / 306))
+((day = tmpday - (306 * month + 5) / 10))
+((month += 2))
+((year += month/12))
+((month = month % 12 + 1))
+
+echo $year$month$day
+
+
