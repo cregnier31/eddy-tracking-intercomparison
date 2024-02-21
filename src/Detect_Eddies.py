@@ -30,9 +30,10 @@ def reg_date(string_to_find_date_in):
 
 
 def compute_eddy(file, general_info):
+    
     MODEL = str(general_info["MODEL"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
-
+    print(MODEL)
     var_adt = str(general_info["var_adt"])
     VAR_U = str(general_info["VAR_U"])
     VAR_V = str(general_info["VAR_V"])
@@ -43,8 +44,11 @@ def compute_eddy(file, general_info):
     AMP_MIN = float(general_info["AMP_MIN"])
     WAVELENGTH = int(general_info["WAVELENGTH"])
     ORDER_FILTER = int(general_info["ORDER_FILTER"])
-
-    date_file = reg_date(file)[0:8]
+    
+    #date_file = reg_date(file)[0:8]
+    date_file="20230201"
+    print(date_file)
+    
     date = pd.to_datetime(
         date_file, format="%Y%m%d"
     )  #### define date for eddy detection
@@ -59,7 +63,7 @@ def compute_eddy(file, general_info):
     )  #### centered pixel position of grid
   
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
-
+    print('toto')
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
     print("h filtered")
     print(var_adt)
@@ -113,7 +117,7 @@ def detect_eddies():
         os.makedirs(OUTPUT_DIR)
 
     INPUT_FILES = sorted(glob.glob(INPUT_FILES + "*.nc"))
-
+    print(INPUT_FILES)
     pool = mp.Pool()
     pool.imap(partial(compute_eddy, general_info=general_info), INPUT_FILES)
     pool.close()
