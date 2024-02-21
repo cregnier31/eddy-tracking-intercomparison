@@ -1,4 +1,4 @@
-#!/bin/ksh
+
 ###############################################################
 ## d2j.ksh
 ##
@@ -15,4 +15,4 @@
  day=`echo ${ndate} | cut -c 7-8`
  ((tmpmonth = 12 * ${year} + ${month} - 3))
  ((tmpyear = ${tmpmonth} / 12))
- print $(((734*${tmpmonth} + 15)/24 - 2*${tmpyear} + ${tmpyear}/4 - ${tmpyear}/100 + ${tmpyear}/400 + ${day} - 712164)) 
+ #print $(((734*${tmpmonth} + 15)/24 - 2*${tmpyear} + ${tmpyear}/4 - ${tmpyear}/100 + ${tmpyear}/400 + ${day} - 712164)) 
