@@ -1,3 +1,4 @@
+#!/bin/ksh
 
 typeset -i day month year tmpday centuries
 typeset -Z2 day month
