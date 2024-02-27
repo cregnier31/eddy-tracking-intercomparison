@@ -4,11 +4,17 @@ copernicusmarine subset --dataset-id cmems_mod_glo_phy_anfc_0.083deg_P1D-m --for
 
 
 
+copernicusmarine subset --dataset-id cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.25deg_P1D --force-dataset-version 202311 --variable adt --variable ugos --variable vgos --start-datetime 2023-01-01T00:00:00 --end-datetime 2023-12-31T00:00:00 --minimum-longitude -70 --maximum-longitude 10 --minimum-latitude 10 --maximum-latitude 60 --output-filename AVISO_2023_NA.nc --force-download 
+
 
 echo "Data downloaded"
 
 ncatted -O -a units,uo,o,c,m/s "GLO12_CURR_2023_NA.nc"  ## change name for zonal velocity if not uo
 ncatted -O -a units,vo,o,c,m/s  "GLO12_CURR_2023_NA.nc"  ## change name for meridian velocity if not vo
+
+
+ncatted -O -a units,ugos,o,c,m/s "AVISO_2023_NA.nc"  ## change name for zonal velocity if not uo
+ncatted -O -a units,vgos,o,c,m/s  "AVISO_2023_NA.nc"  ## change name for meridian velocity if not vo
 echo "Units changed"
 
 ncks -A  "GLO12_CURR_2023_NA.nc" "GLO12_ZOS_2023_NA.nc"
@@ -16,12 +22,15 @@ ncks -A  "GLO12_CURR_2023_NA.nc" "GLO12_ZOS_2023_NA.nc"
 mv "GLO12_ZOS_2023_NA.nc" "GLO12_2023_NA.nc"
 rm "GLO12_CURR_2023_NA.nc"
 
-echo "The data is in one file:)"
-
 
 FILEIN='GLO12_2023_NA'
-DIROUT='/home/onyxia/work/DATA/GLO12_2023_NA/'
+DIROUT='/home/onyxia/work/DATA/GLO12_2023_NA2/'
 PREOUT='GLO12_NA'
+
+FILEIN_REF='AVISO_2023_NA'
+DIROUT_REF='/home/onyxia/work/DATA/AVISO_2023_NA/'
+PREOUT_REF='AVISO_NA'
+
 DATE_START=20230101	
 DATE_END=20231231
 nan='NaN'
@@ -49,6 +58,8 @@ i_time=`echo "${JUL}-${JUL_START}" | bc`
    #if [ ${CONFIG} == 'SST_L4' ] || [ ${CONFIG} == 'SSH_L4' ]
    #then
 ncks -d time,${i_time} ${DIRIN}${FILEIN}.nc ${DIROUT}${PREOUT}_${DATE}.nc
-
+ncks -d time,${i_time} ${DIRIN_REF}${FILEIN_REF}.nc ${DIROUT_REF}${PREOUT_REF}_${DATE}.nc
 
 done
+
+echo "Done"

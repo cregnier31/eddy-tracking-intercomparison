@@ -46,7 +46,6 @@ def compute_eddy(file, general_info):
     
     date_file = reg_date(file)[0:8]
     #date_file="20230201"
-    print(date_file)
     
     date = pd.to_datetime(
         date_file, format="%Y%m%d"
@@ -63,8 +62,8 @@ def compute_eddy(file, general_info):
   
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
-    print("h filtered")
-    print(var_adt)
+    #print("h filtered")
+    
     a, c = h.eddy_identification(
         var_adt,
         VAR_U,
@@ -74,7 +73,7 @@ def compute_eddy(file, general_info):
         pixel_limit=(PIXEL_MIN, PIXEL_MAX),  # Min and max pixel count for valid contour
         shape_error=SHAPE_ERROR,  # Error max (%) between ratio of circle fit and contour
     )
-    print("a and c ok")
+    #print("a and c ok")
     ################# save eddy detcted in netcdf files
     with Dataset(
         date.strftime(OUTPUT_DIR + "Anticyclonic_" + MODEL + "_" + date_file + ".nc"),

@@ -1,7 +1,7 @@
 # Example pour le tracking par overlap
 PATHS:
-  FILES_PATTERN: /home/onyxia/work/DATA/output//Anticyclonic*.nc
-  SAVE_DIR: /home/onyxia/work/DATA/tracking/
+  FILES_PATTERN: /home/onyxia/work/DATA/output_ref//Anticyclonic*.nc
+  SAVE_DIR: /home/onyxia/work/DATA/tracking_ref/
 # Number of timestep for missing detection
 VIRTUAL_LENGTH_MAX: 1
 # Minimal time to consider as a full track
