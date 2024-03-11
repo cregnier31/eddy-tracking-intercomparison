@@ -8,7 +8,7 @@ from configparser import ConfigParser
 import argparse
 import multiprocessing as mp
 from functools import partial
-
+import logging
 from py_eddy_tracker.appli.grid import eddy_id
 from py_eddy_tracker.dataset.grid import RegularGridDataset
 from netCDF4 import Dataset
@@ -29,7 +29,7 @@ def reg_date(string_to_find_date_in):
     return re.search(r"[0-9]{8}", string_to_find_date_in).group()
 
 
-def compute_eddy(file, general_info):
+def compute_eddy(file, general_info, log):
     MODEL = str(general_info["MODEL"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
 
@@ -54,24 +54,25 @@ def compute_eddy(file, general_info):
         "latitude",
     )  #### longitude and latitude name in each netcdf file
     grid_name = file
+   
     h = RegularGridDataset(
         grid_name, lon_name, lat_name
     )  #### centered pixel position of grid
-  
+ 
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
-
+  
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
     print("h filtered")
-    print(var_adt)
     a, c = h.eddy_identification(
-        var_adt,
+    	var_adt,
         VAR_U,
         VAR_V,  # Variables used for identification
         date,
         AMP_MIN,  # step between two isolines of detection (m)
         pixel_limit=(PIXEL_MIN, PIXEL_MAX),  # Min and max pixel count for valid contour
-        shape_error=SHAPE_ERROR,  # Error max (%) between ratio of circle fit and contour
-    )
+        shape_error=SHAPE_ERROR,
+        ) # Error max (%) between ratio of circle fit and contour)
+     
     print("a and c ok")
     ################# save eddy detcted in netcdf files
     with Dataset(
@@ -85,7 +86,7 @@ def compute_eddy(file, general_info):
         c.to_netcdf(h)
 
 
-def detect_eddies():
+def detect_eddies(logger):
     
     # Read in config file name
     parser = argparse.ArgumentParser(description="Script that reads in a config file")
@@ -115,7 +116,7 @@ def detect_eddies():
     INPUT_FILES = sorted(glob.glob(INPUT_FILES + "*.nc"))
 
     pool = mp.Pool()
-    pool.imap(partial(compute_eddy, general_info=general_info), INPUT_FILES)
+    pool.imap(partial(compute_eddy, general_info=general_info,log=logger), INPUT_FILES)
     pool.close()
     pool.join()
     print(OUTPUT_DIR)
@@ -123,4 +124,7 @@ def detect_eddies():
 
 
 if __name__ == "__main__":
-    detect_eddies()
+    logger = logging.getLogger("Pyeddytrack")
+    logging.basicConfig(filename='example.log', level=logging.DEBUG)
+    logger.setLevel(logging.DEBUG)
+    detect_eddies(logger)
