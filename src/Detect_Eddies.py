@@ -28,8 +28,8 @@ def reg_date(string_to_find_date_in):
 
     return re.search(r"[0-9]{8}", string_to_find_date_in).group()
 
-
-def compute_eddy(file, general_info, log):
+#def compute_eddy(file, general_info, log):
+def compute_eddy(file, general_info):
     MODEL = str(general_info["MODEL"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
 
@@ -73,7 +73,7 @@ def compute_eddy(file, general_info, log):
         shape_error=SHAPE_ERROR,
         ) # Error max (%) between ratio of circle fit and contour)
      
-    print("a and c ok")
+    print("")
     ################# save eddy detcted in netcdf files
     with Dataset(
         date.strftime(OUTPUT_DIR + "Anticyclonic_" + MODEL + "_" + date_file + ".nc"),
@@ -85,8 +85,8 @@ def compute_eddy(file, general_info, log):
     ) as h:
         c.to_netcdf(h)
 
-
-def detect_eddies(logger):
+#def detect_eddies(logger):
+def detect_eddies():
     
     # Read in config file name
     parser = argparse.ArgumentParser(description="Script that reads in a config file")
@@ -108,7 +108,7 @@ def detect_eddies(logger):
     general_info = config_object["GENERAL_INFO"]
     INPUT_FILES = str(general_info["INPUT_FILES"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
-    print(OUTPUT_DIR)
+   
     if not os.path.exists(OUTPUT_DIR):
         print("\ncreate directory : ", OUTPUT_DIR)
         os.makedirs(OUTPUT_DIR)
@@ -116,7 +116,10 @@ def detect_eddies(logger):
     INPUT_FILES = sorted(glob.glob(INPUT_FILES + "*.nc"))
 
     pool = mp.Pool()
-    pool.imap(partial(compute_eddy, general_info=general_info,log=logger), INPUT_FILES)
+    pool.imap(partial(compute_eddy, general_info=general_info), INPUT_FILES)
+    
+    ##if problem : run with the logger
+    #pool.imap(partial(compute_eddy, general_info=general_info,log=logger), INPUT_FILES)
     pool.close()
     pool.join()
     print(OUTPUT_DIR)
@@ -124,7 +127,7 @@ def detect_eddies(logger):
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger("Pyeddytrack")
-    logging.basicConfig(filename='example.log', level=logging.DEBUG)
-    logger.setLevel(logging.DEBUG)
+    #logger = logging.getLogger("Pyeddytrack")
+    #logging.basicConfig(filename='example.log', level=logging.DEBUG)
+    #logger.setLevel(logging.DEBUG)
     detect_eddies(logger)

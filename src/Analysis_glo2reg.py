@@ -27,6 +27,8 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
 
+
+
 from plots_glo2reg import Plots
 
 def reverse_index(index, nb):
@@ -71,11 +73,11 @@ def analysis_eddies():
     
 
     ##ONE DAY
-    AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
-    CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20230101.nc"
+    #AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
+    #CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20230101.nc"
 
-    print(AC_DETECTION)
-    print(CC_DETECTION)
+    #print(AC_DETECTION)
+    #print(CC_DETECTION)
 
 
     ### LOAD TRACKS ###
@@ -604,7 +606,7 @@ def analysis_eddies():
 
 
     ### PLOT ALL TRACKS FOR THE PERIOD ###
-    plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
+    #plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
 
     ### PLOT HEATMAP FOR MODEL 
     plots.plot_heatmap(zone_params)
