@@ -604,7 +604,7 @@ def analysis_eddies():
 
 
     ### PLOT ALL TRACKS FOR THE PERIOD ###
-    plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
+    # plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
 
     ### PLOT HEATMAP FOR MODEL 
     plots.plot_heatmap(zone_params)

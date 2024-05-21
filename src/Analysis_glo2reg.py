@@ -68,15 +68,6 @@ def analysis_eddies():
     PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
     var_adt = str(plot_info["var_adt"])
 
-    
-
-    ##ONE DAY
-    AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
-    CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20230101.nc"
-
-    print(AC_DETECTION)
-    print(CC_DETECTION)
-
 
     ### LOAD TRACKS ###
     ## at = anticyclonic tracked
@@ -604,7 +595,7 @@ def analysis_eddies():
 
 
     ### PLOT ALL TRACKS FOR THE PERIOD ###
-    plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
+    # plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
 
     ### PLOT HEATMAP FOR MODEL 
     plots.plot_heatmap(zone_params)

@@ -1,10 +1,10 @@
-copernicusmarine subset --dataset-id cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m --force-dataset-version 202211 --variable uo --variable vo --start-datetime 2023-01-01T00:00:00 --end-datetime 2023-03-31T00:00:00  --minimum-longitude -180 --maximum-longitude 179.9166717529297 --minimum-latitude -80 --maximum-latitude 90 --minimum-depth 0.49402499198913574 --maximum-depth 0.49402499198913574 --output-filename GLO12_CURR.nc --force-download
+copernicusmarine subset --dataset-id cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m --force-dataset-version 202211 --variable uo --variable vo --start-datetime 2024-01-01T00:00:00 --end-datetime 2024-03-31T00:00:00  --minimum-longitude -180 --maximum-longitude 179.9166717529297 --minimum-latitude -80 --maximum-latitude 80 --minimum-depth 0.49402499198913574 --maximum-depth 0.49402499198913574 --output-filename GLO12_CURR.nc --force-download
 
-copernicusmarine subset --dataset-id cmems_mod_glo_phy_anfc_0.083deg_P1D-m --force-dataset-version 202211 --variable zos --start-datetime 2023-01-01T00:00:00 --end-datetime 2023-03-31T00:00:00 --minimum-longitude -180 --maximum-longitude 179.9166717529297 --minimum-latitude -80 --maximum-latitude 90 --minimum-depth 0.49402499198913574 --maximum-depth 0.49402499198913574 --output-filename GLO12_ZOS.nc --force-download
+copernicusmarine subset --dataset-id cmems_mod_glo_phy_anfc_0.083deg_P1D-m --force-dataset-version 202211 --variable zos --start-datetime 2024-01-01T00:00:00 --end-datetime 2024-03-31T00:00:00 --minimum-longitude -180 --maximum-longitude 179.9166717529297 --minimum-latitude -80 --maximum-latitude 80 --minimum-depth 0.49402499198913574 --maximum-depth 0.49402499198913574 --output-filename GLO12_ZOS.nc --force-download
 
 
 
-copernicusmarine subset --dataset-id cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.25deg_P1D --force-dataset-version 202311 --variable adt --variable ugos --variable vgos --start-datetime 2023-01-01T00:00:00 --end-datetime 2023-03-31T00:00:00 --minimum-longitude -180 --maximum-longitude 179.9166717529297 --minimum-latitude -80 --maximum-latitude 90 --output-filename AVISO.nc --force-download 
+copernicusmarine subset --dataset-id cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.25deg_P1D --force-dataset-version 202311 --variable adt --variable ugos --variable vgos --start-datetime 2024-01-01T00:00:00 --end-datetime 2024-03-31T00:00:00 --minimum-longitude -180 --maximum-longitude 179.9166717529297 --minimum-latitude -80 --maximum-latitude 80 --output-filename AVISO.nc --force-download 
 
 
 echo "Data downloaded"
@@ -32,8 +32,8 @@ DIROUT_REF='/home/onyxia/work/DATA/AVISO/'
 PREOUT_REF='AVISO'
 
 ## Format YYYYMMDD
-DATE_START=20230101	
-DATE_END=20230331
+DATE_START=20240101	
+DATE_END=20240331
 nan='NaN'
 
 # Créer le répertoire DIROUT s'il n'existe pas

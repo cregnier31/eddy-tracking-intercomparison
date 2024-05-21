@@ -73,7 +73,7 @@ def compute_eddy(file, general_info):
         pixel_limit=(PIXEL_MIN, PIXEL_MAX),  # Min and max pixel count for valid contour
         shape_error=SHAPE_ERROR,  # Error max (%) between ratio of circle fit and contour
     )
-    #print("a and c ok")
+    print("a and c ok")
     ################# save eddy detcted in netcdf files
     with Dataset(
         date.strftime(OUTPUT_DIR + "Anticyclonic_" + MODEL + "_" + date_file + ".nc"),

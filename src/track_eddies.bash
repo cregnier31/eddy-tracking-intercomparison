@@ -2,8 +2,8 @@
 
 #Activate environment
 
-DIR_IN=/home/onyxia/work/DATA/output_ref/
-DIR_OUT=/home/onyxia/work/DATA/tracking_ref/
+DIR_IN=/home/onyxia/work/DATA/DETECT_AVISO/
+DIR_OUT=/home/onyxia/work/DATA/TRACKING_AVISO/
 
 eddy_types=("Cyclonic" "Anticyclonic")
 tracking_method="overlap"
