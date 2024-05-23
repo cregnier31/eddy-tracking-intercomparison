@@ -1,7 +1,7 @@
 # Example pour le tracking par overlap
 PATHS:
-  FILES_PATTERN: /home/onyxia/work/DATA/DETECT_AVISO//Anticyclonic*.nc
-  SAVE_DIR: /home/onyxia/work/DATA/TRACKING_AVISO/
+  FILES_PATTERN: /home/onyxia/work/DATA/DETECT_GLO12//Anticyclonic*.nc
+  SAVE_DIR: /home/onyxia/work/DATA/TRACKING_GLO12/
 # Number of timestep for missing detection
 VIRTUAL_LENGTH_MAX: 1
 # Minimal time to consider as a full track

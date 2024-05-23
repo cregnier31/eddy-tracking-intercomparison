@@ -36,6 +36,7 @@ class Plots:
         self.periods = int(general_info["PERIODS"])
         
         self.PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
+        self.PATH_DETECT_FILES_REF = str(general_info["PATH_DETECTION_REF_FILES"])
         self.PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
         self.PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
         self.grid_size=int(general_info["GRID_SIZE"])
@@ -50,8 +51,79 @@ class Plots:
 
         self.show = show
 
+    def plot_heatmap_glo(self, dossier_data, model_name, vmin, vmax, ax):
+        longitude_min = self.lon_min
+        longitude_max = self.lon_max
+        latitude_min = self.lat_min
+        latitude_max = self.lat_max
+        
+        grid_size = 2.0
+        lat_cells = int((latitude_max - latitude_min) / grid_size)
+        lon_cells = int((longitude_max - longitude_min) / grid_size)
+        
+        cell_counters = np.zeros((lat_cells, lon_cells), dtype=int)
+        
+        for fichier in os.listdir(dossier_data):
+            with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                
+                for i in range(len(latitudes)):
+                    x, y = latitudes[i], longitudes[i]
+                    if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
+                        lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
+                        cell_counters[lat_index, lon_index] += 1
+        
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        
+        mask = cell_counters == 0
+        cell_counters = np.ma.masked_array(cell_counters, mask=mask)
+        
+        heatmap = ax.imshow(cell_counters/self.periods, vmin=vmin, vmax=vmax, cmap='jet', origin='lower', 
+                            extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+        
+        ax.set_title('Heatmap of eddies ' + model_name)
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1)
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30),
+                          ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False
+        gl.top_labels = False
+        
+        return heatmap
 
-    def plot_heatmap(self,zone_params):
+
+    def plot_heatmap_model_and_ref(self):
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10), subplot_kw={'projection': ccrs.PlateCarree()})
+        
+        # Plot the model heatmap
+        heatmap1 = self.plot_heatmap_glo(self.PATH_DETECT_FILES, str(self.model), 0, 4, ax1)
+        
+        # Plot the reference heatmap
+        heatmap2 = self.plot_heatmap_glo(self.PATH_DETECT_FILES_REF, str(self.reference), 0, 4, ax2)
+        
+        # Create a single colorbar for both heatmaps
+        cbar = fig.colorbar(heatmap1, ax=[ax1, ax2], orientation='vertical', fraction=0.02, pad=0.1)
+        cbar.set_label('Daily number of eddies')
+        
+
+        
+        # Save and show the figure
+        plt.savefig(
+            self.dir_plot + "MODEL_AND_REFERENCE_HEATMAP" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,
+        )
+        
+        if self.show:
+            plt.show()
+
+
+
+    def plot_heatmap(self,zone_params,ax,vmax):
 
         GRID_SIZE=self.grid_size
         
@@ -82,42 +154,123 @@ class Plots:
                         # Increment the counter of the appropriate cell
                         cell_counters[lat_index, lon_index] += 1
         
-        # Create a map using the PlateCarree projection
-        fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
-                                                             
-        # Add coastline
-        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
-        
-        # Create a mask for values = 0
+         # Create a mask for values = 0
         mask = cell_counters == 0
-        
         cell_counters = np.ma.masked_array(cell_counters, mask=mask)
-        
+    
         # Create heatmap
-        heatmap = ax.imshow(cell_counters/self.periods, vmin=0, vmax=(cell_counters/self.periods).max(), cmap='jet', origin='lower',
+        heatmap = ax.imshow(cell_counters/self.periods, vmin=0, vmax=vmax, cmap='jet', origin='lower',
                             extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'], zone_params['urcrnrlat']]) 
-        
-        cbar = plt.colorbar(heatmap, orientation='horizontal', label='Nb eddies by day')
-        plt.title('Mean nb of eddies by day')
-        
-        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
-        
+    
+        cbar = plt.colorbar(heatmap, ax=ax, orientation='horizontal', label='Nb eddies by day')  # Ajout de ax=ax
+        ax.set_title('Mean nb of eddies by day')
+    
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        ax.add_feature(cfeature.LAND, edgecolor='k', facecolor='linen', zorder=1)  # ghostwhite
+    
         gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(-180, 180, 10), ylocs=np.arange(-180, 180, 10))
         gl.xlabel_style = {'color': 'k', 'size': 'medium'}
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False ; gl.top_labels = False
 
 
-        #Save and show
+    def plot_multiple_heatmaps(self, zone_params_list,vmax):
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(20, 20), subplot_kw={'projection': ccrs.PlateCarree()})
+    
+        for ax, zone_params in zip(axes.flat, zone_params_list):
+            self.plot_heatmap(zone_params, ax,vmax)
+    
+        plt.tight_layout()
+    
+        # Save and show
         plt.savefig(
-                self.dir_plot + self.model + "_HEATMAP" + ".jpeg",
-                bbox_inches="tight",
-                dpi=500,)
+            self.dir_plot + self.model + "_MULTIPLE_HEATMAPS" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,
+        )
     
         if self.show:
             plt.show()
 
-    def plot_heatmap_radius(self,zone_params):    
+    def plot_heatmap_radius_glo(self, dossier_data, model_name, vmin,vmax,ax):
+        longitude_min = self.lon_min
+        longitude_max = self.lon_max
+        latitude_min = self.lat_min
+        latitude_max = self.lat_max
+    
+        grid_size = 2.0
+        lat_cells = int((latitude_max - latitude_min) / grid_size)
+        lon_cells = int((longitude_max - longitude_min) / grid_size)
+    
+        radius_sums = np.zeros((lat_cells, lon_cells), dtype=float)
+        cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)
+    
+        for fichier in os.listdir(dossier_data):
+            with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                radii = ds.variables['effective_radius'][:] / 1000
+    
+                for i in range(len(latitudes)):
+                    x, y, radius = latitudes[i], longitudes[i], radii[i]
+    
+                    if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
+                        lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
+    
+                        radius_sums[lat_index, lon_index] += radius
+                        cell_counts[lat_index, lon_index] += 1
+    
+        average_radii = np.divide(radius_sums, cell_counts, where=cell_counts != 0)
+    
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+    
+        mask = cell_counts == 0
+        average_radii = np.ma.masked_array(average_radii, mask=mask)
+    
+        heatmap = ax.imshow(average_radii, cmap='jet', vmax=vmax, origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+    
+        cbar = plt.colorbar(heatmap, location='bottom', shrink=0.5, label='Mean radius of eddies (km)')
+    
+        ax.set_title('Radius of eddies ' + model_name)
+        ax.set_xlabel('Longitude')
+        ax.set_ylabel('Latitude')
+    
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1)
+    
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30), ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False
+        gl.top_labels = False
+
+        return heatmap
+
+    def plot_heatmap_radius_model_and_ref(self,vmax):
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10), subplot_kw={'projection': ccrs.PlateCarree()})
+        
+        # Plot the model heatmap
+        heatmap1 = self.plot_heatmap_radius_glo(self.PATH_DETECT_FILES, str(self.model), 0, vmax, ax1)
+        
+        # Plot the reference heatmap
+        heatmap2 = self.plot_heatmap_radius_glo(self.PATH_DETECT_FILES_REF, str(self.reference), 0, vmax, ax2)
+        
+        # Create a single colorbar for both heatmaps
+        cbar = fig.colorbar(heatmap1, ax=[ax1, ax2], orientation='vertical', fraction=0.02, pad=0.1)
+        cbar.set_label('Mean radius of eddies')
+        
+        
+        # Save and show the figure
+        plt.savefig(
+            self.dir_plot + "MODEL_AND_REFERENCE_HEATMAP_RADIUS" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,
+        )
+        
+        if self.show:
+            plt.show()
+
+    def plot_heatmap_radius(self,zone_params,ax,vmax):    
 
         grid_size=self.grid_size
         
@@ -157,10 +310,9 @@ class Plots:
         average_radii = np.divide(radius_sums, cell_counts, where=cell_counts != 0)
         
         #Create a map
-        fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
+        # fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
         
-        # Add coasts
-        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        
         
         # Create a masque for values = 0 
         mask = cell_counts == 0
@@ -169,8 +321,8 @@ class Plots:
         average_radii = np.ma.masked_array(average_radii, mask=mask)
 
         #Create heatmap
-        heatmap = ax.imshow(average_radii, cmap='jet',vmax=80 ,origin='lower',
-                            extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'], zone_params['urcrnrlat']])
+        heatmap = ax.imshow(average_radii, cmap='jet',vmax=vmax ,origin='lower',
+                            extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'],zone_params['urcrnrlat']])
         
         cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.5,label='Mean radius of eddies (km)')
         
@@ -178,7 +330,9 @@ class Plots:
         plt.title('Radius of eddies ' + str(self.model))
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
-        
+
+        # Add coasts and land
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
         ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
         
         gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(-180, 180, 10), ylocs=np.arange(-180, 180, 10))
@@ -186,38 +340,280 @@ class Plots:
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False ; gl.top_labels = False
 
-        #Save and show
-        plt.savefig(
-            self.dir_plot + self.model + "_HEATMAP_RADIUS" + ".jpeg",
-            bbox_inches="tight",
-            dpi=500,)
 
+    def plot_multiple_heatmaps_radius(self, zone_params_list,vmax):
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(20, 20), subplot_kw={'projection': ccrs.PlateCarree()})
+    
+        for ax, zone_params in zip(axes.flat, zone_params_list):
+            self.plot_heatmap_radius(zone_params, ax,vmax)
+    
+        plt.tight_layout()
+    
+        # Save and show
+        plt.savefig(
+            self.dir_plot + self.model + "_MULTIPLE_HEATMAPS_RADIUS" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,
+        )
+    
+        if self.show:
+            plt.show()
+
+
+    def plot_heatmap_amplitude_glo(self, dossier_data, model_name, vmin,vmax,ax):
+        longitude_min = self.lon_min
+        longitude_max = self.lon_max
+        latitude_min = self.lat_min
+        latitude_max = self.lat_max
+    
+        grid_size = 2.0
+        lat_cells = int((latitude_max - latitude_min) / grid_size)
+        lon_cells = int((longitude_max - longitude_min) / grid_size)
+    
+        amp_sums = np.zeros((lat_cells, lon_cells), dtype=float)
+        cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)
+    
+        for fichier in os.listdir(dossier_data):
+            with nc.Dataset(os.path.join(dossier_data, fichier), 'r') as ds:
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                amp = ds.variables['amplitude'][:] * 100
+    
+                for i in range(len(latitudes)):
+                    x, y, amplitude = latitudes[i], longitudes[i], amp[i]
+    
+                    if (longitude_min <= y <= longitude_max) and (latitude_min <= x <= latitude_max):
+                        lat_index = min(max(int((x - latitude_min) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - longitude_min) / grid_size), 0), lon_cells - 1)
+    
+                        amp_sums[lat_index, lon_index] += amplitude
+                        cell_counts[lat_index, lon_index] += 1
+    
+        average_amp = np.divide(amp_sums, cell_counts, where=cell_counts != 0)
+    
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+    
+        mask = cell_counts == 0
+        average_amp = np.ma.masked_array(average_amp, mask=mask)
+    
+        heatmap = ax.imshow(average_amp, cmap='jet', vmax=vmax, origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
+    
+        cbar = plt.colorbar(heatmap, location='bottom', shrink=0.5, label='Mean amplitude of eddies (cm)')
+    
+        ax.set_title('Amplitude of eddies ' + model_name)
+        ax.set_xlabel('Longitude')
+        ax.set_ylabel('Latitude')
+    
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1)
+    
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(self.lon_min, self.lon_max, 30), ylocs=np.arange(self.lat_min, self.lat_max, 20))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False
+        gl.top_labels = False
+
+        return heatmap
+
+    def plot_heatmap_amplitude_model_and_ref(self,vmax):
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10), subplot_kw={'projection': ccrs.PlateCarree()})
+        
+        # Plot the model heatmap
+        heatmap1 = self.plot_heatmap_amplitude_glo(self.PATH_DETECT_FILES, str(self.model), 0, vmax, ax1)
+        
+        # Plot the reference heatmap
+        heatmap2 = self.plot_heatmap_amplitude_glo(self.PATH_DETECT_FILES_REF, str(self.reference), 0, vmax, ax2)
+        
+        # Create a single colorbar for both heatmaps
+        cbar = fig.colorbar(heatmap1, ax=[ax1, ax2], orientation='vertical', fraction=0.02, pad=0.1)
+        cbar.set_label('Mean amplitude of eddies')
+        
+
+        
+        # Save and show the figure
+        plt.savefig(
+            self.dir_plot + "MODEL_AND_REFERENCE_HEATMAP_AMPLITUDE" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,
+        )
+        
+        if self.show:
+            plt.show()
+
+    def plot_heatmap_amplitude(self,zone_params,ax,vmax):    
+
+        grid_size=self.grid_size
+        
+        # Calculate the number of cells in latitude and longitude for the specified zone_params
+        lat_cells = int((zone_params['urcrnrlat'] - zone_params['llcrnrlat']) / grid_size)
+        lon_cells = int((zone_params['urcrnrlon'] - zone_params['llcrnrlon']) / grid_size)
+        
+        # Create empty grids
+        amp_sums = np.zeros((lat_cells, lon_cells), dtype=float)
+        cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)  
+        
+        
+        for fichier in os.listdir(self.PATH_DETECT_FILES):
+            with nc.Dataset(os.path.join(self.PATH_DETECT_FILES, fichier), 'r') as ds:
+                # Get eddies coordinates and amplitude
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                amp = ds.variables['amplitude'][:] * 100
+                
+                # For each eddy 
+                for i in range(len(latitudes)):
+                    x, y, amplitude = latitudes[i], longitudes[i], amp[i]
+                    
+                    #  Check if the eddy is in the domain of study 
+                    if (zone_params['llcrnrlon'] <= y <= zone_params['urcrnrlon']) and (zone_params['llcrnrlat'] <= x <= zone_params['urcrnrlat']):
+                        # Calculate corresponding cell indices while keeping values within bounds
+                        lat_index = min(max(int((x - zone_params['llcrnrlat']) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - zone_params['llcrnrlon']) / grid_size), 0), lon_cells - 1)
+                        
+                        # Add the radius to the sum 
+                        amp_sums[lat_index, lon_index] += amplitude
+
+                        #Compute the number of eddies
+                        cell_counts[lat_index, lon_index] += 1
+        
+        # Compute the average radius for each cell (avoiding division by zero)
+        average_amp = np.divide(amp_sums, cell_counts, where=cell_counts != 0)
+        
+        #Create a map
+        # fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
+        
+        
+        
+        # Create a masque for values = 0 
+        mask = cell_counts == 0
+        
+        
+        average_amp = np.ma.masked_array(average_amp, mask=mask)
+
+        #Create heatmap
+        heatmap = ax.imshow(average_amp, cmap='jet',vmax=vmax ,origin='lower',
+                            extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'],zone_params['urcrnrlat']])
+        
+        cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.5,label='Mean amplitude of eddies (cm)')
+        
+        # Add title and labels
+        plt.title('Amplitude of eddies ' + str(self.model))
+        ax.set_xlabel('Longitude')
+        ax.set_ylabel('Latitude')
+
+        # Add coasts and land
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(-180, 180, 10), ylocs=np.arange(-180, 180, 10))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False ; gl.top_labels = False
+
+
+    def plot_multiple_heatmaps_amplitude(self, zone_params_list,vmax):
+        fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(20, 20), subplot_kw={'projection': ccrs.PlateCarree()})
+    
+        for ax, zone_params in zip(axes.flat, zone_params_list):
+            self.plot_heatmap_amplitude(zone_params, ax,vmax)
+    
+        plt.tight_layout()
+    
+        # Save and show
+        plt.savefig(
+            self.dir_plot + self.model + "_MULTIPLE_HEATMAPS_AMPLITUDE" + ".jpeg",
+            bbox_inches="tight",
+            dpi=500,
+        )
+    
         if self.show:
             plt.show()
     
-    def plot_number_detection_time_mean(self, NB_EDDIES):
+    def plot_number_detection_time(self, NB_EDDIES):
         t_data = pd.date_range(self.date_start, periods=self.periods, freq="D")
-        NB_mean = np.full(len(t_data), np.mean(NB_EDDIES))
-        NB_mean_zone = [np.mean(NB_EDDIES)]*len(t_data)
+        # NB_mean = np.full(len(t_data), np.mean(NB_EDDIES))
+        # NB_mean_zone = [np.mean(NB_EDDIES)]*len(t_data)
         fig, ax = plt.subplots(figsize=(12, 6))
         # ax = fig.add_axes([.03,.03,.94,.94])
         ax.plot(t_data, NB_EDDIES, color="black")
-        ax.xaxis.set_major_locator(mdates.MonthLocator([1, 4, 7, 10]))
+        ax.xaxis.set_major_locator(mdates.MonthLocator([1,2,3]))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
         plt.ylabel("Nb eddy detected")
-        ax.plot(t_data, NB_mean, label='Mean by day =  '+ str(int(np.round(np.mean(NB_mean_zone)))), linestyle="--")
-        ax.legend()
+        # ax.plot(t_data, NB_mean, label='Mean by day =  '+ str(int(np.round(np.mean(NB_mean_zone)))), linestyle="--")
+        # ax.legend()
 
         plt.savefig(
             f"{self.dir_plot}NB_EDDIES_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight",
+        )
+        if self.show:
+            plt.show()
+
+    def plot_number_detection_multizone(self, NB_EDDIES_GS,NB_EDDIES_IBI,NB_EDDIES_AG,NB_EDDIES_KOE):
+        t_data = pd.date_range(self.date_start, periods=self.periods, freq="D")
+        # NB_mean = np.full(len(t_data), np.mean(NB_EDDIES))
+        # NB_mean_zone = [np.mean(NB_EDDIES)]*len(t_data)
+        fig, ax = plt.subplots(figsize=(12, 6))
+        # ax = fig.add_axes([.03,.03,.94,.94])
+        ax.plot(t_data, NB_EDDIES_GS, color="red",label='GS')
+        ax.plot(t_data, NB_EDDIES_IBI, color="green",label='IBI')
+        ax.plot(t_data, NB_EDDIES_AG, color="pink",label='AG')
+        ax.plot(t_data, NB_EDDIES_KOE, color="purple",label='KOE')
+        
+        ax.xaxis.set_major_locator(mdates.MonthLocator([1,2,3]))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        plt.ylabel("Nb eddy detected")
+        # ax.plot(t_data, NB_mean, label='Mean by day =  '+ str(int(np.round(np.mean(NB_mean_zone)))), linestyle="--")
+        ax.legend()
+
+        plt.savefig(
+            f"{self.dir_plot}NB_EDDIES_MULTIPLE_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
 
         if self.show:
             plt.show()
 
+    
+    def plot_count_log_amp(self,eddies,eddies_ref):
+        
+        kwargs_a = dict(label="Anticyclonic", color="r")
+        kwargs_c = dict(label="Cyclonic", color="b")
+        kwargs_eddies = dict(label="Eddies " + str(self.model), color="blue")
+        kwargs_eddies_ref = dict(label="Eddies "+ str(self.reference), color="k")
+        
+        fig, ax = plt.subplots(figsize=(6, 4))
 
-    def plot_count_log_amp(self, at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref):
+        title = "Amplitude (cm)"
+        
+        data = eddies["amplitude"] * 100
+        bins = np.arange(0.0005, 1000, 0.2)
+        
+        hist, bins = np.histogram(data, bins=bins)
+
+        
+        data_ref = a_ref["amplitude"] * 100
+
+        bins_ref = np.arange(0.0005, 1000, 0.2)
+        
+        hist_ref, bins_ref = np.histogram(data_ref, bins=bins_ref)
+
+        ax.semilogy(bins[:-1], hist **kwargs_eddies)
+        ax.semilogy(bins_ref[:-1], hist_ref, **kwargs_eddies_ref)
+        ax.grid()
+        ax.set_title(title)
+        ax.set_xlabel("Amplitude Value (cm)")
+        ax.set_ylabel("Count (log scale)")
+        ax.set_xlim(0, 20)  # Limite de l'axe des abscisses
+        ax.legend()
+        plt.savefig(
+            f"{self.dir_plot}COUNT_AMP_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight",
+        )
+        if self.show:
+            plt.show()
+
+
+    def plot_count_log_amp(self,eddies_GS, ct_zone, a_zone_ref, c_zone_ref):
         
         kwargs_eddies = dict(label=str(self.model), color="k")
         kwargs_eddies_ref = dict(label=str(self.reference), color="g")
@@ -226,11 +622,12 @@ class Plots:
 
         fig, ax = plt.subplots(figsize=(6, 4))
 
-        name = "amplitude"
+        # name = "amplitude"
         title = "Amplitude (cm)"
 
-        data_a = at[name] * 100
-        data_c = ct[name] * 100
+        # data_a = at[name] * 100
+        # data_c = ct[name] * 100
+        data=eddies["amplitude"]*100
         bins = np.arange(0.0005, 1000, 0.2)
 
         hist_a, bins = np.histogram(data_a, bins=bins)

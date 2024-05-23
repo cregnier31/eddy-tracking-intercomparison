@@ -82,6 +82,7 @@ def analysis_eddies():
     c_ref=TrackEddiesObservations.load_file(PATH_REF_TRACK+"Cyclonic.nc")
     a_ref.position_filter(median_half_window=1, loess_half_window=5)
     c_ref.position_filter(median_half_window=1, loess_half_window=5)
+    eddies_ref=a_ref.merge(c_ref)
 
     #### DOMAIN DEFINITION ###  
     
@@ -90,7 +91,7 @@ def analysis_eddies():
     AG = dict(llcrnrlon=5, llcrnrlat=-45, urcrnrlon=35, urcrnrlat=-25)
     KOE= dict(llcrnrlon=140, llcrnrlat=28, urcrnrlon=170, urcrnrlat=50)
 
-    
+    zone_params_list = [GS, IBI, AG, KOE]
     # if DOMAIN == 'GS':
     #     zone_params = GS
     # elif DOMAIN == 'IBI':
@@ -843,14 +844,22 @@ def analysis_eddies():
     ### PLOT ALL TRACKS FOR THE PERIOD ###
     # plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
 
-    ### PLOT HEATMAP FOR MODEL 
-    # plots.plot_heatmap(GS)
-    # plots.plot_heatmap_radius(GS)
+    ### PLOT HEATMAPS FOR NUMBER, RADIUS & AMPLITUDE ###
+    plots.plot_heatmap_model_and_ref()
+    plots.plot_multiple_heatmaps(zone_params_list,2)
+    
+    plots.plot_heatmap_radius_model_and_ref(80)
+    plots.plot_multiple_heatmaps_radius(zone_params_list,80)
+
+    plots.plot_heatmap_amplitude_model_and_ref(6)
+    plots.plot_multiple_heatmaps_amplitude(zone_params_list,6)
     
     ### NUMBER OF DETECTION BY TIME WITH MEAN ###
-    #plots.plot_number_detection_time_mean(NB_EDDIES_ZONE)
+    plots.plot_number_detection_time(NB_EDDIES)
+    plots.plot_number_detection_multizone(NB_EDDIES_GS,NB_EDDIES_IBI,NB_EDDIES_AG,NB_EDDIES_KOE)
 
     ### COUNT 
+    plots.plot_count_log_amp(eddies,eddies_ref)
     # plots.plot_count_log_amp(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref) 
     # plots.plot_count_speed_radius(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
     # plots.plot_count_lifetime(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
