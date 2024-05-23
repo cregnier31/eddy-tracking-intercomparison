@@ -613,7 +613,7 @@ class Plots:
             plt.show()
 
 
-    def plot_count_log_amp(self,eddies_GS, ct_zone, a_zone_ref, c_zone_ref):
+    def plot_count_log_amp_multiple(self,eddies_GS, ct_zone, a_zone_ref, c_zone_ref):
         
         kwargs_eddies = dict(label=str(self.model), color="k")
         kwargs_eddies_ref = dict(label=str(self.reference), color="g")
