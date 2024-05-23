@@ -14,6 +14,7 @@ from matplotlib.patches import Rectangle
 import os
 import fnmatch
 import netCDF4 as nc
+from scipy.interpolate import interp1d
 
 def plt_cartopy_ibi(ax, labels=True):
     # ax.set_aspect('auto') # The figure will follow the ratio of the figsize
@@ -575,15 +576,13 @@ class Plots:
 
     
     def plot_count_log_amp(self,eddies,eddies_ref):
-        
-        kwargs_a = dict(label="Anticyclonic", color="r")
-        kwargs_c = dict(label="Cyclonic", color="b")
+
         kwargs_eddies = dict(label="Eddies " + str(self.model), color="blue")
-        kwargs_eddies_ref = dict(label="Eddies "+ str(self.reference), color="k")
+        kwargs_eddies_ref = dict(label="Eddies "+ str(self.reference), color="grey")
         
         fig, ax = plt.subplots(figsize=(6, 4))
 
-        title = "Amplitude (cm)"
+        title = "Amplitude"
         
         data = eddies["amplitude"] * 100
         bins = np.arange(0.0005, 1000, 0.2)
@@ -591,13 +590,13 @@ class Plots:
         hist, bins = np.histogram(data, bins=bins)
 
         
-        data_ref = a_ref["amplitude"] * 100
+        data_ref = eddies_ref["amplitude"] * 100
 
         bins_ref = np.arange(0.0005, 1000, 0.2)
         
         hist_ref, bins_ref = np.histogram(data_ref, bins=bins_ref)
 
-        ax.semilogy(bins[:-1], hist **kwargs_eddies)
+        ax.semilogy(bins[:-1], hist, **kwargs_eddies)
         ax.semilogy(bins_ref[:-1], hist_ref, **kwargs_eddies_ref)
         ax.grid()
         ax.set_title(title)
@@ -613,65 +612,40 @@ class Plots:
             plt.show()
 
 
-    def plot_count_log_amp_multiple(self,eddies_GS, ct_zone, a_zone_ref, c_zone_ref):
+    def plot_count_log_amp_multiple(self,eddies_GS, eddies_IBI, eddies_AG, eddies_KOE):
         
-        kwargs_eddies = dict(label=str(self.model), color="k")
-        kwargs_eddies_ref = dict(label=str(self.reference), color="g")
-        kwargs_zone_eddies = dict(label=str(self.model) + " " + self.DOMAIN, color="grey")
-        kwargs_zone_eddies_ref = dict(label=str(self.reference) + " " + self.DOMAIN, color="limegreen")
+        kwargs_eddies_GS = dict(label="GS", color="red")
+        kwargs_eddies_IBI = dict(label="IBI", color="green")
+        kwargs_eddies_AG = dict(label="AG", color="pink")
+        kwargs_eddies_KOE = dict(label="KOE", color="purple")
+
 
         fig, ax = plt.subplots(figsize=(6, 4))
 
         # name = "amplitude"
-        title = "Amplitude (cm)"
-
-        # data_a = at[name] * 100
-        # data_c = ct[name] * 100
-        data=eddies["amplitude"]*100
+        title = "Amplitude"
         bins = np.arange(0.0005, 1000, 0.2)
 
-        hist_a, bins = np.histogram(data_a, bins=bins)
-        hist_c, _ = np.histogram(data_c, bins=bins)
+        
+        data_GS=eddies_GS["amplitude"]*100
+        hist_GS, bins_GS = np.histogram(data_GS, bins=bins)
 
-        hist_eddies = hist_a + hist_c
+        data_IBI=eddies_IBI["amplitude"]*100
+        hist_IBI, bins_IBI = np.histogram(data_IBI, bins=bins)
 
-        data_a_ref = a_ref[name] * 100
-        data_c_ref = c_ref[name] * 100
-        bins_ref = np.arange(0.0005, 1000, 0.2)
+        data_AG=eddies_AG["amplitude"]*100
+        hist_AG, bins_AG = np.histogram(data_AG, bins=bins)
 
-        hist_a_ref, bins_ref = np.histogram(data_a_ref, bins=bins_ref)
-        hist_c_ref, _ = np.histogram(data_c_ref, bins=bins_ref)
+        data_KOE=eddies_KOE["amplitude"]*100
+        hist_KOE, bins_KOE = np.histogram(data_KOE, bins=bins)
 
-        hist_eddies_ref = hist_a_ref + hist_c_ref
 
-        ####################################################################
-
-        # Data for the domain
-        data_zone_a = at_zone[name] * 100
-        data_zone_c = ct_zone[name] * 100
-        bins_zone = np.arange(0.0005, 100, 0.5)
-
-        hist_zone_a, bins_zone = np.histogram(data_zone_a, bins=bins_zone)
-        hist_zone_c, _ = np.histogram(data_zone_c, bins=bins_zone)
-
-        hist_eddies_zone = hist_zone_a + hist_zone_c
-
-        # Data ref for the demain
-        data_zone_a_ref = a_zone_ref[name] * 100
-        data_zone_c_ref = c_zone_ref[name] * 100
-        bins_zone_ref = np.arange(0.0005, 100, 0.5)
-
-        hist_zone_a_ref, bins_zone_ref = np.histogram(data_zone_a_ref, bins=bins_zone_ref)
-        hist_zone_c_ref, _ = np.histogram(data_zone_c_ref, bins=bins_zone_ref)
-
-        hist_eddies_zone_ref = hist_zone_a_ref + hist_zone_c_ref
-
-        ################################################################
-
-        ax.semilogy(bins[:-1], hist_eddies, **kwargs_eddies)
-        ax.semilogy(bins_ref[:-1], hist_eddies_ref, **kwargs_eddies_ref)
-        ax.semilogy(bins_zone[:-1], hist_eddies_zone, **kwargs_zone_eddies)
-        ax.semilogy(bins_zone[:-1], hist_eddies_zone_ref, **kwargs_zone_eddies_ref)
+    
+        ax.semilogy(bins_GS[:-1], hist_GS, **kwargs_eddies_GS)
+        ax.semilogy(bins_IBI[:-1], hist_IBI, **kwargs_eddies_IBI)
+        ax.semilogy(bins_AG[:-1], hist_AG, **kwargs_eddies_AG)
+        ax.semilogy(bins_KOE[:-1], hist_KOE, **kwargs_eddies_KOE)
+ 
 
         ax.grid()
         ax.set_title(title)
@@ -681,96 +655,96 @@ class Plots:
         ax.legend()
         
         # Save the plot
-        plt.savefig(f"{self.dir_plot}Amplitude_{self.model}_{self.reference}_{self.DOMAIN}.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}COUNT_AMP_{self.model}_MULTIPLE.jpeg", bbox_inches="tight")
 
         # Show the plot
         if self.show:
             plt.show()
 
-    def plot_count_speed_radius(self,at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref):
 
-        kwargs_eddies = dict(label=str(self.model), color="k")
-        kwargs_eddies_ref = dict(label=str(self.reference), color="g")
-        kwargs_zone_eddies = dict(label=str(self.model) + " " + self.DOMAIN, color="grey")
-        kwargs_zone_eddies_ref = dict(label=str(self.reference) + " " + self.DOMAIN, color="limegreen")
+    def plot_count_log_rad(self,eddies,eddies_ref):
+
+        kwargs_eddies = dict(label="Eddies " + str(self.model), color="blue")
+        kwargs_eddies_ref = dict(label="Eddies "+ str(self.reference), color="grey")
         
         fig, ax = plt.subplots(figsize=(6, 4))
-        
-        name = "speed_radius"
-        title = "Speed Radius (km)"
 
-        #### GLOBAL DATA ####
-        ### MODEL ###
-        data_a = at[name] * 0.001
-        data_c = ct[name] * 0.001
+        title = "Radius"
+        
+        data = eddies["effective_radius"] / 1000
         bins = np.arange(0, 2000, 1)
         
-        hist_a, bins = np.histogram(data_a, bins=bins)
-        hist_c, _ = np.histogram(data_c, bins=bins)
+        hist, bins = np.histogram(data, bins=bins)
         
-        hist_eddies = hist_a + hist_c
-        
-        ### REF ###
-        data_a_ref = a_ref[name] * 0.001
-        data_c_ref = c_ref[name] * 0.001
+        data_ref = eddies_ref["effective_radius"] /1000
+
         bins_ref = np.arange(0, 2000, 1)
         
-        hist_a_ref, bins_ref = np.histogram(data_a_ref, bins=bins_ref)
-        hist_c_ref, _ = np.histogram(data_c_ref, bins=bins_ref)
-        
-        hist_eddies_ref = hist_a_ref + hist_c_ref
-        
-        
-        
-        #### DATA FOR DOMAIN ####
+        hist_ref, bins_ref = np.histogram(data_ref, bins=bins_ref)
 
-        ### MODEL ###
-        
-        data_zone_a = at_zone[name] * 0.001
-        data_zone_c = ct_zone[name] *0.001
-        bins_zone = np.arange(0, 2000, 1)
-        
-        hist_zone_a, bins_zone = np.histogram(data_zone_a, bins=bins_zone)
-        hist_zone_c, _ = np.histogram(data_zone_c, bins=bins_zone)
-        
-        hist_eddies_zone = hist_zone_a + hist_zone_c
-        
-        
-        ### REF ###
-        
-        data_zone_a_ref = a_zone_ref[name] * 0.001
-        data_zone_c_ref = c_zone_ref[name] * 0.001
-        bins_zone_ref = np.arange(0, 2000, 1)
-        
-        hist_zone_a_ref, bins_zone_ref = np.histogram(data_zone_a_ref, bins=bins_zone_ref)
-        hist_zone_c_ref, _ = np.histogram(data_zone_c_ref, bins=bins_zone_ref)
-        
-        hist_eddies_zone_ref = hist_zone_a_ref + hist_zone_c_ref
-
-        ##### PLOT ####
-        
-        ax.semilogy(bins[:-1], hist_eddies, **kwargs_eddies)
-        ax.semilogy(bins[:-1], hist_eddies_ref, **kwargs_eddies_ref)
-        ax.semilogy(bins[:-1], hist_eddies_zone, **kwargs_zone_eddies)
-        ax.semilogy(bins[:-1], hist_eddies_zone_ref, **kwargs_zone_eddies_ref)
-        
+        ax.semilogy(bins[:-1], hist, **kwargs_eddies)
+        ax.semilogy(bins_ref[:-1], hist_ref, **kwargs_eddies_ref)
         ax.grid()
         ax.set_title(title)
-        ax.set_xlabel("Speed Radius Value (km)")
+        ax.set_xlabel("Radius Value (km)")
         ax.set_ylabel("Count (log scale)")
-        ax.set_xlim(0, 150)  
+        ax.set_xlim(0, 130)  # Limite de l'axe des abscisses
         ax.legend()
+        plt.savefig(
+            f"{self.dir_plot}COUNT_RAD_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight",
+        )
+        if self.show:
+            plt.show()
 
+
+    def plot_count_log_rad_multiple(self,eddies_GS, eddies_IBI, eddies_AG, eddies_KOE):
+        
+        kwargs_eddies_GS = dict(label="GS", color="red")
+        kwargs_eddies_IBI = dict(label="IBI", color="green")
+        kwargs_eddies_AG = dict(label="AG", color="pink")
+        kwargs_eddies_KOE = dict(label="KOE", color="purple")
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+
+        title = "Radius"
+        bins =  np.arange(0, 2000, 1)
+
+        data_GS=eddies_GS["effective_radius"]/1000
+        hist_GS, bins_GS = np.histogram(data_GS, bins=bins)
+
+        data_IBI=eddies_IBI["effective_radius"]/1000
+        hist_IBI, bins_IBI = np.histogram(data_IBI, bins=bins)
+
+        data_AG=eddies_AG["effective_radius"]/1000
+        hist_AG, bins_AG = np.histogram(data_AG, bins=bins)
+
+        data_KOE=eddies_KOE["effective_radius"]/1000
+        hist_KOE, bins_KOE = np.histogram(data_KOE, bins=bins)
+
+        ax.semilogy(bins_GS[:-1], hist_GS, **kwargs_eddies_GS)
+        ax.semilogy(bins_IBI[:-1], hist_IBI, **kwargs_eddies_IBI)
+        ax.semilogy(bins_AG[:-1], hist_AG, **kwargs_eddies_AG)
+        ax.semilogy(bins_KOE[:-1], hist_KOE, **kwargs_eddies_KOE)
+ 
+
+        ax.grid()
+        ax.set_title(title)
+        ax.set_xlabel("Radius Value (km)")
+        ax.set_ylabel("Count (log scale)")
+        ax.set_xlim(0, 130)  # Limite de l'axe des abscisses
+        ax.legend()
         
         # Save the plot
-        plt.savefig(f"{self.dir_plot}Speed_Radius_{self.model}_{self.reference}_{self.DOMAIN}.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}COUNT_RAD_{self.model}_MULTIPLE.jpeg", bbox_inches="tight")
 
         # Show the plot
         if self.show:
             plt.show()
-            
 
-    def plot_count_lifetime(self,at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref):
+
+        
+    def plot_count_lifetime(self,eddies,eddies_ref):
         
         fig, ax = plt.subplots(figsize=(6, 4))
 
@@ -779,216 +753,186 @@ class Plots:
         title = "Eddy lifetime (days)"
         x = np.arange(0, 2000, 1)
         
-        data_a = at.nb_obs_by_track
-        data_c = ct.nb_obs_by_track
-        
-        # Delete nul values
-        data_a = data_a[data_a != 0]
-        data_c = data_c[data_c != 0]
-        
-        data_a_ref = a_ref.nb_obs_by_track
-        data_c_ref = c_ref.nb_obs_by_track
-        
-        data_a_ref = data_a_ref[data_a_ref != 0]
-        data_c_ref = data_c_ref[data_c_ref != 0]
-        
-        
-        hist_a, x = np.histogram(data_a, bins=x)
-        hist_c, _ = np.histogram(data_c, bins=x)
-        hist_eddies = hist_a + hist_c
-        
-        hist_a_ref, x = np.histogram(data_a_ref, bins=x)
-        hist_c_ref, _ = np.histogram(data_c_ref, bins=x)
-        hist_eddies_ref = hist_a_ref + hist_c_ref
-        
-        ######### DATA ZONE ######
-        data_a_zone=at_zone.nb_obs_by_track
-        data_c_zone=ct_zone.nb_obs_by_track
-        
-        data_a_zone = data_a_zone[data_a_zone != 0]
-        data_c_zone = data_c_zone[data_c_zone != 0]
-        
-        hist_a_zone, x = np.histogram(data_a_zone, bins=x)
-        hist_c_zone, _ = np.histogram(data_c_zone, bins=x)
-        hist_eddies_zone = hist_a_zone + hist_c_zone
-        
-        ###data zone ref ###
-        data_a_zone_ref=a_zone_ref.nb_obs_by_track
-        data_c_zone_ref=c_zone_ref.nb_obs_by_track
-        
-        data_a_zone_ref = data_a_zone_ref[data_a_zone_ref != 0]
-        data_c_zone_ref = data_c_zone_ref[data_c_zone_ref != 0]
-        
-        hist_a_zone_ref, x = np.histogram(data_a_zone_ref, bins=x)
-        hist_c_zone_ref, _ = np.histogram(data_c_zone_ref, bins=x)
-        hist_eddies_zone_ref = hist_a_zone_ref + hist_c_zone_ref
-        
-        
+        data = eddies.nb_obs_by_track
+        data= data[data!= 0]
+
+        data_ref = eddies_ref.nb_obs_by_track
+        data_ref= data_ref[data_ref!= 0]
+
+
+        hist, x = np.histogram(data, bins=x)
+        hist_ref, x_ref = np.histogram(data_ref, bins=x)
         
         ######PLOT######
         
         # Log scale 
-        ax.semilogy(x[:-1], hist_eddies, color="k",label='Eddies ' + str(self.model))
-        ax.semilogy(x[:-1], hist_eddies_ref, color="g",label='Eddies ' + str(self.reference))
-        ax.semilogy(x[:-1], hist_eddies_zone,label=str(self.model) +" " +self.DOMAIN, color="grey")
-        ax.semilogy(x[:-1], hist_eddies_zone_ref,label=str(self.reference) +" " +self.DOMAIN, color="limegreen")            
+        ax.semilogy(x[:-1], hist, color="blue",label='Eddies ' + str(self.model))
+        ax.semilogy(x[:-1], hist_ref, color="grey",label='Eddies ' + str(self.reference))
+         
         # Add legend and label
         ax.set_xlabel(title)
         ax.set_ylabel("Count (log scale)")
         ax.legend()
-        ax.set_xlim(10, 30)
+        ax.set_xlim(10, self.periods)
         ax.grid()
+        x_ticks = np.arange(10, self.periods, 10)  # Generate ticks from 10 to 30 with step 1
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels([str(int(tick)) for tick in x_ticks])
 
         # Save the plot
-        plt.savefig(f"{self.dir_plot}Lifetime_{self.model}_{self.reference}_{self.DOMAIN}.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}LIFETIME_{self.model}_{self.reference}.jpeg", bbox_inches="tight")
+
+        # Show the plot
+        if self.show:
+            plt.show()
+
+    def plot_count_lifetime_multiple(self,eddies_GS, eddies_IBI, eddies_AG, eddies_KOE):
+        
+        fig, ax = plt.subplots(figsize=(6, 4))
+
+        # Select the variable nb_obs-by_track which is the lifetime of eddies
+        name = "nb_obs_by_track"
+        title = "Eddy lifetime"
+        x = np.arange(0, 2000, 1)
+        
+        data_GS = eddies_GS.nb_obs_by_track
+        data_GS= data_GS[data_GS!= 0]
+
+        data_IBI = eddies_IBI.nb_obs_by_track
+        data_IBI= data_IBI[data_IBI!= 0]
+
+        data_AG = eddies_AG.nb_obs_by_track
+        data_AG= data_AG[data_AG!= 0]
+
+        data_KOE = eddies_KOE.nb_obs_by_track
+        data_KOE= data_KOE[data_KOE!= 0]
+
+  
+        hist_GS, x_GS = np.histogram(data_GS, bins=x)
+        hist_IBI, x_IBI = np.histogram(data_IBI, bins=x)
+        hist_AG, x_AG = np.histogram(data_AG, bins=x)
+        hist_KOE, x_KOE = np.histogram(data_KOE, bins=x)
+       
+        
+        ######PLOT######
+        
+        # Log scale 
+        ax.semilogy(x[:-1], hist_GS, color="red",label='GS')
+        ax.semilogy(x[:-1], hist_IBI, color="green",label='IBI')
+        ax.semilogy(x[:-1], hist_AG, color="pink",label='AG')
+        ax.semilogy(x[:-1], hist_KOE, color="purple",label='KOE')
+         
+        # Add legend and label
+        ax.set_xlabel("Eddy lifetime (days)")
+        ax.set_ylabel("Count (log scale)")
+        ax.legend()
+        ax.set_xlim(10, self.periods)
+        ax.grid()
+        x_ticks = np.arange(10, self.periods, 10)  # Generate ticks from 10 to 30 with step 1
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels([str(int(tick)) for tick in x_ticks])
+        
+        # Save the plot
+        plt.savefig(f"{self.dir_plot}LIFETIME_MULTIPLE.jpeg", bbox_inches="tight")
 
         # Show the plot
         if self.show:
             plt.show()
             
-    def plot_2d_histo(self, eddies_zone):
-        fig, ax = plt.subplots()
-        counts, xedges, yedges, im = ax.hist2d(
-            eddies_zone["effective_radius"] / 1000,
-            eddies_zone["amplitude"] * 100,
-            bins=200,
-            cmap=plt.cm.jet,
-            cmin=1,
-        )
-        ax.set_xlabel("Radius (km)")
-        ax.set_ylabel("Amplitude (cm)")
 
-        fig.colorbar(im, ax=ax)
-        plt.title(self.model)
-        plt.savefig(
-            f"{self.dir_plot}HIST2D_AMP_RAD_{self.model}_{self.year}.jpeg",
-            bbox_inches="tight",
-        )
-
-        if self.show:
-            plt.show()
-
-    def plot_histo_hits_false(self, radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
-        
-        bins = np.arange(0, 400, 3)
-        hits_histogram_glo = np.histogram(radius_AR_hits_glo, bins=bins)
-        misses_histogram_glo = np.histogram(radius_AR_misses_glo, bins=bins)
-        falarm_histogram_glo = np.histogram(radius_AR_falarm_glo, bins=bins)
+    def plot_histo_matching(self,radius_AR_hits, radius_AR_misses, radius_AR_falarm):
+        bins = np.arange(0, 250, 5)
         
         hits_histogram = np.histogram(radius_AR_hits, bins=bins)
         misses_histogram = np.histogram(radius_AR_misses, bins=bins)
         falarm_histogram = np.histogram(radius_AR_falarm, bins=bins)
         
-        max_value1 = max(
+        # Calculer les coordonn??es des points d'escalier pour chaque histogramme
+        hits_x = hits_histogram[1][:-1]
+        hits_y = hits_histogram[0]
+        
+        misses_x = misses_histogram[1][:-1]
+        misses_y = misses_histogram[0]
+        
+        falarm_x = falarm_histogram[1][:-1]
+        falarm_y = falarm_histogram[0]
+        max_value = max(
             max(hits_histogram[0]),
             max(misses_histogram[0]),
-            max(falarm_histogram[0]))
+            max(falarm_histogram[0])
+            )
+        # Lissage des donn??es
+        f_hits = interp1d(hits_x, hits_y, kind='cubic')
+        f_misses = interp1d(misses_x, misses_y, kind='cubic')
+        f_falarm = interp1d(falarm_x, falarm_y, kind='cubic')
         
-        max_value2=max(
-            max(hits_histogram_glo[0]),
-            max(misses_histogram_glo[0]),
-            max(falarm_histogram_glo[0])
-        )
+        x_new = np.linspace(0, max(max(hits_x), max(misses_x), max(falarm_x)), 1000)
+
+        y_hits_smooth = f_hits(x_new)
+        y_misses_smooth = f_misses(x_new)
+        y_falarm_smooth = f_falarm(x_new)
         
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+    
+        fig, ax = plt.subplots(figsize=(8, 6))
         
-        # Plot for Global data
-        ax1.hist(
-            [radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo],
-            bins=bins,
-            fill=False,
-            linewidth=3,
-            histtype="step",
-            label=["hits", "misses", "false alarm"],
-            color=["green", "red", "orange"],
-        )
-        ax1.set_ylim(0, max_value2+100)
-        ax1.set_xlim(0, 130)
-        ax1.set_xlabel("Radius (km)")
-        ax1.legend()
-        ax1.set_title(f"{self.model} Reference {self.reference} (Global)")
+        ax.plot(x_new, y_hits_smooth, label='hits', color='green')
+        ax.plot(x_new, y_misses_smooth, label='misses', color='red')
+        ax.plot(x_new, y_falarm_smooth, label='false alarm', color='orange')
         
-        # Plot for regional data
-        ax2.hist(
-            [radius_AR_hits, radius_AR_misses, radius_AR_falarm],
-            bins=bins,
-            fill=False,
-            linewidth=3,
-            histtype="step",
-            label=["hits", "misses", "false alarm"],
-            color=["green", "red", "orange"],
-        )
-        ax2.set_ylim(0, max_value1+20)
-        ax2.set_xlim(0, 130)
-        ax2.set_xlabel("Radius (km)")
-        ax2.legend()
-        ax2.set_title(f"{self.model} Reference {self.reference} (Domain)")
-        
-        plt.tight_layout()  # Ensures proper spacing
-        plt.savefig(f"{self.dir_plot}HIST_MATCHING_{self.model}_{self.year}_dual.jpeg", bbox_inches="tight")
-        
-        if self.show:
-            plt.show()
 
+        ax.set_ylim(0, max_value + 1000)
+        ax.set_xlim(0, 130)
+        ax.set_xlabel("Radius (km)")
+        ax.set_ylabel("Occurences")
+        ax.set_title(f"{self.model} Reference {self.reference}")
+        ax.legend()
+        ax.grid(True)
 
-
-
-    def plot_pod_far_amplitude(self, POD_AR, FAR_AR):
-        bins = np.arange(0, 400, 1)
-        fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-
-        axes[0].step(bins[:-1], POD_AR, color="black", linewidth=2)
-        axes[0].set(
-            ylim=(np.nanmin(POD_AR) - 0.2, 1.05),
-            ylabel="Probability of Detection",
-            xlim=(0, 20),
-            xlabel="Amplitude (cm)",
-            xticks=np.arange(0, 25, 5),
-        )
-        axes[0].grid()
-
-        axes[1].step(bins[:-1], FAR_AR, color="black", linewidth=2)
-        axes[1].set(
-            ylim=(0, np.nanmax(FAR_AR) + 0.2),
-            ylabel="False Alarm Ratio",
-            xlim=(0, 20),
-            xlabel="Amplitude (cm)",
-            xticks=np.arange(0, 25, 5),
-        )
-        axes[1].grid()
-
-        fig.suptitle(f"{self.model} Reference {self.reference}")
-        plt.tight_layout()
         plt.savefig(
-            f"{self.dir_plot}POD_FAR_AMP_{self.model}_{self.year}.jpeg",
-            bbox_inches="tight",
-        )
+            f"{self.dir_plot}HIST_MATCHING_{self.model}_{self.year}.jpeg",
+            bbox_inches="tight")
         if self.show:
             plt.show()
+
+
 
 
     def plot_pod_far_time(self, AR_POD, AR_FAR):
-        t_data = pd.date_range(self.date_start, periods=self.periods - 1, freq="D")
         t_data_obs = pd.date_range(self.date_start, periods=self.periods - 1, freq="D")
+    
+        fig, ax = plt.subplots(figsize=(17, 3))
+    
+        # Plot Probability Of Detection
+        ax.plot(t_data_obs, AR_POD, color="green", label="Probability Of Detection")
+    
+        # Plot False Alarm Ratio
+        ax.plot(t_data_obs, AR_FAR, color="red", label="False Alarm Ratio")
+    
+        # Setting limits for y-axis
+        ax.set_ylim(0, 1)
+    
+        # Setting major locators and formatters for x-axis
+        ax.xaxis.set_major_locator(mdates.MonthLocator([1,2,3]))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    
+        # Add title and labels
+        ax.set_title("Probability Of Detection and False Alarm Ratio Over Time")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Value")
+    
+        # Add a legend
+        ax.legend()
+    
+        # Add grid
+        ax.grid()
 
-        fig, axes = plt.subplots(1, 2, figsize=(17, 3))
-
-        axes[0].plot(t_data_obs, AR_POD, color="black")
-        axes[0].set_ylim(0, 1)
-        axes[0].xaxis.set_major_locator(mdates.MonthLocator([1, 4, 7, 10]))
-        axes[0].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-        axes[0].set_title("Probability Of Detection")
-
-        axes[1].plot(t_data_obs, AR_FAR, color="black")
-        axes[1].set_ylim(0, 1)
-        axes[1].xaxis.set_major_locator(mdates.MonthLocator([1, 4, 7, 10]))
-        axes[1].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-        axes[1].set_title("False Alarm Ratio")
-
+        # Save the figure
         plt.savefig(
             f"{self.dir_plot}POD_FAR_TEMP_{self.model}_{self.year}.jpeg",
             bbox_inches="tight",
         )
+
+        # Show the plot if specified
         if self.show:
             plt.show()
 
@@ -1021,19 +965,25 @@ class Plots:
 
         ax.set_title("Performance Diagram " + self.model + " " + str(self.year), y=1.08)
         ax.scatter(np.mean(SR_GLO), np.mean(AR_POD_GLO), color="blue", s=200)
-        
-        ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=200)
-        ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=200)
-        ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=200)
-        ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=200)
+        ax.text(np.mean(SR_GLO), np.mean(AR_POD_GLO) + 0.02, "Global", color="blue", size=15)
+
+        ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=150, label="GS")
+        ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=150, label="IBI")
+        ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=150, label="AG")
+        ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=150, label="KOE")
+    
+        # Add legend
+        ax.legend(loc="best")
+        # ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=150)
+        # ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=150)
+        # ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=150)
+        # ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=150)
 
         
-        ax.text(np.mean(SR_GLO), np.mean(AR_POD_GLO) + 0.02, "Global", color="blue", size=15)
-        
-        ax.text(np.mean(SR_GS), np.mean(AR_POD_GS) - 0.05, "GS", color="red", size=15)
-        ax.text(np.mean(SR_IBI), np.mean(AR_POD_IBI) - 0.05, "IBI", color="red", size=15)
-        ax.text(np.mean(SR_AG), np.mean(AR_POD_AG) - 0.05, "AG", color="red", size=15)
-        ax.text(np.mean(SR_KOE), np.mean(AR_POD_KOE) - 0.05, "DKOE", color="red", size=15)
+        # ax.text(np.mean(SR_GS), np.mean(AR_POD_GS) - 0.05, "GS", color="red", size=13)
+        # ax.text(np.mean(SR_IBI), np.mean(AR_POD_IBI) - 0.05, "IBI", color="green", size=13)
+        # ax.text(np.mean(SR_AG), np.mean(AR_POD_AG) - 0.05, "AG", color="pink", size=13)
+        # ax.text(np.mean(SR_KOE), np.mean(AR_POD_KOE) - 0.05, "DKOE", color="purple", size=13)
 
         ax.scatter(0.995, 0.995, color="orange", s=200, marker="D")
         ax.text(0.8, 0.96, "Perfect match", size=15)

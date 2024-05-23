@@ -92,21 +92,6 @@ def analysis_eddies():
     KOE= dict(llcrnrlon=140, llcrnrlat=28, urcrnrlon=170, urcrnrlat=50)
 
     zone_params_list = [GS, IBI, AG, KOE]
-    # if DOMAIN == 'GS':
-    #     zone_params = GS
-    # elif DOMAIN == 'IBI':
-    #     zone_params = IBI
-    # elif DOMAIN == 'AG':
-    #     zone_params = AG 
-    # elif DOMAIN =='KOE':
-    #     zone_params = KOE
-    # else:
-    #     raise ValueError("DOMAIN is not defined.")
-
-
-    ######### DATA EXTRACTION #########
-        
-   
     
     #### TRACKING DATA ####
     ##### GS ######
@@ -860,6 +845,12 @@ def analysis_eddies():
 
     ### COUNT 
     plots.plot_count_log_amp(eddies,eddies_ref)
+    plots.plot_count_log_amp_multiple(eddies_GS, eddies_IBI, eddies_AG, eddies_KOE)
+
+    plots.plot_count_log_rad(eddies,eddies_ref)
+    plots.plot_count_log_rad_multiple(eddies_GS, eddies_IBI, eddies_AG, eddies_KOE)
+    plots.plot_count_lifetime(eddies,eddies_ref)
+    plots.plot_count_lifetime_multiple(eddies_GS, eddies_IBI, eddies_AG, eddies_KOE)
     # plots.plot_count_log_amp(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref) 
     # plots.plot_count_speed_radius(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
     # plots.plot_count_lifetime(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
@@ -869,6 +860,7 @@ def analysis_eddies():
     #plots.plot_2d_histo(eddies_zone)
 
     ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
+    plots.plot_histo_matching(radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo)
     # plots.plot_histo_hits_false(radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo,radius_AR_hits, radius_AR_misses, radius_AR_falarm)
 
     ### POD & FAR BY AMPLITUDE (CM) ###
@@ -876,6 +868,7 @@ def analysis_eddies():
 
     ### POD & FAR BY TIME ###
     # plots.plot_pod_far_time(AR_POD, AR_FAR)
+    plots.plot_pod_far_time(AR_POD_GLO, AR_FAR_GLO)
 
     ### PERFORMANCE DIAGRAM ###
     plots.perf_diag(SR_GS, AR_POD_GS, SR_IBI, AR_POD_IBI, SR_AG, AR_POD_AG, SR_KOE, AR_POD_KOE ,SR_GLO,AR_POD_GLO)
