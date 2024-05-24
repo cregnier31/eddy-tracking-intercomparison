@@ -15,6 +15,10 @@ import os
 import fnmatch
 import netCDF4 as nc
 from scipy.interpolate import interp1d
+from matplotlib.lines import Line2D
+from matplotlib.gridspec import GridSpec
+
+
 
 def plt_cartopy_ibi(ax, labels=True):
     # ax.set_aspect('auto') # The figure will follow the ratio of the figsize
@@ -110,7 +114,6 @@ class Plots:
         cbar = fig.colorbar(heatmap1, ax=[ax1, ax2], orientation='vertical', fraction=0.02, pad=0.1)
         cbar.set_label('Daily number of eddies')
         
-
         
         # Save and show the figure
         plt.savefig(
@@ -231,7 +234,7 @@ class Plots:
     
         heatmap = ax.imshow(average_radii, cmap='jet', vmax=vmax, origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
     
-        cbar = plt.colorbar(heatmap, location='bottom', shrink=0.5, label='Mean radius of eddies (km)')
+        # cbar = plt.colorbar(heatmap, location='bottom', shrink=0.5, label='Mean radius of eddies (km)')
     
         ax.set_title('Radius of eddies ' + model_name)
         ax.set_xlabel('Longitude')
@@ -259,7 +262,7 @@ class Plots:
         # Create a single colorbar for both heatmaps
         cbar = fig.colorbar(heatmap1, ax=[ax1, ax2], orientation='vertical', fraction=0.02, pad=0.1)
         cbar.set_label('Mean radius of eddies')
-        
+        plt.subplots_adjust(right=0.8)
         
         # Save and show the figure
         plt.savefig(
@@ -326,9 +329,7 @@ class Plots:
                             extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'],zone_params['urcrnrlat']])
         
         cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.5,label='Mean radius of eddies (km)')
-        
-        # Add title and labels
-        plt.title('Radius of eddies ' + str(self.model))
+
         ax.set_xlabel('Longitude')
         ax.set_ylabel('Latitude')
 
@@ -340,23 +341,21 @@ class Plots:
         gl.xlabel_style = {'color': 'k', 'size': 'medium'}
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False ; gl.top_labels = False
+        return heatmap
 
 
-    def plot_multiple_heatmaps_radius(self, zone_params_list,vmax):
+    def plot_multiple_heatmaps_radius(self, zone_params_list, vmax):
         fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(20, 20), subplot_kw={'projection': ccrs.PlateCarree()})
     
         for ax, zone_params in zip(axes.flat, zone_params_list):
             self.plot_heatmap_radius(zone_params, ax,vmax)
     
+
+        plt.suptitle('Radius of eddies ' + str(self.model))
         plt.tight_layout()
-    
-        # Save and show
-        plt.savefig(
-            self.dir_plot + self.model + "_MULTIPLE_HEATMAPS_RADIUS" + ".jpeg",
-            bbox_inches="tight",
-            dpi=500,
-        )
-    
+ 
+        plt.savefig(self.dir_plot + self.model + "_MULTIPLE_HEATMAPS_RADIUS" + ".jpeg", bbox_inches="tight", dpi=500)
+        
         if self.show:
             plt.show()
 
@@ -399,7 +398,7 @@ class Plots:
     
         heatmap = ax.imshow(average_amp, cmap='jet', vmax=vmax, origin='lower', extent=[longitude_min, longitude_max, latitude_min, latitude_max])
     
-        cbar = plt.colorbar(heatmap, location='bottom', shrink=0.5, label='Mean amplitude of eddies (cm)')
+        # cbar = plt.colorbar(heatmap, location='bottom', shrink=0.5, label='Mean amplitude of eddies (cm)')
     
         ax.set_title('Amplitude of eddies ' + model_name)
         ax.set_xlabel('Longitude')
@@ -771,6 +770,7 @@ class Plots:
          
         # Add legend and label
         ax.set_xlabel(title)
+        ax.set_title("Eddy lifetime")
         ax.set_ylabel("Count (log scale)")
         ax.legend()
         ax.set_xlim(10, self.periods)
@@ -826,6 +826,7 @@ class Plots:
         ax.set_xlabel("Eddy lifetime (days)")
         ax.set_ylabel("Count (log scale)")
         ax.legend()
+        ax.set_title(title)
         ax.set_xlim(10, self.periods)
         ax.grid()
         x_ticks = np.arange(10, self.periods, 10)  # Generate ticks from 10 to 30 with step 1
@@ -856,12 +857,9 @@ class Plots:
         
         falarm_x = falarm_histogram[1][:-1]
         falarm_y = falarm_histogram[0]
-        max_value = max(
-            max(hits_histogram[0]),
-            max(misses_histogram[0]),
-            max(falarm_histogram[0])
-            )
-        # Lissage des donn??es
+    
+
+        
         f_hits = interp1d(hits_x, hits_y, kind='cubic')
         f_misses = interp1d(misses_x, misses_y, kind='cubic')
         f_falarm = interp1d(falarm_x, falarm_y, kind='cubic')
@@ -872,7 +870,11 @@ class Plots:
         y_misses_smooth = f_misses(x_new)
         y_falarm_smooth = f_falarm(x_new)
         
-    
+        max_value = max(
+            max(y_hits_smooth),
+            max(y_misses_smooth),
+            max(y_falarm_smooth))
+        
         fig, ax = plt.subplots(figsize=(8, 6))
         
         ax.plot(x_new, y_hits_smooth, label='hits', color='green')
@@ -884,7 +886,7 @@ class Plots:
         ax.set_xlim(0, 130)
         ax.set_xlabel("Radius (km)")
         ax.set_ylabel("Occurences")
-        ax.set_title(f"{self.model} Reference {self.reference}")
+        ax.set_title(f"Matching {self.model} Reference {self.reference}")
         ax.legend()
         ax.grid(True)
 
@@ -965,21 +967,30 @@ class Plots:
 
         ax.set_title("Performance Diagram " + self.model + " " + str(self.year), y=1.08)
         ax.scatter(np.mean(SR_GLO), np.mean(AR_POD_GLO), color="blue", s=200)
-        ax.text(np.mean(SR_GLO), np.mean(AR_POD_GLO) + 0.02, "Global", color="blue", size=15)
+        # ax.text(np.mean(SR_GLO), np.mean(AR_POD_GLO) + 0.02, "Global", color="blue", size=15)
 
-        ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=150, label="GS")
-        ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=150, label="IBI")
-        ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=150, label="AG")
-        ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=150, label="KOE")
+        # ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=150, label="GS")
+        # ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=150, label="IBI")
+        # ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=150, label="AG")
+        # ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=150, label="KOE")
     
         # Add legend
         ax.legend(loc="best")
-        # ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=150)
-        # ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=150)
-        # ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=150)
-        # ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=150)
+        ax.scatter(np.mean(SR_GS), np.mean(AR_POD_GS), color="red", s=150)
+        ax.scatter(np.mean(SR_IBI), np.mean(AR_POD_IBI), color="green", s=150)
+        ax.scatter(np.mean(SR_AG), np.mean(AR_POD_AG), color="pink", s=150)
+        ax.scatter(np.mean(SR_KOE), np.mean(AR_POD_KOE), color="purple", s=150)
 
-        
+        # Create custom legend for scatter points
+        scatter_handles = [
+            Line2D([0], [0], marker='o', color='w', markerfacecolor="blue", markersize=10, label="Global"),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor="red", markersize=10, label="GS"),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor="green", markersize=10, label="IBI"),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor="pink", markersize=10, label="AG"),
+            Line2D([0], [0], marker='o', color='w', markerfacecolor="purple", markersize=10, label="KOE"),
+            ]
+
+        ax.legend(handles=scatter_handles, loc="upper left", title="Regions")
         # ax.text(np.mean(SR_GS), np.mean(AR_POD_GS) - 0.05, "GS", color="red", size=13)
         # ax.text(np.mean(SR_IBI), np.mean(AR_POD_IBI) - 0.05, "IBI", color="green", size=13)
         # ax.text(np.mean(SR_AG), np.mean(AR_POD_AG) - 0.05, "AG", color="pink", size=13)

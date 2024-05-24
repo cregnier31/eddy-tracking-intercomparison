@@ -27,7 +27,7 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
 
-from plots_multi import Plots
+from plots_bulletin import Plots
 
 def reverse_index(index, nb):
     m = np.ones(nb, dtype="bool")
@@ -833,11 +833,11 @@ def analysis_eddies():
     plots.plot_heatmap_model_and_ref()
     plots.plot_multiple_heatmaps(zone_params_list,2)
     
-    plots.plot_heatmap_radius_model_and_ref(80)
-    plots.plot_multiple_heatmaps_radius(zone_params_list,80)
+    plots.plot_heatmap_radius_model_and_ref(100)
+    plots.plot_multiple_heatmaps_radius(zone_params_list,100)
 
-    plots.plot_heatmap_amplitude_model_and_ref(6)
-    plots.plot_multiple_heatmaps_amplitude(zone_params_list,6)
+    plots.plot_heatmap_amplitude_model_and_ref(8)
+    plots.plot_multiple_heatmaps_amplitude(zone_params_list,8)
     
     ### NUMBER OF DETECTION BY TIME WITH MEAN ###
     plots.plot_number_detection_time(NB_EDDIES)
@@ -851,23 +851,16 @@ def analysis_eddies():
     plots.plot_count_log_rad_multiple(eddies_GS, eddies_IBI, eddies_AG, eddies_KOE)
     plots.plot_count_lifetime(eddies,eddies_ref)
     plots.plot_count_lifetime_multiple(eddies_GS, eddies_IBI, eddies_AG, eddies_KOE)
-    # plots.plot_count_log_amp(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref) 
-    # plots.plot_count_speed_radius(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
-    # plots.plot_count_lifetime(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
-
-
-    ### 2D HISTOGRAM RADIUS AMPLITUDE ###
-    #plots.plot_2d_histo(eddies_zone)
 
     ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
     plots.plot_histo_matching(radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo)
-    # plots.plot_histo_hits_false(radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo,radius_AR_hits, radius_AR_misses, radius_AR_falarm)
+
 
     ### POD & FAR BY AMPLITUDE (CM) ###
-    #plots.plot_pod_far_amplitude(POD_AR, FAR_AR)
+    # plots.plot_pod_far_amplitude(POD_AR, FAR_AR)
 
     ### POD & FAR BY TIME ###
-    # plots.plot_pod_far_time(AR_POD, AR_FAR)
+    plots.plot_pod_far_time(AR_POD, AR_FAR)
     plots.plot_pod_far_time(AR_POD_GLO, AR_FAR_GLO)
 
     ### PERFORMANCE DIAGRAM ###
