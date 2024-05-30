@@ -829,7 +829,7 @@ def analysis_eddies():
     ### PLOT ALL TRACKS FOR THE PERIOD ###
     # plots.plot_all_tracks_period(at_zone, ct_zone,rect_params)
 
-    ### PLOT HEATMAPS FOR NUMBER, RADIUS & AMPLITUDE ###
+    ## PLOT HEATMAPS FOR NUMBER, RADIUS & AMPLITUDE ###
     plots.plot_heatmap_model_and_ref()
     plots.plot_multiple_heatmaps(zone_params_list,2)
     

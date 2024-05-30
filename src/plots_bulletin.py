@@ -14,6 +14,7 @@ from matplotlib.patches import Rectangle
 import os
 import fnmatch
 import netCDF4 as nc
+import xarray as xr
 from scipy.interpolate import interp1d
 from matplotlib.lines import Line2D
 from matplotlib.gridspec import GridSpec
@@ -36,7 +37,7 @@ class Plots:
         general_info = info["GENERAL_INFO"]
         self.model = str(general_info["MODEL"])
         self.reference = str(general_info["REFERENCE"])
-        self.year = int(general_info["YEAR"])
+        self.year = str(general_info["YEAR"])
         self.date_start = str(general_info["DATE_START"])
         self.periods = int(general_info["PERIODS"])
         
@@ -97,6 +98,30 @@ class Plots:
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False
         gl.top_labels = False
+
+        
+         # Save the data to a NetCDF file using xarray
+        latitudes = np.linspace(latitude_min, latitude_max, lat_cells)
+        longitudes = np.linspace(longitude_min, longitude_max, lon_cells)
+    
+        ds = xr.Dataset(
+            {
+                'cell_counters': (['latitude', 'longitude'], cell_counters/self.periods)
+            },
+            coords={
+                'latitude': latitudes,
+                'longitude': longitudes
+            }
+        )
+    
+        ds['cell_counters'].attrs = {
+            'units': 'counts',
+            'long_name': 'Counts of eddies'}
+        
+        
+        output_netcdf = os.path.join(self.dir_plot, f"{model_name}_{self.year}_Heatmap-eddies.nc")
+        ds.to_netcdf(output_netcdf)
+
         
         return heatmap
 
@@ -115,13 +140,12 @@ class Plots:
         cbar.set_label('Daily number of eddies')
         
         
-        # Save and show the figure
         plt.savefig(
-            self.dir_plot + "MODEL_AND_REFERENCE_HEATMAP" + ".jpeg",
+            f"{self.dir_plot}{str(self.model)}_{self.year}_Heatmap-eddies.png",
             bbox_inches="tight",
-            dpi=500,
-        )
-        
+            dpi=500)
+
+
         if self.show:
             plt.show()
 
@@ -186,12 +210,7 @@ class Plots:
     
         plt.tight_layout()
     
-        # Save and show
-        plt.savefig(
-            self.dir_plot + self.model + "_MULTIPLE_HEATMAPS" + ".jpeg",
-            bbox_inches="tight",
-            dpi=500,
-        )
+        plt.savefig(f"{self.dir_plot}{self.model}_{self.year}_Heatmaps_allzones.png", bbox_inches="tight", dpi=600)
     
         if self.show:
             plt.show()
@@ -248,6 +267,30 @@ class Plots:
         gl.right_labels = False
         gl.top_labels = False
 
+        
+        # Save the data to a NetCDF file using xarray
+        latitudes = np.linspace(latitude_min, latitude_max, lat_cells)
+        longitudes = np.linspace(longitude_min, longitude_max, lon_cells)
+    
+        ds = xr.Dataset(
+            {
+                'average_radius': (['latitude', 'longitude'], average_radii.filled(np.nan))
+            },
+            coords={
+                'latitude': latitudes,
+                'longitude': longitudes
+            }
+        )
+    
+        ds['average_radius'].attrs = {
+            'units': 'km',
+            'long_name': 'Mean radius of eddies'
+        }
+        
+        output_netcdf = os.path.join(self.dir_plot, f"{model_name}_{self.year}_Heatmap-radius-eddies.nc")
+        ds.to_netcdf(output_netcdf)
+            
+        
         return heatmap
 
     def plot_heatmap_radius_model_and_ref(self,vmax):
@@ -266,16 +309,15 @@ class Plots:
         
         # Save and show the figure
         plt.savefig(
-            self.dir_plot + "MODEL_AND_REFERENCE_HEATMAP_RADIUS" + ".jpeg",
+            f"{self.dir_plot}{str(self.model)}_{self.year}_Heatmap-radius-eddies.png",
             bbox_inches="tight",
-            dpi=500,
-        )
+            dpi=500)
         
         if self.show:
             plt.show()
-
+    
     def plot_heatmap_radius(self,zone_params,ax,vmax):    
-
+    
         grid_size=self.grid_size
         
         # Calculate the number of cells in latitude and longitude for the specified zone_params
@@ -354,8 +396,8 @@ class Plots:
         plt.suptitle('Radius of eddies ' + str(self.model))
         plt.tight_layout()
  
-        plt.savefig(self.dir_plot + self.model + "_MULTIPLE_HEATMAPS_RADIUS" + ".jpeg", bbox_inches="tight", dpi=500)
-        
+        plt.savefig(f"{self.dir_plot}{self.model}_{self.year}_Heatmaps_radius_allzones.png", bbox_inches="tight", dpi=600)
+
         if self.show:
             plt.show()
 
@@ -412,6 +454,28 @@ class Plots:
         gl.right_labels = False
         gl.top_labels = False
 
+        # Save the data to a NetCDF file using xarray
+        latitudes = np.linspace(latitude_min, latitude_max, lat_cells)
+        longitudes = np.linspace(longitude_min, longitude_max, lon_cells)
+    
+        ds = xr.Dataset(
+            {
+                'average_amp': (['latitude', 'longitude'], average_amp.filled(np.nan))
+            },
+            coords={
+                'latitude': latitudes,
+                'longitude': longitudes
+            }
+        )
+    
+        ds['average_amp'].attrs = {
+            'units': 'cm',
+            'long_name': 'Mean amplitude of eddies'
+        }
+        
+        output_netcdf = os.path.join(self.dir_plot, f"{model_name}_{self.year}_Heatmap-amplitude-eddies.nc")
+        ds.to_netcdf(output_netcdf)
+
         return heatmap
 
     def plot_heatmap_amplitude_model_and_ref(self,vmax):
@@ -431,10 +495,9 @@ class Plots:
         
         # Save and show the figure
         plt.savefig(
-            self.dir_plot + "MODEL_AND_REFERENCE_HEATMAP_AMPLITUDE" + ".jpeg",
+            f"{self.dir_plot}{str(self.model)}_{self.year}_Heatmap-amplitude-eddies.png",
             bbox_inches="tight",
-            dpi=500,
-        )
+            dpi=500)
         
         if self.show:
             plt.show()
@@ -519,11 +582,8 @@ class Plots:
         plt.tight_layout()
     
         # Save and show
-        plt.savefig(
-            self.dir_plot + self.model + "_MULTIPLE_HEATMAPS_AMPLITUDE" + ".jpeg",
-            bbox_inches="tight",
-            dpi=500,
-        )
+        plt.savefig(f"{self.dir_plot}{self.model}_{self.year}_Heatmaps_allzones_amplitude.png", bbox_inches="tight", dpi=600)
+
     
         if self.show:
             plt.show()
@@ -542,7 +602,7 @@ class Plots:
         # ax.legend()
 
         plt.savefig(
-            f"{self.dir_plot}NB_EDDIES_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}Timeseries_detections_global_{self.model}_{self.year}.png",
             bbox_inches="tight",
         )
         if self.show:
@@ -566,7 +626,7 @@ class Plots:
         ax.legend()
 
         plt.savefig(
-            f"{self.dir_plot}NB_EDDIES_MULTIPLE_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}Timeseries_detections_all_zones_{self.model}_{self.year}.png",
             bbox_inches="tight",
         )
 
@@ -604,7 +664,7 @@ class Plots:
         ax.set_xlim(0, 20)  # Limite de l'axe des abscisses
         ax.legend()
         plt.savefig(
-            f"{self.dir_plot}COUNT_AMP_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}Log_count_amplitude_{self.model}_{self.year}.png",
             bbox_inches="tight",
         )
         if self.show:
@@ -654,7 +714,7 @@ class Plots:
         ax.legend()
         
         # Save the plot
-        plt.savefig(f"{self.dir_plot}COUNT_AMP_{self.model}_MULTIPLE.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}Log_count_amplitude_allzones_{self.model}_{self.year}.png", bbox_inches="tight")
 
         # Show the plot
         if self.show:
@@ -690,7 +750,7 @@ class Plots:
         ax.set_xlim(0, 130)  # Limite de l'axe des abscisses
         ax.legend()
         plt.savefig(
-            f"{self.dir_plot}COUNT_RAD_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}Log_count_radius_{self.model}_{self.year}.png",
             bbox_inches="tight",
         )
         if self.show:
@@ -735,7 +795,7 @@ class Plots:
         ax.legend()
         
         # Save the plot
-        plt.savefig(f"{self.dir_plot}COUNT_RAD_{self.model}_MULTIPLE.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}Log_count_radius_allzones_{self.model}_{self.year}.png", bbox_inches="tight")
 
         # Show the plot
         if self.show:
@@ -780,7 +840,7 @@ class Plots:
         ax.set_xticklabels([str(int(tick)) for tick in x_ticks])
 
         # Save the plot
-        plt.savefig(f"{self.dir_plot}LIFETIME_{self.model}_{self.reference}.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}Lifetime_eddies_{self.model}_{self.reference}_{self.year}.png", bbox_inches="tight")
 
         # Show the plot
         if self.show:
@@ -834,7 +894,7 @@ class Plots:
         ax.set_xticklabels([str(int(tick)) for tick in x_ticks])
         
         # Save the plot
-        plt.savefig(f"{self.dir_plot}LIFETIME_MULTIPLE.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}Lifetime_eddies_allzones_{self.model}_{self.year}.png", bbox_inches="tight")
 
         # Show the plot
         if self.show:
@@ -891,7 +951,7 @@ class Plots:
         ax.grid(True)
 
         plt.savefig(
-            f"{self.dir_plot}HIST_MATCHING_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}Hist_matching_{self.model}_{self.reference}_{self.year}.png",
             bbox_inches="tight")
         if self.show:
             plt.show()
@@ -930,7 +990,7 @@ class Plots:
 
         # Save the figure
         plt.savefig(
-            f"{self.dir_plot}POD_FAR_TEMP_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}Timeseries_POD_FAR_{self.model}_{self.year}.png",
             bbox_inches="tight",
         )
 
@@ -1008,7 +1068,7 @@ class Plots:
         ax.minorticks_on()
         
             
-        plt.savefig(f"{self.dir_plot}PERFORMANCE_DIAG_{self.model}_{self.year}.jpeg", bbox_inches="tight", dpi=600)
+        plt.savefig(f"{self.dir_plot}Performance_diag_{self.model}_{self.reference}_{self.year}.png", bbox_inches="tight", dpi=600)
 
         if self.show:
             plt.show()
