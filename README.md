@@ -70,6 +70,9 @@ requires editing for specifying input and output locations
 
 All 3 variables must be on a regular grid with one netcdf file per day. The units for the current velocities must be "m/s" or no detection can be performed.
 
+One can also use the Marine Data Store to download data.Only the surface is required and changing the units for sea surface velocity must be done manually. 
+One can choose to study the global ocean or a specific region.
+
 ## 2. Detect Eddies 
 
 Once all daily files with surface velocities and SSH for the region of interest are in one repository you can procceed to the identification. 
@@ -78,7 +81,7 @@ Edit the Config_Detect.ini file for detection parameters, variables & input and 
 ```sh
 python Detect_Eddies.py Config_Detect.ini
 ```
-
+This operation must be done for the model and for the reference. No need to change the parameters but only the path of input and output in the config file. 
 
 ## 3. Track Eddies
 
@@ -95,6 +98,11 @@ Produces 8 files (4 for AC and 4 for CC) :
 ```
 
 Idem for cyclonic eddies. 
+
+The directories are in the track_eddies file. 
+The operation must be done for the model and the reference. 
+
+
 
 ***
 
@@ -182,5 +190,28 @@ RESULTS MATCHING
 <img src="IMAGES_EXAMPLES/PERFORMANCE_DIAG_GLO12_2019.jpeg"  width="250" height="250"> 
 </div>
 
+This shows the method and the results for the Analysis_Eddy_1model. 
+
+
+# Analysis 2.0
+
+The Analysis_glo2reg.py code associated with its config file has been coded in order for the user to choose a region of study. The data to enter is datat from the gobal ocean, model and reference. The detection and tracking steps are similar to what has already been described. 
+
+In the configuration file one can choose from 4 domains of study. The results are given for this specific region but also for the global ocean in order to compare trends and scores. 
+
+One can easily define a new region in the Analysis_glo2reg code. 
+
+
+***
+
+In the edito-eddy branch one can find a processing code with the downloead from the data store, change of units and separation into daily files. 
+
+One can also fine the bulletin plot for a trimestrial analysis with plots and netcdf files. 
+
+Detection and tracking are similar to other analysis.
+One must launch python Analysis_bulletin.py ../confs/Config_Analysis-fdubost.ini
+Paths and general info must be changed in the config file. 
+
+PS : To run the bulletin code in fidji one can use one or the other git branch. Only the paths in the config files (and the track file) must be modified. 
 
 
