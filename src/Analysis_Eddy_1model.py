@@ -161,7 +161,9 @@ def analysis_eddies():
     amplitude_AR_misses = []
 
     i = 0
-    for date in datesb:
+    for ind_date, date in enumerate(datesb):
+      if i < 3:
+        print(f"{ind_date} {date}")
         index = int(date - dates[0])
         # Extract by date
         ## Anticyclonic
@@ -238,7 +240,7 @@ def analysis_eddies():
         )
 
         i += 1
-
+        print("Date OK")
     bins = np.arange(0, 400, 1)
     hist_hits, bins_hits = np.histogram(amplitude_AR_hits, bins=bins)
     hist_misses, bins_misses = np.histogram(amplitude_AR_misses, bins=bins)
@@ -259,7 +261,8 @@ def analysis_eddies():
     bias = AR_POD / (1 - AR_FAR)
     CSI = 1 / ((1 / (1 - AR_FAR)) + (1 / AR_POD) - 1)
 
-    print("GENREAL DETECTION ADN TRACKING INFO")
+    output_file = "detection_and_tracking_info.txt"
+    print("GENERAL DETECTION AND TRACKING INFO")
     print("AC stands for AntiCyclonic & CC for CyClonic")
     print("---------------------------------------------------------")
 
@@ -505,22 +508,21 @@ def analysis_eddies():
     ################################################################################################################
 
     plots = Plots(config_object, True)
-
+    
     ### PLOT ONE DAY DETECTION WITH ADT ###
 
     # Make sure the filtering parameters are the same as in the detection script
 
-    h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
-    h.bessel_high_filter(var_adt, 500, order=1)
+    #h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
+    #h.bessel_high_filter(var_adt, 500, order=1)
 
     a = EddiesObservations.load_file(AC_DETECTION)
     c = EddiesObservations.load_file(CC_DETECTION)
 
-    plots.plot_one_day_adt(h, var_adt, a, c)
-
+    #plots.plot_one_day_adt(h, var_adt, a, c)
+    print("plot_all_tracks_period")
     ### PLOT ALL TRACKS FOR THE PERIOD ###
     plots.plot_all_tracks_period(at, ct)
-
     ### PLOT HEATMAP FOR MODEL 
     plots.plot_heatmap()
 

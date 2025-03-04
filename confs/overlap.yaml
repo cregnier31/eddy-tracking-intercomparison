@@ -1,9 +1,9 @@
 # Example pour le tracking par overlap
 PATHS:
-  FILES_PATTERN: /data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_GLOBAL_DETECT//Cyclonic*.nc
-  SAVE_DIR: /data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_GLO_TRACK_2/
+  FILES_PATTERN: /home/smer/sval001/WORK/EDDY/DETECTIONS/AVISO/2024/all//Anticyclonic*.nc
+  SAVE_DIR: /home/smer/sval001/WORK/EDDY/TRACKING/TRACKING_AVISO/2024/all/
 # Number of timestep for missing detection
-VIRTUAL_LENGTH_MAX: 3
+VIRTUAL_LENGTH_MAX: 1
 # Minimal time to consider as a full track
 TRACK_DURATION_MIN: 10
 
