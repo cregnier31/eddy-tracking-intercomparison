@@ -2,8 +2,8 @@
 
 #Activate environment
 
-DIR_IN=/home/onyxia/work/DATA/DETECT_GLO12/
-DIR_OUT=/home/onyxia/work/DATA/TRACKING_GLO12/
+DIR_IN=/home/jovyan/work/DATA/DETECT_GLO_EQUI/
+DIR_OUT=/home/jovyan/work/DATA/TRACKING_GLO_EQUI/
 
 eddy_types=("Cyclonic" "Anticyclonic")
 tracking_method="overlap"
