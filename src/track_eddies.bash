@@ -3,12 +3,12 @@
 #Activate environment
 
 YEAR="2024"
-QUARTER="all"
+QUARTER="OND"
 
-list_track="AVISO GLO12"
-list_track="AVISO"
+list_track="GLO12 AVISO"
+#list_track="AVISO"
 eddy_types=("Cyclonic" "Anticyclonic")
-eddy_types=("Anticyclonic")
+#eddy_types=("Anticyclonic")
 tracking_method="overlap"
 
 for mod_track in $list_track

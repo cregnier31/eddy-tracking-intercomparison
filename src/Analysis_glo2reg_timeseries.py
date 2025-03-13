@@ -134,24 +134,24 @@ def analysis_eddies():
     for zone, zone_params in zones.items():
         print(f"Extract zone {zone}")
         # Data extraction for each type
-        #at_zone = at.extract_with_area(zone_params, full_path=False)
-        #ct_zone = ct.extract_with_area(zone_params, full_path=False)
-        #eddies_zone = at_zone.merge(ct_zone)
+        at_zone = at.extract_with_area(zone_params, full_path=False)
+        ct_zone = ct.extract_with_area(zone_params, full_path=False)
+        eddies_zone = at_zone.merge(ct_zone)
         #
         ## Reference data
-        #a_zone_ref = a_ref.extract_with_area(zone_params, full_path=False)
-        #c_zone_ref = c_ref.extract_with_area(zone_params, full_path=False)
-        #eddies_ref_zone = a_zone_ref.merge(c_zone_ref)
+        a_zone_ref = a_ref.extract_with_area(zone_params, full_path=False)
+        c_zone_ref = c_ref.extract_with_area(zone_params, full_path=False)
+        eddies_ref_zone = a_zone_ref.merge(c_zone_ref)
         #
         ## Short track data
-        #ats_zone = ats.extract_with_area(zone_params, full_path=False)
-        #cts_zone = cts.extract_with_area(zone_params, full_path=False)
-        #eddies_ts_zone = eddies_ts.extract_with_area(zone_params, full_path=False)
+        ats_zone = ats.extract_with_area(zone_params, full_path=False)
+        cts_zone = cts.extract_with_area(zone_params, full_path=False)
+        eddies_ts_zone = eddies_ts.extract_with_area(zone_params, full_path=False)
         #
         ## Untracked eddies
-        #ata_zone = ata.extract_with_area(zone_params, full_path=False)
-        #cta_zone = cta.extract_with_area(zone_params, full_path=False)
-        #eddies_a_zone = eddies_a.extract_with_area(zone_params, full_path=False)
+        ata_zone = ata.extract_with_area(zone_params, full_path=False)
+        cta_zone = cta.extract_with_area(zone_params, full_path=False)
+        eddies_a_zone = eddies_a.extract_with_area(zone_params, full_path=False)
         
         # Initialize counters
         NB_AC = results[zone]["NB_AC"]
