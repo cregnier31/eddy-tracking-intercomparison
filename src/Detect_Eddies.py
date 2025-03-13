@@ -62,15 +62,10 @@ def compute_eddy(file, general_info):
     )  #### centered pixel position of grid
  
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
-<<<<<<< HEAD
   
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
     print("h filtered")
-=======
-    h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
-    #print("h filtered")
-    
->>>>>>> edito-eddy
+
     a, c = h.eddy_identification(
     	var_adt,
         VAR_U,
@@ -116,11 +111,6 @@ def detect_eddies():
     general_info = config_object["GENERAL_INFO"]
     INPUT_FILES = str(general_info["INPUT_FILES"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
-<<<<<<< HEAD
-   
-=======
-    
->>>>>>> edito-eddy
     if not os.path.exists(OUTPUT_DIR):
         print("\ncreate directory : ", OUTPUT_DIR)
         os.makedirs(OUTPUT_DIR)

@@ -70,19 +70,6 @@ def analysis_eddies():
     PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
     var_adt = str(plot_info["var_adt"])
 
-<<<<<<< HEAD
-    
-
-    ##ONE DAY
-    #AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
-    #CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20230101.nc"
-
-    #print(AC_DETECTION)
-    #print(CC_DETECTION)
-
-=======
->>>>>>> edito-eddy
-
     ### LOAD TRACKS ###
     ## at = anticyclonic tracked
     ## ct = cyclonic tracked
