@@ -26,7 +26,7 @@ from py_eddy_tracker.appli.grid import eddy_id
 from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
-
+import xarray as xr
 
 
 from plots_glo2reg import Plots
@@ -55,7 +55,7 @@ def analysis_eddies():
     # Read in user input arguments
     config_object = ConfigParser()
     config_object.read(CONFIG_FILE)
-
+    
     ### IN CONFIG FILE : 2 sections : GENERAL INFO and PLOT INFO
 
     general_info = config_object["GENERAL_INFO"]
@@ -66,9 +66,14 @@ def analysis_eddies():
     PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
     PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
     GRID_SIZE=int(general_info["GRID_SIZE"])
+    YEAR = str(general_info["YEAR"])
+    QUARTER = str(general_info["QUARTER"])
     plot_info = config_object["PLOT_INFO"]
     PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
     var_adt = str(plot_info["var_adt"])
+    PATH_DETECT_FILES = f"{PATH_DETECT_FILES}{YEAR}/{QUARTER}/"
+    PATH_TRAJ_FILES = f"{PATH_TRAJ_FILES}{YEAR}/{QUARTER}/"
+    PATH_REF_TRACK = f"{PATH_REF_TRACK}{YEAR}/{QUARTER}/"
 
     ### LOAD TRACKS ###
     ## at = anticyclonic tracked
@@ -108,6 +113,7 @@ def analysis_eddies():
     IBI= dict(llcrnrlon=-19, llcrnrlat=26, urcrnrlon=5, urcrnrlat=56)
     AG = dict(llcrnrlon=5, llcrnrlat=-45, urcrnrlon=35, urcrnrlat=-25)
     KOE= dict(llcrnrlon=140, llcrnrlat=28, urcrnrlon=170, urcrnrlat=50)
+    GLOBAL= dict(llcrnrlon=-180, llcrnrlat=-80, urcrnrlon=180, urcrnrlat=80)
         
     if DOMAIN == 'GS':
         zone_params = GS
@@ -117,6 +123,8 @@ def analysis_eddies():
         zone_params = AG 
     elif DOMAIN =='KOE':
         zone_params = KOE
+    elif DOMAIN =='GLOBAL':
+        zone_params = GLOBAL
     else:
         raise ValueError("DOMAIN is not defined.")
 
@@ -211,6 +219,8 @@ def analysis_eddies():
     
     i=0
     for date in datesb:
+      #if i < 3:
+        print(f"Date {date}")
         index = int(date - dates[0])
         # Extract by date
         ## Anticyclonic
@@ -349,6 +359,8 @@ def analysis_eddies():
     
     i=0
     for date in datesb:
+      #if i < 3:
+        print(date)
         index = int(date - dates[0])
         # Extract by date
         ## Anticyclonic
@@ -441,10 +453,134 @@ def analysis_eddies():
     bias=AR_POD/(1-AR_FAR)
     CSI=1/((1/(1-AR_FAR))+(1/AR_POD)-1)
 
+    # Open a file in write mode
+    with open(f"eddy_tracking_summary_{YEAR}_{QUARTER}.txt", "w") as file:
+        
+        # General detection and tracking information
+        file.write("GENERAL DETECTION AND TRACKING INFO\n")
+        file.write("AC stands for AntiCyclonic & CC for CyClonic\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        file.write("The following information applies to the chosen domain\n")
+        
+        # AC eddies information
+        file.write(f"Number of AC eddies in the period = {sum(NB_AC_ZONE)}\n")
+        file.write(f"Minimum number of AC eddies detected in one day = {min(NB_AC_ZONE)}\n")
+        file.write(f"Maximum number of AC eddies detected in one day = {max(NB_AC_ZONE)}\n")
+        file.write(f"So on average {round(np.mean(NB_AC_ZONE), 0)} AC eddies per day\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # CC eddies information
+        file.write(f"Number of CC eddies in the period = {sum(NB_CC_ZONE)}\n")
+        file.write(f"Minimum number of CC eddies detected in one day = {min(NB_CC_ZONE)}\n")
+        file.write(f"Maximum number of CC eddies detected in one day = {max(NB_CC_ZONE)}\n")
+        file.write(f"So on average {round(np.mean(NB_CC_ZONE), 0)} CC eddies per day\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # All eddies information
+        file.write(f"Number of eddies in the period = {sum(NB_EDDIES_ZONE)}\n")
+        file.write(f"Minimum number of eddies detected in one day = {min(NB_EDDIES_ZONE)}\n")
+        file.write(f"Maximum number of eddies detected in one day = {max(NB_EDDIES_ZONE)}\n")
+        file.write(f"So on average {round(np.mean(NB_EDDIES_ZONE))} eddies per day\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Track information
+        file.write(f"Number of AC tracks = {at_zone.nb_tracks}\n")
+        file.write(f"Number of CC tracks = {ct_zone.nb_tracks}\n")
+        file.write(f"Number of tracks = {at_zone.nb_tracks + ct_zone.nb_tracks}\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Average track duration
+        file.write(f"Average AC track duration = {round(np.mean(at_zone.nb_obs_by_track))} jours\n")
+        file.write(f"Average CC track duration = {round(np.mean(ct_zone.nb_obs_by_track))} jours\n")
+        file.write(f"Average track duration = {round(np.mean(eddies_zone.nb_obs_by_track))} jours\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean amplitude
+        file.write(f"Mean AC amplitude = {round(np.mean(at_zone.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean CC amplitude = {round(np.mean(ct_zone.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean eddy amplitude = {round(np.mean(eddies_zone.amplitude * 100), 2)} cm\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean radius
+        file.write(f"Mean AC radius = {round(np.mean(at_zone.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean CC radius = {round(np.mean(ct_zone.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean eddy radius = {round(np.mean(eddies_zone.effective_radius / 1000), 2)} km\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean surface area
+        file.write(f"Mean surface occupied by AC eddies = {round(np.mean(at_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by CC eddies = {round(np.mean(ct_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by eddies = {round(np.mean(eddies_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Tracks too short
+        file.write(f"Number of AC tracks too short = {ats_zone.nb_tracks}\n")
+        file.write(f"Number of CC tracks too short = {cts_zone.nb_tracks}\n")
+        file.write(f"Number of tracks too short = {ats_zone.nb_tracks + cts_zone.nb_tracks}\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Average duration of tracks too short
+        file.write(f"Average AC track too short duration = {round(np.mean(ats_zone.nb_obs_by_track))} jours\n")
+        file.write(f"Average CC track too short duration = {round(np.mean(cts_zone.nb_obs_by_track))} jours\n")
+        file.write(f"Average track too short duration = {round(np.mean(eddies_ts_zone.nb_obs_by_track))} jours\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean amplitude of tracks too short
+        file.write(f"Mean AC amplitude track too short = {round(np.mean(ats_zone.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean CC amplitude track too short = {round(np.mean(cts_zone.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean amplitude track too short = {round(np.mean(eddies_ts_zone.amplitude * 100), 2)} cm\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean radius of tracks too short
+        file.write(f"Mean AC radius track too short = {round(np.mean(ats_zone.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean CC radius track too short = {round(np.mean(cts_zone.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean radius track too short = {round(np.mean(eddies_ts_zone.effective_radius / 1000), 2)} km\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean surface area of tracks too short
+        file.write(f"Mean surface occupied by AC eddies from tracks too short = {round(np.mean(ats_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by CC eddies from tracks too short = {round(np.mean(cts_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by eddies from tracks too short = {round(np.mean(eddies_ts_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Untracked eddies
+        file.write(f"Number of untracked AC eddies = {len(ata_zone)}\n")
+        file.write(f"Number of untracked CC eddies = {len(cta_zone)}\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean amplitude of untracked eddies
+        file.write(f"Mean amplitude of untracked AC eddies = {round(np.mean(ata_zone.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean amplitude of untracked CC eddies = {round(np.mean(cta_zone.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean amplitude of untracked eddies = {round(np.mean(eddies_a_zone.amplitude * 100), 2)} cm\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean radius of untracked eddies
+        file.write(f"Mean radius of untracked AC eddies = {round(np.mean(ata_zone.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean radius of untracked CC eddies = {round(np.mean(cta_zone.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean radius of untracked eddies = {round(np.mean(eddies_a_zone.effective_radius / 1000), 2)} km\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean surface area of untracked eddies
+        file.write(f"Mean surface occupied by untracked AC eddies = {round(np.mean(ata_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by untracked CC eddies = {round(np.mean(cta_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by untracked eddies = {round(np.mean(eddies_a_zone.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Matching results
+        file.write("MATCHING RESULTS\n")
+        file.write("---------------------------------------------------------\n")
+        file.write(f"Number of hits = {len(amplitude_AR_hits)}\n")
+        file.write(f"Number of misses = {len(amplitude_AR_misses)}\n")
+        file.write(f"Number of false alarms = {len(amplitude_AR_falarm)}\n")
+        file.write("---------------------------------------------------------\n\n")
+    
+        # Inform the user
+        print("Data has been saved to 'eddy_tracking_summary.txt'")
     
 
 
-    print("GENREAL DETECTION ADN TRACKING INFO")
+    print("GENERAL DETECTION AND TRACKING INFO")
     print("AC stands for AntiCyclonic & CC for CyClonic")
     print("---------------------------------------------------------")
 
@@ -598,32 +734,43 @@ def analysis_eddies():
     ### PLOT ALL TRACKS FOR THE PERIOD ###
 
     ### PLOT HEATMAP FOR MODEL 
-    plots.plot_heatmap(zone_params)
-    plots.plot_heatmap_radius(zone_params)
-    
+    plots.plot_heatmap(zone_params, val_REF="AVISO")
+    plots.plot_heatmap_amplitude(zone_params, val_REF="AVISO")
+    plots.plot_heatmap_radius(zone_params, val_REF="AVISO")
+    plots.plot_heatmap(zone_params, val_REF=MODEL)
+    plots.plot_heatmap_amplitude(zone_params, val_REF=MODEL)
+    plots.plot_heatmap_radius(zone_params, val_REF=MODEL)
+    print('Plot heatmap ok')    
     ### NUMBER OF DETECTION BY TIME WITH MEAN ###
     plots.plot_number_detection_time_mean(NB_EDDIES_ZONE)
 
     ### COUNT 
     plots.plot_count_log_amp(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref) 
+    print('Plot plots.plot_count_log_amp ok')    
     plots.plot_count_speed_radius(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
+    print('Plot plots.plot_count_speed_radius ok')    
     plots.plot_count_lifetime(at, ct, a_ref, c_ref, at_zone, ct_zone, a_zone_ref, c_zone_ref)
+    print('Plot plot_count_lifetime ok')    
 
 
     ### 2D HISTOGRAM RADIUS AMPLITUDE ###
     plots.plot_2d_histo(eddies_zone)
-
+    print('plots.plot_2d_histo ok')
     ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
     plots.plot_histo_hits_false(radius_AR_hits_glo, radius_AR_misses_glo, radius_AR_falarm_glo,radius_AR_hits, radius_AR_misses, radius_AR_falarm)
+    print('plot plot_histo_hits_false ok')
 
     ### POD & FAR BY AMPLITUDE (CM) ###
     plots.plot_pod_far_amplitude(POD_AR, FAR_AR)
 
+    print('plot plots.plot_pod_far_amplitude ok')
     ### POD & FAR BY TIME ###
-    plots.plot_pod_far_time(AR_POD, AR_FAR)
+    #plots.plot_pod_far_time(AR_POD, AR_FAR)
+    print('plot plots.plot_pod_far_time ok')
 
     ### PERFORMANCE DIAGRAM ###
     plots.perf_diag(SR, AR_POD,SR_GLO,AR_POD_GLO)
+    print('plot plots.perf_diag ok')
 
 
 

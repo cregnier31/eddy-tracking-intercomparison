@@ -13,6 +13,12 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import netCDF4 as nc
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+dir_cartopy = "/home/smer/sval001/WORK/DATA/cartopy_data/"
+cartopy.config['pre_existing_data_dir'] = os.path.join(dir_cartopy, 'cartopy_data')
+os.environ['CARTOPY_USER_BACKGROUNDS'] = os.path.join(dir_cartopy, 'cartopy_data')
+
 data_crs = ccrs.PlateCarree()
 from scipy.interpolate import interp1d
 
@@ -27,6 +33,8 @@ def plt_cartopy(ax, labels=True):
 
 class Plots:
     def __init__(self, info, show=False):
+        dir_cartopy = "/home/smer/regnierc/code/LIB_PYT/lib_pyt_dev/lib_pyt/lib_pyt/statics/cartopy_data/"
+        cartopy.config['pre_existing_data_dir'] = os.path.join(dir_cartopy, 'cartopy_data')
         general_info = info["GENERAL_INFO"]
         self.model = str(general_info["MODEL"])
         self.reference = str(general_info["REFERENCE"])
@@ -300,6 +308,9 @@ class Plots:
 
     
     def plot_all_tracks_period(self, at, ct):
+        dir_cartopy = "/home/smer/sval001/WORK/DATA/cartopy_data/"
+        cartopy.config['pre_existing_data_dir'] = os.path.join(dir_cartopy, 'cartopy_data')
+        os.environ['CARTOPY_USER_BACKGROUNDS'] = os.path.join(dir_cartopy, 'cartopy_data')
         fig, ax = plt.subplots(subplot_kw=dict(projection=data_crs))
         at.plot(
             ax,

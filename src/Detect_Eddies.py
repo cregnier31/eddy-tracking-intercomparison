@@ -11,8 +11,10 @@ from functools import partial
 import logging
 from py_eddy_tracker.appli.grid import eddy_id
 from py_eddy_tracker.dataset.grid import RegularGridDataset
+from py_eddy_tracker import start_logger
 from netCDF4 import Dataset
 import pandas as pd
+import numba
 
 import warnings 
 warnings.filterwarnings("ignore")
@@ -62,10 +64,8 @@ def compute_eddy(file, general_info):
     )  #### centered pixel position of grid
  
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
-  
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
     print("h filtered")
-
     a, c = h.eddy_identification(
     	var_adt,
         VAR_U,
@@ -76,7 +76,7 @@ def compute_eddy(file, general_info):
         shape_error=SHAPE_ERROR,
         ) # Error max (%) between ratio of circle fit and contour)
      
-    print("")
+    print("Eddy identification ok")
     ################# save eddy detcted in netcdf files
     with Dataset(
         date.strftime(OUTPUT_DIR + "Anticyclonic_" + MODEL + "_" + date_file + ".nc"),
@@ -87,6 +87,7 @@ def compute_eddy(file, general_info):
         date.strftime(OUTPUT_DIR + "Cyclonic_" + MODEL + "_" + date_file + ".nc"), "w"
     ) as h:
         c.to_netcdf(h)
+    print("write ok")
 
 #def detect_eddies(logger):
 def detect_eddies():
@@ -120,16 +121,15 @@ def detect_eddies():
     pool = mp.Pool()
     pool.imap(partial(compute_eddy, general_info=general_info), INPUT_FILES)
     
-    ##if problem : run with the logger
-    #pool.imap(partial(compute_eddy, general_info=general_info,log=logger), INPUT_FILES)
     pool.close()
     pool.join()
-    print(OUTPUT_DIR)
+    print(f"{OUTPUT_DIR=}")
     print("Eddy detection done")
 
 
 if __name__ == "__main__":
-    #logger = logging.getLogger("Pyeddytrack")
-    #logging.basicConfig(filename='example.log', level=logging.DEBUG)
-    #logger.setLevel(logging.DEBUG)
-    detect_eddies(logger)
+    #start_logger().setLevel("DEBUG")  # Available options: ERROR, WARNING, INFO, DEBUG
+    #start_logger().setLevel("INFO")  # Available options: ERROR, WARNING, INFO, DEBUG
+    print('compute_eddy')
+    #numba.config.DISABLE_JIT = True
+    detect_eddies()

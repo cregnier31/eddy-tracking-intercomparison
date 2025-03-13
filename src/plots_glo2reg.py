@@ -14,6 +14,9 @@ from matplotlib.patches import Rectangle
 import os
 import fnmatch
 import netCDF4 as nc
+import xarray as xr
+#import ssl
+#ssl._create_default_https_context = ssl._create_unverified_context
 
 def plt_cartopy_ibi(ax, labels=True):
     # ax.set_aspect('auto') # The figure will follow the ratio of the figsize
@@ -31,23 +34,42 @@ class Plots:
         general_info = info["GENERAL_INFO"]
         self.model = str(general_info["MODEL"])
         self.reference = str(general_info["REFERENCE"])
-        self.year = int(general_info["YEAR"])
+        self.year = str(general_info["YEAR"])
         self.date_start = str(general_info["DATE_START"])
-        self.periods = int(general_info["PERIODS"])
         self.DOMAIN = str(general_info["DOMAIN"])
         self.PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
         self.PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
         self.PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
+        self.PATH_DETECT_REF_FILES=str(general_info["PATH_DETECTION_REF_FILES"])
+        self.PATH_STATS = str(info["GENERAL_INFO"]["PATH_STATS"])
         self.grid_size=int(general_info["GRID_SIZE"])
-
+        self.quarter = str(general_info["QUARTER"])
+        self.PATH_DETECT_FILES = f"{self.PATH_DETECT_FILES}{self.year}/{self.quarter}/"
+        self.PATH_TRAJ_FILES = f"{self.PATH_TRAJ_FILES}{self.year}/{self.quarter}/"
+        self.PATH_REF_TRACK = f"{self.PATH_REF_TRACK}{self.year}/{self.quarter}/"
+        self.PATH_DETECT_REF_FILES= f"{self.PATH_DETECT_REF_FILES}{self.year}/{self.quarter}/"
+        self.periods = (
+            len(fnmatch.filter(os.listdir(self.PATH_DETECT_FILES), "*.*"))
+            // 2
+        )
         # Geographical extend
         self.lon_min = int(general_info["LON_MIN"])
         self.lon_max = int(general_info["LON_MAX"])
         self.lat_min = int(general_info["LAT_MIN"])
         self.lat_max = int(general_info["LAT_MAX"])
-
+        self.average_radius_units = "km"
+        self.average_radius_long_name = "Mean radius of eddies"
+        self.cell_counters_units = "counts"
+        self.average_amp_units = "cm"
+        self.average_amp_long_name = "Mean amplitude of eddies"
+        self.cell_counters_long_name = "Number of eddies"
         self.dir_plot = str(info["PLOT_INFO"]["PATH_PLOT"])
-
+        self.colors = {}
+        self.colors['GS'] = "red"
+        self.colors['IBI'] = "green"
+        self.colors['AG'] = "pink"
+        self.colors['KOE'] = "purple"
+        self.colors['GLOBAL'] = "black"
         self.show = show
 
 
@@ -101,10 +123,10 @@ class Plots:
         gl.ylabel_style = {'color': 'k', 'size': 'medium'}
         gl.right_labels = False ; gl.top_labels = False
         ax.legend()
-        ax.set_title("Tracks " + str(self.model) + " " + str(self.year))
+        ax.set_title(f"Tracks {self.model} {self.year}_{self.quarter}")
         plt_cartopy_ibi(ax, labels=False)
         plt.savefig(
-            self.dir_plot + self.model + "_TRACKS_" + str(self.year) + ".jpeg",
+            f"{self.dir_plot}{self.model}_TRACKS_{self.year}_{self.quarter}.jpeg",
             bbox_inches="tight",
             dpi=600,
         )
@@ -112,21 +134,35 @@ class Plots:
         if self.show:
             plt.show()
 
-    def plot_heatmap(self,zone_params):
+    def plot_heatmap(self,zone_params, val_REF=""):
 
         GRID_SIZE=self.grid_size
         
         # Calculate the number of cells in latitude and longitude for the specified zone_params
         lat_cells = int((zone_params['urcrnrlat'] - zone_params['llcrnrlat']) / GRID_SIZE)
         lon_cells = int((zone_params['urcrnrlon'] - zone_params['llcrnrlon']) / GRID_SIZE)
-        
-        
+        # Generate latitude and longitude arrays based on the grid size
+        lat_values = np.linspace(
+                    zone_params['llcrnrlat'] + GRID_SIZE / 2,
+                        zone_params['urcrnrlat'] - GRID_SIZE / 2,
+                            lat_cells
+                            )
+        lon_values = np.linspace(
+                    zone_params['llcrnrlon'] + GRID_SIZE / 2,
+                        zone_params['urcrnrlon'] - GRID_SIZE / 2,
+                            lon_cells
+                            )
+
         # Create an empty grid to store cell counters
         cell_counters = np.zeros((lat_cells, lon_cells), dtype=int)
+        if val_REF == "AVISO":
+            input_files = self.PATH_DETECT_REF_FILES
+        else:
+            input_files = self.PATH_DETECT_FILES
         
         # Iterate through all files in the folder
-        for file in os.listdir(self.PATH_DETECT_FILES):
-            with nc.Dataset(os.path.join(self.PATH_DETECT_FILES, file), 'r') as ds:
+        for file in os.listdir(input_files):
+            with nc.Dataset(os.path.join(input_files, file), 'r') as ds:
                 # Get eddies' coordinates (latitude, longitude) from the NetCDF file
                 latitudes = ds.variables['latitude'][:]
                 longitudes = ds.variables['longitude'][:]
@@ -154,6 +190,22 @@ class Plots:
         
         cell_counters = np.ma.masked_array(cell_counters, mask=mask)
         
+        # Save netcdf file
+        # Create an xarray DataArray and Dataset
+        data_array = xr.DataArray(
+                                  cell_counters/self.periods,
+                                  dims=("latitude", "longitude"),
+                                  coords={"latitude": lat_values, "longitude": lon_values},
+                                  name="cell_counters",
+                                  attrs={
+                                         "units": self.cell_counters_units,
+                                         "long_name": self.cell_counters_long_name
+                                        }
+                                )
+        # Create a Dataset and save to NetCDF
+        dataset = xr.Dataset({"cell_counters": data_array})
+        dataset.to_netcdf(f"{self.PATH_STATS}{val_REF}_{self.year}_{self.quarter}_Heatmap-eddies.nc")
+
         # Create heatmap
         heatmap = ax.imshow(cell_counters/self.periods, vmin=0, vmax=(cell_counters/self.periods).max(), cmap='jet', origin='lower',
                             extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'], zone_params['urcrnrlat']]) 
@@ -170,29 +222,155 @@ class Plots:
 
 
         #Save and show
-        plt.savefig(
-                self.dir_plot + self.model + "_HEATMAP" + ".jpeg",
+        plt.savefig(f'{self.dir_plot}{val_REF}_HEATMAP_{self.year}_{self.quarter}.jpeg',
                 bbox_inches="tight",
                 dpi=500,)
     
         if self.show:
             plt.show()
 
-    def plot_heatmap_radius(self,zone_params):    
+    def plot_heatmap_amplitude(self,zone_params, val_REF=""):    
 
         grid_size=self.grid_size
+        GRID_SIZE = grid_size 
         
         # Calculate the number of cells in latitude and longitude for the specified zone_params
         lat_cells = int((zone_params['urcrnrlat'] - zone_params['llcrnrlat']) / grid_size)
         lon_cells = int((zone_params['urcrnrlon'] - zone_params['llcrnrlon']) / grid_size)
         
+        # Generate latitude and longitude arrays based on the grid size
+        lat_values = np.linspace(
+                    zone_params['llcrnrlat'] + GRID_SIZE / 2,
+                        zone_params['urcrnrlat'] - GRID_SIZE / 2,
+                            lat_cells
+                            )
+        lon_values = np.linspace(
+                    zone_params['llcrnrlon'] + GRID_SIZE / 2,
+                        zone_params['urcrnrlon'] - GRID_SIZE / 2,
+                            lon_cells
+                            )
+
+        # Create empty grids
+        amp_sums = np.zeros((lat_cells, lon_cells), dtype=float)
+        cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)  
+        
+        if val_REF == "AVISO":
+            input_files = self.PATH_DETECT_REF_FILES
+        else:
+            input_files = self.PATH_DETECT_FILES
+        for fichier in os.listdir(input_files):
+            with nc.Dataset(os.path.join(input_files, fichier), 'r') as ds:
+                # Get eddies coordinates and amplitude
+                latitudes = ds.variables['latitude'][:]
+                longitudes = ds.variables['longitude'][:]
+                amplitude = ds.variables['amplitude'][:]*100
+                
+                # For each eddy 
+                for i in range(len(latitudes)):
+                    x, y, amp = latitudes[i], longitudes[i], amplitude[i]
+                    
+                    #  Check if the eddy is in the domain of study 
+                    if (zone_params['llcrnrlon'] <= y <= zone_params['urcrnrlon']) and (zone_params['llcrnrlat'] <= x <= zone_params['urcrnrlat']):
+                        # Calculate corresponding cell indices while keeping values within bounds
+                        lat_index = min(max(int((x - zone_params['llcrnrlat']) / grid_size), 0), lat_cells - 1)
+                        lon_index = min(max(int((y - zone_params['llcrnrlon']) / grid_size), 0), lon_cells - 1)
+                        
+                        # Add the amplitude to the sum 
+                        amp_sums[lat_index, lon_index] += amp
+
+                        #Compute the number of eddies
+                        cell_counts[lat_index, lon_index] += 1
+        
+        # Compute the average amplitude for each cell (avoiding division by zero)
+        average_amp = np.divide(amp_sums, cell_counts, where=cell_counts != 0)
+        
+        # Save netcdf file
+        # Create an xarray DataArray and Dataset
+        data_array = xr.DataArray(
+                                  average_amp,
+                                  dims=("latitude", "longitude"),
+                                  coords={"latitude": lat_values, "longitude": lon_values},
+                                  name="average_amp",
+                                  attrs={
+                                         "units": self.average_amp_units,
+                                         "long_name": self.average_amp_long_name
+                                        }
+                                )
+        # Create a Dataset and save to NetCDF
+        dataset = xr.Dataset({"average_amp": data_array})
+        # Add the average_amplitude as an attribute to the Dataset
+
+        dataset.to_netcdf(f"{self.PATH_STATS}{val_REF}_{self.year}_{self.quarter}_Heatmap-amplitude-eddies.nc")
+
+        # Create heatmap
+        
+        #Create a map
+        fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
+        
+        # Add coasts
+        ax.add_feature(cfeature.COASTLINE, linewidth=1, edgecolor='black')
+        
+        # Create a masque for values = 0 
+        mask = cell_counts == 0
+        
+        
+        average_amp = np.ma.masked_array(average_amp, mask=mask)
+
+        #Create heatmap
+        heatmap = ax.imshow(average_amp, cmap='jet',vmax=80 ,origin='lower',
+                            extent=[zone_params['llcrnrlon'], zone_params['urcrnrlon'], zone_params['llcrnrlat'], zone_params['urcrnrlat']])
+        
+        cbar = plt.colorbar(heatmap ,location='bottom',shrink=0.5,label='Mean Amplitude of eddies (cm)')
+        
+        # Add title and labels
+        plt.title('Amplitude of eddies ' + str(self.model))
+        ax.set_xlabel('Longitude')
+        ax.set_ylabel('Latitude')
+        
+        ax.add_feature(cartopy.feature.LAND, edgecolor='k', facecolor='linen', zorder=1) # ghostwhite
+        
+        gl = ax.gridlines(draw_labels=True, linestyle=':', xlocs=np.arange(-180, 180, 10), ylocs=np.arange(-180, 180, 10))
+        gl.xlabel_style = {'color': 'k', 'size': 'medium'}
+        gl.ylabel_style = {'color': 'k', 'size': 'medium'}
+        gl.right_labels = False ; gl.top_labels = False
+
+        #Save and show
+        plt.savefig(f"{self.dir_plot}{val_REF}_HEATMAP_Amplitude_{self.year}_{self.quarter}.jpeg",
+            bbox_inches="tight",
+            dpi=500)
+
+        if self.show:
+            plt.show()
+
+
+    def plot_heatmap_radius(self,zone_params, val_REF=""):    
+
+        grid_size=self.grid_size
+        GRID_SIZE = grid_size 
+        # Calculate the number of cells in latitude and longitude for the specified zone_params
+        lat_cells = int((zone_params['urcrnrlat'] - zone_params['llcrnrlat']) / grid_size)
+        lon_cells = int((zone_params['urcrnrlon'] - zone_params['llcrnrlon']) / grid_size)
+        # Generate latitude and longitude arrays based on the grid size
+        lat_values = np.linspace(
+                    zone_params['llcrnrlat'] + GRID_SIZE / 2,
+                        zone_params['urcrnrlat'] - GRID_SIZE / 2,
+                            lat_cells
+                            )
+        lon_values = np.linspace(
+                    zone_params['llcrnrlon'] + GRID_SIZE / 2,
+                        zone_params['urcrnrlon'] - GRID_SIZE / 2,
+                            lon_cells
+                            )
         # Create empty grids
         radius_sums = np.zeros((lat_cells, lon_cells), dtype=float)
         cell_counts = np.zeros((lat_cells, lon_cells), dtype=int)  
+        if val_REF == "AVISO":
+            input_files = self.PATH_DETECT_REF_FILES
+        else:
+            input_files = self.PATH_DETECT_FILES
         
-        
-        for fichier in os.listdir(self.PATH_DETECT_FILES):
-            with nc.Dataset(os.path.join(self.PATH_DETECT_FILES, fichier), 'r') as ds:
+        for fichier in os.listdir(input_files):
+            with nc.Dataset(os.path.join(input_files, fichier), 'r') as ds:
                 # Get eddies coordinates and radius
                 latitudes = ds.variables['latitude'][:]
                 longitudes = ds.variables['longitude'][:]
@@ -216,6 +394,26 @@ class Plots:
         
         # Compute the average radius for each cell (avoiding division by zero)
         average_radii = np.divide(radius_sums, cell_counts, where=cell_counts != 0)
+        
+        # Save netcdf file
+        # Create an xarray DataArray and Dataset
+        data_array = xr.DataArray(
+                                  average_radii,
+                                  dims=("latitude", "longitude"),
+                                  coords={"latitude": lat_values, "longitude": lon_values},
+                                  name="average_radius",
+                                  attrs={
+                                         "units": self.average_radius_units,
+                                         "long_name": self.average_radius_long_name
+                                        }
+                                )
+        # Create a Dataset and save to NetCDF
+        dataset = xr.Dataset({"average_radius": data_array})
+        # Add the average_radius as an attribute to the Dataset
+
+        dataset.to_netcdf(f"{self.PATH_STATS}{val_REF}_{self.year}_{self.quarter}_Heatmap-radius-eddies.nc")
+
+        # Create heatmap
         
         #Create a map
         fig, ax = plt.subplots(figsize=(10,10),subplot_kw={'projection': ccrs.PlateCarree()})
@@ -249,13 +447,43 @@ class Plots:
 
         #Save and show
         plt.savefig(
-            self.dir_plot + self.model + "_HEATMAP_RADIUS" + ".jpeg",
+            self.dir_plot + val_REF + "_HEATMAP_RADIUS" + ".jpeg",
             bbox_inches="tight",
             dpi=500,)
 
         if self.show:
             plt.show()
-    
+   
+    def plot_number_detection_time_mean_area(self, results):
+        t_data = pd.date_range(self.date_start, periods=self.periods, freq="D")
+        fig, ax = plt.subplots(figsize=(12, 6))
+        # ax = fig.add_axes([.03,.03,.94,.94])
+        for region in results.keys():
+            print(f"Plot {region}")
+            color = self.colors[region]
+            NB_EDDIES = results[region]['NB_EDDIES']
+            NB_EDDIES_REF = results[region]['NB_EDDIES_REF']
+            ax.plot(t_data, NB_EDDIES, color=color, label=region)
+            ax.plot(t_data, NB_EDDIES_REF, color=color, linestyle="--")
+            #NB_mean = np.nanmean(NB_EDDIES)
+            #ax.plot(t_data, NB_mean, label='Mean by day =  '+ str(int(np.round(np.mean(NB_mean)))), linestyle="--")
+        plt.ylabel("Nb eddy detected", fontsize=16)
+        plt.title("Evolution of eddies detected for GLO12 and AVISO (dashed)",  fontsize=20)
+        ax.xaxis.set_major_locator(mdates.MonthLocator([1, 4, 7, 10]))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        # Adjust font size of tick labels
+        ax.tick_params(axis="x", labelsize=16)  # X-axis tick labels
+        ax.tick_params(axis="y", labelsize=16)  # Y-axis tick labels
+        # Set y-axis to log scale
+        #ax.set_yscale("log")
+        ax.legend()
+
+        plt.savefig(
+            f"{self.dir_plot}NB_EDDIES_all_regions_withREF_{self.model}_{self.year}_{self.quarter}.jpeg",
+            bbox_inches="tight",
+        )
+
+
     def plot_number_detection_time_mean(self, NB_EDDIES):
         t_data = pd.date_range(self.date_start, periods=self.periods, freq="D")
         NB_mean = np.full(len(t_data), np.mean(NB_EDDIES))
@@ -270,7 +498,7 @@ class Plots:
         ax.legend()
 
         plt.savefig(
-            f"{self.dir_plot}NB_EDDIES_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}NB_EDDIES_{self.model}_{self.year}_{self.quarter}.jpeg",
             bbox_inches="tight",
         )
 
@@ -320,7 +548,7 @@ class Plots:
 
         hist_eddies_zone = hist_zone_a + hist_zone_c
 
-        # Data ref for the demain
+        # Data ref for the domain
         data_zone_a_ref = a_zone_ref[name] * 100
         data_zone_c_ref = c_zone_ref[name] * 100
         bins_zone_ref = np.arange(0.0005, 100, 0.5)
@@ -525,7 +753,7 @@ class Plots:
         fig.colorbar(im, ax=ax)
         plt.title(self.model)
         plt.savefig(
-            f"{self.dir_plot}HIST2D_AMP_RAD_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}HIST2D_AMP_RAD_{self.model}_{self.year}_{self.quarter}.jpeg",
             bbox_inches="tight",
         )
 
@@ -589,7 +817,7 @@ class Plots:
         ax2.set_title(f"{self.model} Reference {self.reference} (Domain)")
         
         plt.tight_layout()  # Ensures proper spacing
-        plt.savefig(f"{self.dir_plot}HIST_MATCHING_{self.model}_{self.year}_dual.jpeg", bbox_inches="tight")
+        plt.savefig(f"{self.dir_plot}HIST_MATCHING_{self.model}_{self.year}_{self.quarter}_dual.jpeg", bbox_inches="tight")
         
         if self.show:
             plt.show()
@@ -624,7 +852,7 @@ class Plots:
         fig.suptitle(f"{self.model} Reference {self.reference}")
         plt.tight_layout()
         plt.savefig(
-            f"{self.dir_plot}POD_FAR_AMP_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}POD_FAR_AMP_{self.model}_{self.year}_{self.quarter}.jpeg",
             bbox_inches="tight",
         )
         if self.show:
@@ -650,7 +878,7 @@ class Plots:
         axes[1].set_title("False Alarm Ratio")
 
         plt.savefig(
-            f"{self.dir_plot}POD_FAR_TEMP_{self.model}_{self.year}.jpeg",
+            f"{self.dir_plot}POD_FAR_TEMP_{self.model}_{self.year}_{self.quarter}.jpeg",
             bbox_inches="tight",
         )
         if self.show:
@@ -683,7 +911,7 @@ class Plots:
             ax.plot(pente, pente * float(label), linestyle="--", color="k", linewidth=1)
             ax.text(x[i], y_offsets[i], label, size=10)
 
-        ax.set_title("Performance Diagram " + self.model + " " + str(self.year), y=1.08)
+        ax.set_title(f"Performance Diagram {self.model} {self.year}_{self.quarter}", y=1.08)
         ax.scatter(np.mean(SR), np.mean(AR_POD), color="blue", s=200)
         ax.scatter(np.mean(SR_GLO), np.mean(AR_POD_GLO), color="red", s=200)
 
@@ -702,7 +930,7 @@ class Plots:
         ax.minorticks_on()
         
             
-        plt.savefig(f"{self.dir_plot}PERFORMANCE_DIAG_{self.model}_{self.year}.jpeg", bbox_inches="tight", dpi=600)
+        plt.savefig(f"{self.dir_plot}PERFORMANCE_DIAG_{self.model}_{self.year}_{self.quarter}.jpeg", bbox_inches="tight", dpi=600)
 
         if self.show:
             plt.show()
