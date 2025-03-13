@@ -1,9 +1,9 @@
-#!bin/bash
+#!/bin/bash
 
 #Activate environment
 
-DIR_IN=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_GLOBAL_DETECT/
-DIR_OUT=/data/rd_exchange/fdubost/EddyDetection/FDUBOST/nrt/GLO12_GLO_TRACK_2/
+DIR_IN=/home/jovyan/work/DATA/DETECT_GLO_EQUI/
+DIR_OUT=/home/jovyan/work/DATA/TRACKING_GLO_EQUI/
 
 eddy_types=("Cyclonic" "Anticyclonic")
 tracking_method="overlap"
@@ -25,7 +25,7 @@ do
     ls -l ${DIR_IN}/${eddy_type}*.nc | wc -l
 
     echo "Track eddies:"
-    EddyTracking ../confs/${tracking_method}.yaml -v DEBUG
+    EddyTracking ../confs/${tracking_method}.yaml 
 
     echo ".oO Eddy Tracking Done Oo."
 done

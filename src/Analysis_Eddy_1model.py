@@ -65,12 +65,13 @@ def analysis_eddies():
     MODEL = str(general_info["MODEL"])
     REFERENCE = str(general_info["REFERENCE"])
     PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
+    PATH_DETECT_FILES_REF=str(general_info["PATH_DETECTION_REF_FILES"])
     PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
     PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
 
-    plot_info = config_object["PLOT_INFO"]
-    PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
-    var_adt = str(plot_info["var_adt"])
+    # plot_info = config_object["PLOT_INFO"]
+    # PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
+    # var_adt = str(plot_info["var_adt"])
     GRID_SIZE=int(general_info["GRID_SIZE"])
 
     ##ONE DAY
@@ -510,21 +511,24 @@ def analysis_eddies():
 
     # Make sure the filtering parameters are the same as in the detection script
 
-    h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
-    h.bessel_high_filter(var_adt, 500, order=1)
+    # h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
+    # h.bessel_high_filter(var_adt, 500, order=1)
 
-    a = EddiesObservations.load_file(AC_DETECTION)
-    c = EddiesObservations.load_file(CC_DETECTION)
+    # a = EddiesObservations.load_file(AC_DETECTION)
+    # c = EddiesObservations.load_file(CC_DETECTION)
 
-    plots.plot_one_day_adt(h, var_adt, a, c)
+    # plots.plot_one_day_adt(h, var_adt, a, c)
 
-    ### PLOT ALL TRACKS FOR THE PERIOD ###
-    plots.plot_all_tracks_period(at, ct)
+    # ### PLOT ALL TRACKS FOR THE PERIOD ###
+    # plots.plot_all_tracks_period(at, ct)
 
     ### PLOT HEATMAP FOR MODEL 
-    plots.plot_heatmap()
-
-    plots.plot_heatmap_radius()
+    plots.plot_heatmap_model()
+    plots.plot_heatmap_ref()
+    plots.plot_heatmap_radius_model()
+    plots.plot_heatmap_radius_ref()
+    plots.plot_heatmap_amplitude_model()
+    plots.plot_heatmap_amplitude_ref()
     
     ### NUMBER OF DETECTION BY TIME WITH MEAN ###
     plots.plot_number_detection_time_mean(NB_EDDIES)
@@ -540,7 +544,9 @@ def analysis_eddies():
 
     ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
     plots.plot_histo_hits_false(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
+    plots.plot_histo_lisse(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
 
+    
     ### POD & FAR BY AMPLITUDE (CM) ###
     plots.plot_pod_far_amplitude(POD_AR, FAR_AR)
 

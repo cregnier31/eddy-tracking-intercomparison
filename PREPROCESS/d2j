@@ -6,6 +6,7 @@
 ##
 ## Mercator Ocean
 ###############################################################
+<<<<<<< HEAD
  typeset -i day month year tmpmonth tmpyear
 
  ndate=$1
@@ -16,3 +17,15 @@
  ((tmpmonth = 12 * ${year} + ${month} - 3))
  ((tmpyear = ${tmpmonth} / 12))
  print $(((734*${tmpmonth} + 15)/24 - 2*${tmpyear} + ${tmpyear}/4 - ${tmpyear}/100 + ${tmpyear}/400 + ${day} - 712164)) 
+=======
+typeset -i day month year tmpmonth tmpyear
+
+ndate=$1
+
+year=`echo ${ndate} | cut -c 1-4`
+month=`echo ${ndate} | cut -c 5-6`
+day=`echo ${ndate} | cut -c 7-8`
+((tmpmonth = 12 * ${year} + ${month} - 3))
+((tmpyear = ${tmpmonth} / 12))
+print $(((734*${tmpmonth} + 15)/24 - 2*${tmpyear} + ${tmpyear}/4 - ${tmpyear}/100 + ${tmpyear}/400 + ${day} - 712164)) 
+>>>>>>> edito-eddy

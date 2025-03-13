@@ -30,9 +30,9 @@ def reg_date(string_to_find_date_in):
 
 #def compute_eddy(file, general_info, log):
 def compute_eddy(file, general_info):
+    
     MODEL = str(general_info["MODEL"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
-
     var_adt = str(general_info["var_adt"])
     VAR_U = str(general_info["VAR_U"])
     VAR_V = str(general_info["VAR_V"])
@@ -43,8 +43,10 @@ def compute_eddy(file, general_info):
     AMP_MIN = float(general_info["AMP_MIN"])
     WAVELENGTH = int(general_info["WAVELENGTH"])
     ORDER_FILTER = int(general_info["ORDER_FILTER"])
-
+    
     date_file = reg_date(file)[0:8]
+    #date_file="20230201"
+    
     date = pd.to_datetime(
         date_file, format="%Y%m%d"
     )  #### define date for eddy detection
@@ -60,9 +62,15 @@ def compute_eddy(file, general_info):
     )  #### centered pixel position of grid
  
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
+<<<<<<< HEAD
   
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
     print("h filtered")
+=======
+    h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
+    #print("h filtered")
+    
+>>>>>>> edito-eddy
     a, c = h.eddy_identification(
     	var_adt,
         VAR_U,
@@ -108,13 +116,17 @@ def detect_eddies():
     general_info = config_object["GENERAL_INFO"]
     INPUT_FILES = str(general_info["INPUT_FILES"])
     OUTPUT_DIR = str(general_info["OUTPUT_DIR"])
+<<<<<<< HEAD
    
+=======
+    
+>>>>>>> edito-eddy
     if not os.path.exists(OUTPUT_DIR):
         print("\ncreate directory : ", OUTPUT_DIR)
         os.makedirs(OUTPUT_DIR)
 
     INPUT_FILES = sorted(glob.glob(INPUT_FILES + "*.nc"))
-
+    
     pool = mp.Pool()
     pool.imap(partial(compute_eddy, general_info=general_info), INPUT_FILES)
     
