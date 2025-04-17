@@ -1,0 +1,18 @@
+# This file may be used to create an environment using:
+# $ conda env create -f loader_eddy_env.yml
+name: loader_eddy
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - pip:
+    - copernicusmarine
+  - python>=3.9,<3.12
+  - xarray
+  - matplotlib
+  - numpy
+  - pandas
+  - cartopy
+  - scikit-learn
+  - scipy
+  - s3fs

@@ -1,0 +1,10 @@
+# 
+# !!! Don't forget to initialize your Copernicus Marine account once !!!
+#
+# The "login" command allows users to verify their Copernicus Marine credentials and create the 
+# configuration file (if it does not exist yet) that will automatically be read when consuming 
+# authenticated services. 
+# Run the following python command and insert your Copernicus Marine username and password 
+# (request yours, it's free):
+import copernicusmarine
+copernicusmarine.login()
