@@ -951,11 +951,11 @@ class GridDataset(object):
             eddies.time[:] = (date - datetime(1950, 1, 1)).total_seconds() / 86400.0
 
             # normalization longitude between 0 - 360, because storage have an offset on 180
-            eddies.lon_max[:] %= 360
-            eddies.lon[:] %= 360
-            ref = eddies.lon - 180
-            eddies.contour_lon_e[:] = ((eddies.contour_lon_e.T - ref) % 360 + ref).T
-            eddies.contour_lon_s[:] = ((eddies.contour_lon_s.T - ref) % 360 + ref).T
+            #eddies.lon_max[:] %= 360
+            #eddies.lon[:] %= 360
+            #ref = eddies.lon - 180
+            #eddies.contour_lon_e[:] = ((eddies.contour_lon_e.T - ref) % 360 + ref).T
+            #eddies.contour_lon_s[:] = ((eddies.contour_lon_s.T - ref) % 360 + ref).T
             a_and_c.append(eddies)
 
         if in_h_unit is not None:
