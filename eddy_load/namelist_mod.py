@@ -9,15 +9,15 @@
 #ymin=26.
 #ymax=56.
 #   - GLO
-xmin=-180.
-xmax=180.
-ymin=-70.
-ymax=70.
+#xmin=-180.
+#xmax=180.
+#ymin=-70.
+#ymax=70.
 zmin=0.5
 zmax=0.5
 # Input MDS GLO12 data set
-DATASET_ID_MOD_SSV = "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m"
-DATASET_ID_MOD_SSH = "cmems_mod_glo_phy_anfc_0.083deg_P1D-m"
+#DATASET_ID_MOD_SSV = "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m"
+#DATASET_ID_MOD_SSH = "cmems_mod_glo_phy_anfc_0.083deg_P1D-m"
 # Input MDS IBI data set
 #DATASET_ID_MOD_SSV = "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m"
 #DATASET_ID_MOD_SSH = "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m"
@@ -39,8 +39,8 @@ res_mod = 1 / 12.
 #res_mod = 1 / 36.
 # Output files
 #   - filename
-dirout_mod = "/home/jovyan/work/DATA/GLO/"
-fileout_mod_pre = "GLO"
+#dirout_mod = "/home/jovyan/work/DATA/GLO/"
+#fileout_mod_pre = "GLO"
 #dirout_mod = "/home/jovyan/work/DATA/IBI/"
 #fileout_mod_pre = "IBI"
 #   - attributes
@@ -104,9 +104,9 @@ unit_txt_ssu = "SSU [m/s]"
 unit_txt_ssv = "SSV [m/s]"
 unit_txt_ssh = "SSH [m]"
 #    - Coord of the legend and unit in the plot frame (in lon/lat  coord)
-X_TIME = xmin
+X_TIME = -19
 Y_TIME = 20.
-x_unit = xmin
+x_unit = -19
 y_unit = 20.
 #
 #    - Model/obs equivalent 
@@ -130,7 +130,7 @@ nb_shapi = 1 # nb of Shapiro loops
 #nb_shapi = 30 # nb of Shapiro loops
 # output dir and file for model/obs equivalent
 #dirout_mod_equi = "/home/jovyan/work/DATA/GLO_EQUI/GLO_vs_AVISO/"
-dirout_mod_equi = "/home/jovyan/work/DATA/GLO_EQUI/GLO_vs_AVISO_EU/"
+#dirout_mod_equi = "/home/jovyan/work/DATA/GLO_EQUI/GLO_vs_AVISO_EU/"
 #dirout_mod_equi = "/home/jovyan/work/DATA/IBI_EQUI/"
 #
 # =========================================================================

@@ -1,27 +1,47 @@
-[tool.poetry]
-name = "eti"
+build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eddy_project"
 version = "0.1.0"
-description = "Eddy Tracking Intercomparison"
-authors = ["Flavie Dubost <fdubost@mercator-ocean.fr>"]
+description = "Package to perform regional & global eddy detection and model/obs eddy matching"
+authors = [ 
+    { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } 
+]
 readme = "README.md"
-packages = [{include = "src"}]
+dependencies = [
+    { python = "3.10" }
+    { numpy ="1.26.4" }
+    { matplotlib = "3.5.2" }
+    #{ pyeddytracker = {git = "https://github.com/svangennip/py-eddy-tracker.git"} }
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-pyeddytracker = {git = "https://github.com/svangennip/py-eddy-tracker.git"}
-pandas = "1.4.0"
-matplotlib-label-lines = "^0.6.0"
-cartopy = "^0.21.1"
+[tool.hatch.metadata]
+name = "eddy_project"
+version = "0.1.0"
+description = "Package to perform regional & global eddy detection and model/obs eddy matching"
+authors = ["Sylvain Cailleau <scailleau@mercator-ocean.fr>"]
 
+[tool.hatch.version]
+# Define versioning scheme
+version = "0.1.0"
 
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^3.3.2"
+[tool.hatch.vcs]
+# VCS settings for versioning, e.g., Git integration
+enabled = true
 
-[tool.poetry.scripts]
-detect_eddies = 'src.Detect_Eddies:detect_eddies'
-analysis_eddies = 'src.Analysis_Eddy_1model:analysis_eddies'
+[project.scripts]
+eddy_load = "eddy_load.__main__:main"
 
+[tool.hatch.scripts]
+eddy_load = "eddy_load.__main__:main"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# =================================================
+
+#[tool.poetry]
+#packages = [{include = "src"}]
+
+#[tool.poetry.scripts]
+#detect_eddies = 'src.Detect_Eddies:detect_eddies'
+#analysis_eddies = 'src.Analysis_Eddy_1model:analysis_eddies'
