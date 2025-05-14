@@ -1,0 +1,9 @@
+Analysis_Eddy_1model
+Analysis_bulletin
+Analysis_fcst
+Analysis_glo2reg
+Analysis_glo2reg_timeseries
+Detect_Eddies
+plots
+plots_bulletin
+plots_glo2reg

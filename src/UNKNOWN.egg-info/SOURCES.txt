@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/Analysis_Eddy_1model.py
+src/Analysis_bulletin.py
+src/Analysis_fcst.py
+src/Analysis_glo2reg.py
+src/Analysis_glo2reg_timeseries.py
+src/Detect_Eddies.py
+src/plots.py
+src/plots_bulletin.py
+src/plots_glo2reg.py
+src/UNKNOWN.egg-info/PKG-INFO
+src/UNKNOWN.egg-info/SOURCES.txt
+src/UNKNOWN.egg-info/dependency_links.txt
+src/UNKNOWN.egg-info/top_level.txt

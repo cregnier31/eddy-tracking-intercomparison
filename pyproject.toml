@@ -1,46 +1,73 @@
-build-system]
+# ====================
+# File: pyproject.toml
+# ====================#
+# --------------------------
+# Build system configuration
+# --------------------------
+[build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
+#
+# ------------------------------
+# Project descript & metadataion
+# ------------------------------
 [project]
 name = "eddy_project"
 version = "0.1.0"
-description = "Package to perform regional & global eddy detection and model/obs eddy matching"
-authors = [ 
-    { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } 
-]
+description = "Package to perform regional and global eddy detection and model/obs eddy matching"
+authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
 readme = "README.md"
 dependencies = [
-    { python = "3.10" }
-    { numpy ="1.26.4" }
-    { matplotlib = "3.5.2" }
-    #{ pyeddytracker = {git = "https://github.com/svangennip/py-eddy-tracker.git"} }
-]
-
+    "numpy",
+    "matplotlib" ]
+# The Python version required by the project
+requires-python = "==3.10.0"
+#
+# ----------------------------------------
+# Main scripts of the project to be launch
+# ----------------------------------------
+[project.scripts]
+eddy_load = "eddy_load.__main__:main"
+#
+# ------------
+# Project URLs
+# ------------
+[project.urls]
+homepage = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
+documentation  =" https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.ith"
+repository = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
+#
+# -------------------------------------
+# Hatch build configuration & metadata
+# ------------------------------------
+#
+#   - metadata---
 [tool.hatch.metadata]
 name = "eddy_project"
 version = "0.1.0"
 description = "Package to perform regional & global eddy detection and model/obs eddy matching"
-authors = ["Sylvain Cailleau <scailleau@mercator-ocean.fr>"]
-
+authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
+#
+#   - versionning
 [tool.hatch.version]
 # Define versioning scheme
 version = "0.1.0"
-
+#
+#   - VCS settings for versioning (e.g., Git integration)
 [tool.hatch.vcs]
-# VCS settings for versioning, e.g., Git integration
 enabled = true
-
-[project.scripts]
-eddy_load = "eddy_load.__main__:main"
+#
+#    - main scrip
+[tool.hatch.build.targets.wheel]
+packages = ["eddy_load"]
 
 [tool.hatch.scripts]
 eddy_load = "eddy_load.__main__:main"
-
+#
 # =================================================
 
 #[tool.poetry]
-#packages = [{include = "src"}]
+#packages = [{include = "src}]
 
 #[tool.poetry.scripts]
 #detect_eddies = 'src.Detect_Eddies:detect_eddies'

@@ -141,13 +141,6 @@ def main():
       fileout_mod = model+"_"+date+".nc"
       #
       #   - Set parameters
-
-
-      print ("xmin = ",xmin)
-      print ("xmax = ",xmax)
-      print ("ymin = ",ymin)
-      print ("ymax = ",ymax) 
-       
       data_request = {
          "dataset_id_mod_ssv" : DATASET_ID_MOD_SSV,
          "longitude" : [xmin, xmax], 
