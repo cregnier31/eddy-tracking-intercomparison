@@ -1,0 +1,19 @@
+# =======================================
+# Namelist for model & obs eddy detection
+# =======================================
+#[GENERAL_INFO]
+
+#MODEL       = AVISO
+#var_adt     = adt
+#VAR_U	    = ugos
+#VAR_V       = vgos
+
+WAVELENGTH  = 500
+ORDER_FILTER= 1
+SHAPE_ERROR = 55
+PIXEL_MIN   = 5
+PIXEL_MAX   = 2000
+AMP_MIN     = 0.002
+
+#INPUT_FILES = /home/jovyan/work/DATA/AVISO/
+#OUTPUT_DIR  = /home/jovyan/work/DATA/DETECT_AVISO/

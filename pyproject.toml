@@ -28,6 +28,7 @@ requires-python = "==3.10.0"
 # ----------------------------------------
 [project.scripts]
 eddy_load = "eddy_load.__main__:main"
+#eddy_detect = "eddy_detect.__main__:main"
 #
 # ------------
 # Project URLs
@@ -60,15 +61,11 @@ enabled = true
 #    - main scrip
 [tool.hatch.build.targets.wheel]
 packages = ["eddy_load"]
-
-[tool.hatch.scripts]
-eddy_load = "eddy_load.__main__:main"
+#packages = ["eddy_load",  "eddy_detect"]
 #
-# =================================================
 
-#[tool.poetry]
-#packages = [{include = "src}]
-
-#[tool.poetry.scripts]
-#detect_eddies = 'src.Detect_Eddies:detect_eddies'
-#analysis_eddies = 'src.Analysis_Eddy_1model:analysis_eddies'
+[tool.hatch.scripts
+eddy_load = "eddy_load.__main__:main"
+#eddy_detect = "eddy_detect.__main__:main""
+#
+# ================================================'

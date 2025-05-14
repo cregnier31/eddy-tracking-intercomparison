@@ -1,0 +1,16 @@
+[console_scripts]
+EddyAnim = py_eddy_tracker.appli.gui:anim
+EddyCircle = py_eddy_tracker.appli.eddies:eddies_add_circle
+EddyFrequency = py_eddy_tracker.appli.eddies:get_frequency_grid
+EddyId = py_eddy_tracker.appli.grid:eddy_id
+EddyInfos = py_eddy_tracker.appli.eddies:display_infos
+EddyNetworkBuildPath = py_eddy_tracker.appli.network:divide_network
+EddyNetworkGroup = py_eddy_tracker.appli.network:build_network
+EddyNetworkQuickCompare = py_eddy_tracker.appli.network:quick_compare
+EddyNetworkSubSetter = py_eddy_tracker.appli.network:subset_network
+EddyQuickCompare = py_eddy_tracker.appli.eddies:quick_compare
+EddyTracking = py_eddy_tracker.appli.eddies:eddies_tracking
+GUIEddy = py_eddy_tracker.appli.gui:guieddy
+GridFiltering = py_eddy_tracker.appli.grid:grid_filtering
+MergeEddies = py_eddy_tracker.appli.eddies:merge_eddies
+ZarrDump = py_eddy_tracker.appli.misc:zarrdump
