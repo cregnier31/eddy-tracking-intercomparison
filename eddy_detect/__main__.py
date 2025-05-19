@@ -80,10 +80,7 @@ def main():
 #
 # Run the main code
 if __name__ == "__main__":
-    #start_logger().setLevel("DEBUG")  # Available options: ERROR, WARNING, INFO, DEBUG
-    #start_logger().setLevel("INFO")  # Available options: ERROR, WARNING, INFO, DEBUG
     print('compute_eddy')
-    #numba.config.DISABLE_JIT = True
     main()
 #
 # =========================================================================

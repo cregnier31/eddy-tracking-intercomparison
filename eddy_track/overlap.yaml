@@ -3,9 +3,9 @@ PATHS:
   FILES_PATTERN: /home/jovyan/work/DATA/GLO/DETECT//Anticyclonic*.nc
   SAVE_DIR: /home/jovyan/work/DATA/GLO/TRACK/
 # Number of timestep for missing detection
-VIRTUAL_LENGTH_MAX: 5
+VIRTUAL_LENGTH_MAX: 2
 # Minimal time to consider as a full track
-TRACK_DURATION_MIN: 2
+TRACK_DURATION_MIN: 10
 
 CLASS:
     MODULE: py_eddy_tracker.featured_tracking.area_tracker

@@ -29,6 +29,7 @@ requires-python = "==3.10.0"
 [project.scripts]
 eddy_load = "eddy_load.__main__:main"
 eddy_detect = "eddy_detect.__main__:main"
+eddy_track = "eddy_track.__main__:main"
 #
 # ------------
 # Project URLs
@@ -60,11 +61,11 @@ enabled = true
 #
 #    - main scrip
 [tool.hatch.build.targets.wheel]
-#packages = ["eddy_load"]
-packages = ["eddy_load",  "eddy_detect"]
+packages = ["eddy_load", "eddy_detect, "eddy_track""]
 
 [tool.hatch.script]
 eddy_load = "eddy_load.__main__:main"
-eddy_detect = "eddy_detect.__main__:main"
+eddy_detect = "eddy_detect.__main__:main
+eddy_track = "eddy_track.__main__:main""
 #
 # ================================================
