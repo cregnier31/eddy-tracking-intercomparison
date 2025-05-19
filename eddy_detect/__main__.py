@@ -15,6 +15,7 @@ from py_eddy_tracker import start_logger
 from netCDF4 import Dataset
 import pandas as pd
 #import numba
+sys.path.append("./")
 import my_functions as fn # use of homemade function modules
 
 import warnings 
@@ -33,25 +34,22 @@ def main():
    #
    #    - Main parameters in arguments
    #  
-   if (len(sys.argv)==4):
+   if (len(sys.argv)==3):
       # Considered period (in arguments)
-      MODEL = str(sys.argv[1])
-      INPUT_DIR = str(sys.argv[2])
-      OUTPUT_DIR = str(sys.argv[3])
-      print ("Input data = ",MODEL)
-      print ("Input data directory = ",INPUT_DIR)
-      print ("Output detection data directory = ",OUTPUT_DIR)
+      data_acro = str(sys.argv[1])
+      data_dir = str(sys.argv[2])
+      print ("Input data = ", data_acro)
+      print ("Input data directory = ", data_dir)
    else:
-      print ("!!! ERROR: 3 arguments to be chosen !!!")
-      print ("Argument 1 = Input data (GLO, IBI, AVISO, AVISO-EU)")
-      print ("Argument 2 = Input data directory")
-      print ("Argument 3 = Output detection data directory")
+      print ("!!! ERROR: 2 arguments to be chosen !!!")
+      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO-EU)")
+      print ("Argument 2 = Idata directory")
       sys.exit()
    #
    #    - Var name depending on the kind of data (model or obs) ==> !!! to be updated following the Copernicus MDS updates !!!
    # 
    #       - for MDS adt AVISO obs data (SL-TAC)
-   if ( ( MODEL=="AVISO" ) or ( MODEL == "AVISO-EU" ) ):
+   if ( ( data_acro == "AVISO" ) or ( data_acro == "AVISO-EU" ) ):
       var_adt = "adt"
       VAR_U = "ugos"
       VAR_V = "vgos"
@@ -61,11 +59,22 @@ def main():
       VAR_U = "uo"
       VAR_V = "vo"
    #
+   # ---------------------
+   # Make data directories
+   # ---------------------
+   #
+   INPUT_DIR = data_dir+"/"+data_acro+"/"
+   OUTPUT_DIR = data_dir+"/"+data_acro+"/DETECT/"
+   if not os.path.exists(INPUT_DIR):
+      os.mkdir(INPUT_DIR)
+   if not os.path.exists(OUTPUT_DIR):
+      os.mkdir(OUTPUT_DIR)
+   #
    # --------------
    # Eddy detection
    # --------------
    #
-   fn.detect_eddies(MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER)
+   fn.detect_eddies(data_acro, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER)
    #
    # --------------
 #

@@ -8,3 +8,5 @@
 # (request yours, it's free):
 import copernicusmarine
 copernicusmarine.login()
+#
+# NB.: Normally, now EDITO manages this access once you configure your service => Copernicus Marine Tab

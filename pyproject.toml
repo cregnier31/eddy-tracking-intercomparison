@@ -1,6 +1,6 @@
 # ====================
 # File: pyproject.toml
-# ====================#
+# ====================
 # --------------------------
 # Build system configuration
 # --------------------------
@@ -28,14 +28,14 @@ requires-python = "==3.10.0"
 # ----------------------------------------
 [project.scripts]
 eddy_load = "eddy_load.__main__:main"
-#eddy_detect = "eddy_detect.__main__:main"
+eddy_detect = "eddy_detect.__main__:main"
 #
 # ------------
 # Project URLs
 # ------------
 [project.urls]
 homepage = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
-documentation  =" https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.ith"
+documentation  =" https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
 repository = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
 #
 # -------------------------------------
@@ -60,12 +60,11 @@ enabled = true
 #
 #    - main scrip
 [tool.hatch.build.targets.wheel]
-packages = ["eddy_load"]
-#packages = ["eddy_load",  "eddy_detect"]
-#
+#packages = ["eddy_load"]
+packages = ["eddy_load",  "eddy_detect"]
 
-[tool.hatch.scripts
+[tool.hatch.script]
 eddy_load = "eddy_load.__main__:main"
-#eddy_detect = "eddy_detect.__main__:main""
+eddy_detect = "eddy_detect.__main__:main"
 #
-# ================================================'
+# ================================================

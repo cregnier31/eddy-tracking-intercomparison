@@ -24,7 +24,7 @@ import datetime as dt
 import os
 import sys
 import matplotlib.pyplot as plt
-#sys.path.append("../MY_TOOLS/")
+sys.path.append("./")
 import my_functions as fn # use of homemade function modules
 from my_classes import *  # use of homemade class modules
 #
@@ -47,18 +47,18 @@ def main():
       xmax = float(sys.argv[4])
       ymin = float(sys.argv[5])
       ymax = float(sys.argv[6])
-      model = str(sys.argv[7])
-      obs = str(sys.argv[8])
-      dirout = str(sys.argv[9])
+      model_acro = str(sys.argv[7])
+      obs_acro = str(sys.argv[8])
+      data_dir = str(sys.argv[9])
       print ("Date start = ",date_start)
       print ("Date end = ",date_end)
       print ("Longitude min = ",xmin)
       print ("Longitude max = ",xmax)
       print ("Latitude min = ",ymin)
       print ("Latitude max = ",ymax)
-      print ("Analysis & Forecasting system = ",model)
-      print ("Altimetric satellite data = ",obs)
-      print ("Downloaded file directory = ",dirout)
+      print ("Analysis & Forecasting system = ",model_acro)
+      print ("Altimetric satellite data = ",obs_acro)
+      print ("Downloaded file directory = ",data_dir)
    else:
       print ("!!! ERROR: 9 arguments to be chosen !!!")
       print ("Argument 1 = Date start (yyyy-mm-dd)")
@@ -74,7 +74,7 @@ def main():
    #
    #   - Copernicus dataset IDs from the model chosen data 
    #
-   match model:
+   match model_acro:
       case 'GLO':
          # Input MDS GLO data set
          DATASET_ID_MOD_SSV = "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m"
@@ -86,7 +86,7 @@ def main():
    #
    #   - Copernicus dataset IDs from the obs chosen data 
    #
-   match obs:
+   match obs_acro:
       case 'AVISO':
          # AVISO GLOBAL
          DATASET_ID_OBS = "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"
@@ -97,9 +97,9 @@ def main():
    # ----------------------------------
    #
    # Make data directories
-   dirout_mod = dirout+"/"+model
-   dirout_obs = dirout+"/"+obs
-   dirout_mod_equi = dirout+"/"+model+"_EQUI/" 
+   dirout_mod = data_dir+"/"+model_acro+"/"
+   dirout_obs = data_dir+"/"+obs_acro+"/"
+   dirout_mod_equi = data_dir+"/"+model_acro+"_EQUI/" 
    if not os.path.exists(dirout_mod):
       os.mkdir(dirout_mod)
    if not os.path.exists(dirout_obs):
@@ -138,7 +138,7 @@ def main():
       print("DATASET_ID = "+DATASET_ID_MOD_SSV)
       print("-----------------------------------------------")
       #
-      fileout_mod = model+"_"+date+".nc"
+      fileout_mod = model_acro+"_"+date+".nc"
       #
       #   - Set parameters
       data_request = {
@@ -252,7 +252,7 @@ def main():
       print("DATASET_ID = "+DATASET_ID_OBS)
       print("-----------------------------------------------")
       #
-      fileout_obs = obs+"_"+date+".nc"
+      fileout_obs = obs_acro+"_"+date+".nc"
       if os.path.isfile(dirout_obs+fileout_obs):
          os.remove(dirout_obs+fileout_obs) 
       #
@@ -359,7 +359,7 @@ def main():
          #   - Write nc file gathering ssu, ssv and ssh model/obs equivalent
          #     with the right units following the Eddy_Tracking file format 
          #
-         fileout_mod_equi = model+"_EQUI_"+date+".nc"      
+         fileout_mod_equi = model_acro+"_EQUI_"+date+".nc"      
          fn.mds2eddy_track(dirout_mod_equi,
                      fileout_mod_equi,
                      ugos_mod_interp,

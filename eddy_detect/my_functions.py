@@ -45,7 +45,7 @@ def reg_date(string_to_find_date_in):
 # ---------------------------------
 #
 #def compute_eddy(file, general_info, log):
-def compute_eddy(file, MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER):
+def compute_eddy(file, DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER):
     
     date_file = reg_date(file)[0:8]
     #date_file="20230201"
@@ -80,12 +80,12 @@ def compute_eddy(file, MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAP
     print("Eddy identification ok")
     ################# save eddy detcted in netcdf files
     with Dataset(
-        date.strftime(OUTPUT_DIR + "Anticyclonic_" + MODEL + "_" + date_file + ".nc"),
+        date.strftime(OUTPUT_DIR + "Anticyclonic_" + DATA + "_" + date_file + ".nc"),
         "w",
     ) as h:
         a.to_netcdf(h)
     with Dataset(
-        date.strftime(OUTPUT_DIR + "Cyclonic_" + MODEL + "_" + date_file + ".nc"), "w"
+        date.strftime(OUTPUT_DIR + "Cyclonic_" + DATA + "_" + date_file + ".nc"), "w"
     ) as h:
         c.to_netcdf(h)
     print("write ok")
@@ -95,28 +95,26 @@ def compute_eddy(file, MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAP
 # ------------------------------------------------------------------------------
 #
 #def detect_eddies(logger):
-def detect_eddies(MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER):
+def detect_eddies(DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER):    
 
     if not os.path.exists(OUTPUT_DIR):
         print("\ncreate directory : ", OUTPUT_DIR)
         os.makedirs(OUTPUT_DIR)
 
-    #LIST_PARAM = [ MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER ]
-    
     INPUT_FILES = sorted(glob.glob(INPUT_DIR + "*.nc"))
     print (INPUT_FILES)
-    for FILE in INPUT_FILES: 
-       print ("input files = ", FILE)
-       compute_eddy(FILE, MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER)
-
-    # !!! BUG MULTIPROC !!!
-    #pool = mp.Pool()
-    #pool.imap(partial(compute_eddy, LIST_PARAM=LIST_PARAM), INPUT_FILES)
-    #pool.imap(partial(compute_eddy(MODEL, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER), INPUT_FILES))
-    
-    #pool.close()
-    #pool.join()
+    #
+    # Sequential calculation / data file
+    #for FILE in INPUT_FILES: 
+    #   print ("input files = ", FILE)
+    #   compute_eddy(FILE, DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER)
+    #
+    # Multiproc calculation for all data files
+    pool = mp.Pool()
+    pool.imap(partial(compute_eddy, DATA=DATA, INPUT_DIR=INPUT_DIR, OUTPUT_DIR=OUTPUT_DIR, var_adt=var_adt, VAR_U=VAR_U, VAR_V=VAR_V, SHAPE_ERROR=SHAPE_ERROR, PIXEL_MIN=PIXEL_MIN, PIXEL_MAX=PIXEL_MAX, AMP_MIN=AMP_MIN, WAVELENGTH=WAVELENGTH, ORDER_FILTER=ORDER_FILTER), INPUT_FILES)
+    pool.close()
+    pool.join()
     print(f"{OUTPUT_DIR=}")
-    print("Eddy detection done")
+    print("oO Eddy Detection Done Oo")
 #
 # =============================================================================
