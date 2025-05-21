@@ -1,4 +1,5 @@
 import os
+import sys
 import fnmatch
 
 import pandas as pd
@@ -22,42 +23,35 @@ os.environ['CARTOPY_USER_BACKGROUNDS'] = os.path.join(dir_cartopy, 'cartopy_data
 data_crs = ccrs.PlateCarree()
 from scipy.interpolate import interp1d
 
-def plt_cartopy(ax, labels=True):
-    # ax.set_aspect('auto') # The figure will follow the ratio of the figsize
-    ax.coastlines()  # Plot the coastlines
-    lon_formatter = LongitudeFormatter(zero_direction_label=True)
-    lat_formatter = LatitudeFormatter()
-    ax.xaxis.set_major_formatter(lon_formatter)
-    ax.yaxis.set_major_formatter(lat_formatter)
-
+sys.path.append("./")
+import my_functions as fn
 
 class Plots:
-    def __init__(self, info, show=False):
+    def __init__(self, DATE_START, MODEL, REFERENCE, YEAR, PATH_DETECT_FILES, PATH_DETECT_FILES_REF, PATH_TRAJ_FILES, PATH_REF_TRACK, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, PATH_PLOT, GRID_SIZE, show=False):
         dir_cartopy = "/home/smer/regnierc/code/LIB_PYT/lib_pyt_dev/lib_pyt/lib_pyt/statics/cartopy_data/"
         cartopy.config['pre_existing_data_dir'] = os.path.join(dir_cartopy, 'cartopy_data')
-        general_info = info["GENERAL_INFO"]
-        self.model = str(general_info["MODEL"])
-        self.reference = str(general_info["REFERENCE"])
-        self.year = int(general_info["YEAR"])
-        self.date_start = str(general_info["DATE_START"])
+        self.model = str(MODEL)
+        self.reference = str(REFERENCE)
+        self.year = int(YEAR)
+        self.date_start = str(DATE_START)
         self.periods = (
-            len(fnmatch.filter(os.listdir(general_info["PATH_DETECT_FILES"]), "*.*"))
+            len(fnmatch.filter(os.listdir(PATH_DETECT_FILES), "*.*"))
             // 2
         )
 
-        self.PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
-        self.PATH_DETECT_FILES_REF=str(general_info["PATH_DETECTION_REF_FILES"])
-        self.PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
-        self.PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
+        self.PATH_DETECT_FILES = str(PATH_DETECT_FILES)
+        self.PATH_DETECT_FILES_REF=str(PATH_DETECT_FILES_REF)
+        self.PATH_TRAJ_FILES = str(PATH_TRAJ_FILES)
+        self.PATH_REF_TRACK = str(PATH_REF_TRACK)
 
         # Geographical extend
-        self.lon_min = int(general_info["LON_MIN"])
-        self.lon_max = int(general_info["LON_MAX"])
-        self.lat_min = int(general_info["LAT_MIN"])
-        self.lat_max = int(general_info["LAT_MAX"])
+        self.lon_min = int(LON_MIN)
+        self.lon_max = int(LON_MAX)
+        self.lat_min = int(LAT_MIN)
+        self.lat_max = int(LAT_MAX)
 
-        self.dir_plot = str(info["PLOT_INFO"]["PATH_PLOT"])
-        self.GRID_SIZE =int(general_info["GRID_SIZE"])
+        self.dir_plot = str(PATH_PLOT)
+        self.GRID_SIZE =int(GRID_SIZE)
         self.show = show
 
     def plot_one_day_adt(self, h, var_adt, a, c):
@@ -76,7 +70,7 @@ class Plots:
 
         ax.set_title(self.model)
         im = h.display(ax, var_adt, vmin=-0.15, vmax=0.15)
-        plt_cartopy(ax, labels=False)
+        plt.cartopy(ax, labels=False)
         plt.suptitle("Detection Cyclonic (Dotted) & Anticyclonic (Solid)")
         cbar = fig.colorbar(im, orientation='horizontal', ticks=[-0.1, 0, 0.1, 0.2], pad=0.08, shrink=0.8, extend='both')
         cbar.ax.set_xlabel("ADT (m) Filtered (500 km)")
@@ -227,12 +221,8 @@ class Plots:
     def plot_heatmap_radius_model(self):
         self.plot_heatmap_radius(self.PATH_DETECT_FILES, str(self.model), 100)
     
-    
     def plot_heatmap_radius_ref(self):
         self.plot_heatmap_radius(self.PATH_DETECT_FILES_REF, str(self.reference), 100)
-
-
-
     
     def plot_heatmap_amplitude(self, dossier_data, model_name, vmax):
         longitude_min = self.lon_min
@@ -299,14 +289,10 @@ class Plots:
 
     def plot_heatmap_amplitude_model(self):
         self.plot_heatmap_amplitude(self.PATH_DETECT_FILES, str(self.model), 7)
-    
-    
+        
     def plot_heatmap_amplitude_ref(self):
         self.plot_heatmap_amplitude(self.PATH_DETECT_FILES_REF, str(self.reference), 7)
 
-
-
-    
     def plot_all_tracks_period(self, at, ct):
         dir_cartopy = "/home/smer/sval001/WORK/DATA/cartopy_data/"
         cartopy.config['pre_existing_data_dir'] = os.path.join(dir_cartopy, 'cartopy_data')
@@ -338,7 +324,7 @@ class Plots:
         ax.legend()
     
         ax.set_title("Tracks " + str(self.model) + " " + str(self.year))
-        plt_cartopy(ax, labels=False)
+        fn.plt_cartopy(ax, labels=False)
         plt.savefig(
             self.dir_plot + self.model + "_TRACKS_" + str(self.year) + ".jpeg",
             bbox_inches="tight",
@@ -541,11 +527,9 @@ class Plots:
     def plot_histo_hits_false(self, radius_AR_hits, radius_AR_misses, radius_AR_falarm):
         bins = np.arange(0, 250, 5)
 
-
         hits_histogram = np.histogram(radius_AR_hits, bins=bins)
         misses_histogram = np.histogram(radius_AR_misses, bins=bins)
         falarm_histogram = np.histogram(radius_AR_falarm, bins=bins)
-
     
         max_value = max(
         	max(hits_histogram[0]),

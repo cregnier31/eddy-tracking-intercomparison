@@ -4,7 +4,7 @@
 
 ########################################################################################################################
 
-### 	ANALYSIS ONE MODEL WITH DETECTION AND TRACKING AND MATCHING WITH A REFERENCE 				    ###
+### 	             ANALYSIS ONE MODEL WITH DETECTION AND TRACKING AND MATCHING WITH A REFERENCE 			   	    ###
 
 ########################################################################################################################
 
@@ -14,6 +14,9 @@
 # Mason et al.
 
 import glob
+import sys
+import os
+import shutil
 from configparser import ConfigParser
 import argparse
 from datetime import datetime
@@ -21,7 +24,6 @@ from datetime import datetime
 from netCDF4 import Dataset
 import pandas as pd
 import numpy as np
-
 
 from py_eddy_tracker import data
 from py_eddy_tracker.observations.observation import EddiesObservations
@@ -31,52 +33,89 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
 
-from plots import Plots
-
-
-def reverse_index(index, nb):
-    m = np.ones(nb, dtype="bool")
-    m[index] = False
-    return np.where(m)[0]
-
-
+sys.path.append("./")
+from my_classes import Plots
+import my_functions as fn
+#
+# ---------------
+# USER PARAMETERS
+# ---------------
+#
+from namelist_diags import *
+#
 def analysis_eddies():
-
-    # Read in config file name
-    parser = argparse.ArgumentParser(description="Script that reads in a config file")
-    # default drifting time 90 days
-    # model output NEMO Mercator PSY4V3R1_1dAV
-    # advection in 2D at the surface'''))
-    # add command line option
-    parser.add_argument(
-        "CONFIG_FILE", help="specify name of configuration file", type=str
-    )
-    args = parser.parse_args()
-    CONFIG_FILE = args.CONFIG_FILE
-    print("read in:", CONFIG_FILE)
-
-    # Read in user input arguments
-    config_object = ConfigParser()
-    config_object.read(CONFIG_FILE)
-
-    ### IN CONFIG FILE : 2 sections : GENERAL INFO and PLOT INFO
-
-    general_info = config_object["GENERAL_INFO"]
-    MODEL = str(general_info["MODEL"])
-    REFERENCE = str(general_info["REFERENCE"])
-    PATH_DETECT_FILES = str(general_info["PATH_DETECT_FILES"])
-    PATH_DETECT_FILES_REF=str(general_info["PATH_DETECTION_REF_FILES"])
-    PATH_TRAJ_FILES = str(general_info["PATH_TRAJ_FILES"])
-    PATH_REF_TRACK = str(general_info["PATH_REF_TRACK"])
-
-    # plot_info = config_object["PLOT_INFO"]
-    # PATH_ADT_MODEL = str(plot_info["PATH_ADT_MODEL"])
-    # var_adt = str(plot_info["var_adt"])
-    GRID_SIZE=int(general_info["GRID_SIZE"])
-
+    #
+    #   - Main parameters in arguments
+    #     
+    if (len(sys.argv)==9):
+       # Considered period (in arguments)
+       date_start = str(sys.argv[1])
+       xmin = float(sys.argv[2])
+       xmax = float(sys.argv[3])
+       ymin = float(sys.argv[4])
+       ymax = float(sys.argv[5]) 
+       model_acro = str(sys.argv[6])
+       obs_acro = str(sys.argv[7])
+       data_dir = str(sys.argv[8])
+       print ("Date start = ",date_start)
+       print ("Longitude min = ",xmin)
+       print ("Longitude max = ",xmax)
+       print ("Latitude min = ",ymin)
+       print ("Latitude max = ",ymax)
+       print ("Analysis & Forecasting system = ",model_acro)
+       print ("Altimetric satellite data = ",obs_acro)
+       print ("Downloaded file directory = ",data_dir)
+    else:
+       print ("!!! ERROR: 8 arguments to be chosen !!!")
+       print ("Argument 1 = Date start (yyyy-mm-dd)")
+       print ("Argument 2 = Longitude min (-180/180° longitude convention)")
+       print ("Argument 3 = Longitude max (-180/180° longitude convention)")
+       print ("Argument 4 = Latitude min (-90/90° latitude convention)")
+       print ("Argument 5 = Latitude max (-90/90° latitude convention)")
+       print ("Argument 6 = Analysis & Forecasting system (GLO, IBI)")
+       print ("Argument 7 = Altimetric satellite data (AVISO, AVISO_EU)")
+       print ("Argument 8 = Downloaded file directory")
+       sys.exit()
+    #
+    # ----------------------------------
+    #
+    DATE_START = date_start
+    YEAR = DATE_START[0:4]
+    LON_MIN = xmin
+    LON_MAX = xmax
+    LAT_MIN = ymin
+    LAT_MAX = ymax
+    MODEL = str(model_acro)
+    REFERENCE = str(obs_acro)
+    # Data directories
+    PATH_DETECT_FILES = data_dir+"/"+MODEL+"/DETECT/"
+    PATH_DETECT_FILES_REF = data_dir+"/"+REFERENCE+"/DETECT/"
+    PATH_TRAJ_FILES = data_dir+"/"+MODEL+"/TRACK/"
+    PATH_REF_TRACK = data_dir+"/"+REFERENCE+"/TRACK/"
+    #path for output stats
+    PATH_STATS = data_dir+"/"+MODEL+"/STATS/"
+    PATH_PLOT = data_dir+"/"+MODEL+"/PLOTS/"
+    if not os.path.exists(PATH_STATS):
+        os.mkdir(PATH_STATS)
+    if not os.path.exists(PATH_PLOT):
+        os.mkdir(PATH_PLOT)
+    #
+    # Cleanning 
+    # (sometimes ".ipynb_checkpoints" file is automatically generated in detect and track directories & then the diags run is out ...)
+    if os.path.exists(PATH_DETECT_FILES+".ipynb_checkpoints"):
+       shutil.rmtree(PATH_DETECT_FILES+".ipynb_checkpoints")
+    if os.path.exists(PATH_DETECT_FILES_REF+".ipynb_checkpoints"):    
+       shutil.rmtree(PATH_DETECT_FILES_REF+".ipynb_checkpoints")
+    if os.path.exists(PATH_TRAJ_FILES+".ipynb_checkpoints"):    
+       shutil.rmtree(PATH_TRAJ_FILES+".ipynb_checkpoints")
+    if os.path.exists(PATH_REF_TRACK+".ipynb_checkpoints"):    
+       shutil.rmtree(PATH_REF_TRACK+".ipynb_checkpoints")
+    #
     ##ONE DAY
-    AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_" + MODEL + "_20230101.nc"
-    CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_" + MODEL + "_20230101.nc"
+    d_start = date_start[0:4]+date_start[5:7]+date_start[8:10]
+    # PATH_ADT_MODEL = data_dir+"/"+MODEL+"/"+MODEL+"_"+d_start+".nc"
+    AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_"+MODEL+"_"+d_start+".nc"
+    CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_"+MODEL+"_"+d_start+".nc"
 
     ########################################################################################################################
 
@@ -180,9 +219,9 @@ def analysis_eddies():
         reference_id, model_id, cost = reference_ac.tracking(model_ac)
         Hits.append(len(reference_id))
 
-        reference_id_junk, model_id_junk = reverse_index(
+        reference_id_junk, model_id_junk = fn.reverse_index(
             reference_id, len(reference_ac)
-        ), reverse_index(model_id, len(model_ac))
+        ), fn.reverse_index(model_id, len(model_ac))
         Misses.append(len(reference_id_junk))
         Falarms.append(len(model_id_junk))
         #### Hits, Misses, False Alarm
@@ -208,9 +247,9 @@ def analysis_eddies():
 
         ### Cyclonic
         reference_id, model_id, cost = reference_cc.tracking(model_cc)
-        reference_id_junk, model_id_junk = reverse_index(
+        reference_id_junk, model_id_junk = fn.reverse_index(
             reference_id, len(reference_cc)
-        ), reverse_index(model_id, len(model_cc))
+        ), fn.reverse_index(model_id, len(model_cc))
         Hits[i] += len(reference_id)
         Misses[i] += len(reference_id_junk)
         Falarms[i] += len(model_id_junk)
@@ -508,7 +547,7 @@ def analysis_eddies():
     # 						PLOTS							       #
     ################################################################################################################
 
-    plots = Plots(config_object, True)
+    plots = Plots(DATE_START, MODEL, REFERENCE, YEAR, PATH_DETECT_FILES, PATH_DETECT_FILES_REF, PATH_TRAJ_FILES, PATH_REF_TRACK, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, PATH_PLOT, GRID_SIZE, True)
     
     ### PLOT ONE DAY DETECTION WITH ADT ###
 
