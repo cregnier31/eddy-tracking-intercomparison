@@ -34,16 +34,16 @@ from py_eddy_tracker.generic import distance_grid
 from py_eddy_tracker.gui import GUI_AXES
 
 sys.path.append("./")
-from my_classes import Plots
-import my_functions as fn
+from eddy_diags.my_classes import Plots
+import eddy_diags.my_functions as fn
 #
 # ---------------
 # USER PARAMETERS
 # ---------------
 #
-from namelist_diags import *
+from eddy_diags.namelist_diags import *
 #
-def analysis_eddies():
+def main():
     #
     #   - Main parameters in arguments
     #     
@@ -544,7 +544,7 @@ def analysis_eddies():
     print("The critical success index (CSI) is", round(np.mean(CSI), 3))
 
     ################################################################################################################
-    # 						PLOTS							       #
+    # 						                             PLOTS		                    					       #
     ################################################################################################################
 
     plots = Plots(DATE_START, MODEL, REFERENCE, YEAR, PATH_DETECT_FILES, PATH_DETECT_FILES_REF, PATH_TRAJ_FILES, PATH_REF_TRACK, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, PATH_PLOT, GRID_SIZE, True)
@@ -598,4 +598,4 @@ def analysis_eddies():
 
 
 if __name__ == "__main__":
-    analysis_eddies()
+    main()

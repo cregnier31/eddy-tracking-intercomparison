@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # ==========================================================
 #
 #                         LOADER
@@ -25,15 +26,15 @@ import os
 import sys
 import matplotlib.pyplot as plt
 sys.path.append("./")
-import my_functions as fn # use of homemade function modules
-from my_classes import *  # use of homemade class modules
+import eddy_load.my_functions as fn # use of homemade function modules
+from eddy_load.my_classes import *  # use of homemade class modules
 #
 # ---------------
 # USER PARAMETERS
 # ---------------
 #
-from namelist_mod import *
-from namelist_obs import *
+from eddy_load.namelist_mod import *
+from eddy_load.namelist_obs import *
 #
 def main():
    #

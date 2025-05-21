@@ -20,7 +20,7 @@ def main():
    else:
       print ("!!! ERROR: 2 arguments to be chosen !!!")
       print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO-EU)")
-      print ("Argument 2 = Idata directory")
+      print ("Argument 2 = data directory")
       sys.exit()
    #
    # ---------------
@@ -28,8 +28,10 @@ def main():
    eddy_types = ["Cyclonic", "Anticyclonic"]
    tracking_method = "overlap" 
    # Chemins relatifs
-   conf_template = f"eddy_track/{tracking_method}_template.yaml"
-   conf_file = f"eddy_track/{tracking_method}.yaml"
+   conf_template = os.path.join(os.path.dirname(__file__), str(tracking_method+"_template.yaml"))
+   #conf_template = f"eddy_track/{tracking_method}_template.yaml"
+   conf_file = os.path.join(os.path.dirname(__file__), str(tracking_method+".yaml"))
+   #conf_file = f"eddy_track/{tracking_method}.yaml"
 
    DIR_IN = data_dir+"/"+data_acro+"/DETECT/"
    DIR_OUT = data_dir+"/"+data_acro+"/TRACK/"

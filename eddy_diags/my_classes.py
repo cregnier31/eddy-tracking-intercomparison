@@ -24,7 +24,7 @@ data_crs = ccrs.PlateCarree()
 from scipy.interpolate import interp1d
 
 sys.path.append("./")
-import my_functions as fn
+import eddy_diags.my_functions as fn
 
 class Plots:
     def __init__(self, DATE_START, MODEL, REFERENCE, YEAR, PATH_DETECT_FILES, PATH_DETECT_FILES_REF, PATH_TRAJ_FILES, PATH_REF_TRACK, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, PATH_PLOT, GRID_SIZE, show=False):

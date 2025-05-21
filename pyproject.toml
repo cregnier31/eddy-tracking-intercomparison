@@ -31,12 +31,13 @@ eddy_load = "eddy_load.__main__:main"
 eddy_detect = "eddy_detect.__main__:main"
 eddy_track = "eddy_track.__main__:main"
 eddy_diags = "eddy_diags.__main__:main"
+eddy_run = "eddy_run.__main__:main"
 #
 # ------------
 # Project URLs
 # ------------
 [project.urls]
-homepage = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
+homepage = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
 documentation  =" https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
 repository = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
 #
@@ -50,7 +51,6 @@ name = "eddy_project"
 version = "0.1.0"
 description = "Package to perform regional & global eddy detection and model/obs eddy matching"
 authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
-#
 #   - versionning
 [tool.hatch.version]
 # Define versioning scheme
@@ -62,12 +62,13 @@ enabled = true
 #
 #    - main scrip
 [tool.hatch.build.targets.wheel]
-packages = ["eddy_load", "eddy_detect", "eddy_track", "eddy_diags"]
+packages = ["eddy_load", "eddy_detect", "eddy_track", "eddy_diags", "eddy_run"]
 
 [tool.hatch.script]
 eddy_load = "eddy_load.__main__:main"
 eddy_detect = "eddy_detect.__main__:main"
 eddy_track = "eddy_track.__main__:main"
 eddy_diags = "eddy_diags.__main__:main"
+eddy_run = "eddy_run.__main__:main"
 #
 # ================================================

@@ -16,7 +16,7 @@ from netCDF4 import Dataset
 import pandas as pd
 #import numba
 sys.path.append("./")
-import my_functions as fn # use of homemade function modules
+import eddy_detect.my_functions as fn # use of homemade function modules
 
 import warnings 
 warnings.filterwarnings("ignore")
@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore")
 # USER PARAMETERS
 # ---------------
 #
-from namelist_detect import *
+from eddy_detect.namelist_detect import *
 #
 def main():
    # -------------------- 
