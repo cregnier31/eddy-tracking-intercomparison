@@ -1,18 +1,22 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
-
-
+########################################################################################################################
+#                                              EDDY ANALYSIS                                                           #
+########################################################################################################################
+#
+#   Description : 	             ANALYSIS ONE MODEL WITH DETECTION AND TRACKING AND MATCHING WITH A REFERENCE OBS
+#
+#   Authors     :                S. Cailleau, F. Dubost, C. Reignier
+#   Version     :                05/2025
+#
 ########################################################################################################################
 
-### 	             ANALYSIS ONE MODEL WITH DETECTION AND TRACKING AND MATCHING WITH A REFERENCE 			   	    ###
-
-########################################################################################################################
-
-
-### IMPORT ###
+# ---------
+#  IMPORT
+# ---------
+#
 # environment with py-eddy-tracker
 # Mason et al.
-
 import glob
 import sys
 import os
@@ -116,9 +120,9 @@ def main():
     # PATH_ADT_MODEL = data_dir+"/"+MODEL+"/"+MODEL+"_"+d_start+".nc"
     AC_DETECTION = PATH_DETECT_FILES + "Anticyclonic_"+MODEL+"_"+d_start+".nc"
     CC_DETECTION = PATH_DETECT_FILES + "Cyclonic_"+MODEL+"_"+d_start+".nc"
-
+    #
     ########################################################################################################################
-
+    #
     ### NUMBER OF DETECTION ###
     NB_AC = []
     NB_CC = []
@@ -301,7 +305,135 @@ def main():
     bias = AR_POD / (1 - AR_FAR)
     CSI = 1 / ((1 / (1 - AR_FAR)) + (1 / AR_POD) - 1)
 
-    output_file = "detection_and_tracking_info.txt"
+    # Open an output diag file in write mode
+    output_file = PATH_STATS+"eddy_tracking_summary.txt"
+    #with open(f"eddy_tracking_summary.txt", "w") as file:
+    with open(output_file, "w") as file:
+        
+        # General detection and tracking information
+        file.write("GENERAL DETECTION AND TRACKING INFO\n")
+        file.write("AC stands for AntiCyclonic & CC for CyClonic\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        file.write("The following information applies to the chosen domain\n")
+        
+        # AC eddies information
+        file.write(f"Number of AC eddies in the period = {sum(NB_AC)}\n")
+        file.write(f"Minimum number of AC eddies detected in one day = {min(NB_AC)}\n")
+        file.write(f"Maximum number of AC eddies detected in one day = {max(NB_AC)}\n")
+        file.write(f"So on average {round(np.mean(NB_AC), 0)} AC eddies per day\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # CC eddies information
+        file.write(f"Number of CC eddies in the period = {sum(NB_CC)}\n")
+        file.write(f"Minimum number of CC eddies detected in one day = {min(NB_CC)}\n")
+        file.write(f"Maximum number of CC eddies detected in one day = {max(NB_CC)}\n")
+        file.write(f"So on average {round(np.mean(NB_CC), 0)} CC eddies per day\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # All eddies information
+        file.write(f"Number of eddies in the period = {sum(NB_EDDIES)}\n")
+        file.write(f"Minimum number of eddies detected in one day = {min(NB_EDDIES)}\n")
+        file.write(f"Maximum number of eddies detected in one day = {max(NB_EDDIES)}\n")
+        file.write(f"So on average {round(np.mean(NB_EDDIES))} eddies per day\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Track information
+        file.write(f"Number of AC tracks = {at.nb_tracks}\n")
+        file.write(f"Number of CC tracks = {ct.nb_tracks}\n")
+        file.write(f"Number of tracks = {at.nb_tracks + ct.nb_tracks}\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Average track duration
+        file.write(f"Average AC track duration = {round(np.mean(at.nb_obs_by_track))} jours\n")
+        file.write(f"Average CC track duration = {round(np.mean(ct.nb_obs_by_track))} jours\n")
+        file.write(f"Average track duration = {round(np.mean(eddies.nb_obs_by_track))} jours\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean amplitude
+        file.write(f"Mean AC amplitude = {round(np.mean(at.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean CC amplitude = {round(np.mean(ct.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean eddy amplitude = {round(np.mean(eddies.amplitude * 100), 2)} cm\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean radius
+        file.write(f"Mean AC radius = {round(np.mean(at.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean CC radius = {round(np.mean(ct.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean eddy radius = {round(np.mean(eddies.effective_radius / 1000), 2)} km\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean surface area
+        file.write(f"Mean surface occupied by AC eddies = {round(np.mean(at.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by CC eddies = {round(np.mean(ct.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by eddies = {round(np.mean(eddies.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Tracks too short
+        file.write(f"Number of AC tracks too short = {ats.nb_tracks}\n")
+        file.write(f"Number of CC tracks too short = {cts.nb_tracks}\n")
+        file.write(f"Number of tracks too short = {ats.nb_tracks + cts.nb_tracks}\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Average duration of tracks too short
+        file.write(f"Average AC track too short duration = {round(np.mean(ats.nb_obs_by_track))} jours\n")
+        file.write(f"Average CC track too short duration = {round(np.mean(cts.nb_obs_by_track))} jours\n")
+        file.write(f"Average track too short duration = {round(np.mean(eddies_ts.nb_obs_by_track))} jours\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean amplitude of tracks too short
+        file.write(f"Mean AC amplitude track too short = {round(np.mean(ats.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean CC amplitude track too short = {round(np.mean(cts.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean amplitude track too short = {round(np.mean(eddies_ts.amplitude * 100), 2)} cm\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean radius of tracks too short
+        file.write(f"Mean AC radius track too short = {round(np.mean(ats.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean CC radius track too short = {round(np.mean(cts.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean radius track too short = {round(np.mean(eddies_ts.effective_radius / 1000), 2)} km\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean surface area of tracks too short
+        file.write(f"Mean surface occupied by AC eddies from tracks too short = {round(np.mean(ats.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by CC eddies from tracks too short = {round(np.mean(cts.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by eddies from tracks too short = {round(np.mean(eddies_ts.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Untracked eddies
+        file.write(f"Number of untracked AC eddies = {len(ata)}\n")
+        file.write(f"Number of untracked CC eddies = {len(cta)}\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean amplitude of untracked eddies
+        file.write(f"Mean amplitude of untracked AC eddies = {round(np.mean(ata.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean amplitude of untracked CC eddies = {round(np.mean(cta.amplitude * 100), 2)} cm\n")
+        file.write(f"Mean amplitude of untracked eddies = {round(np.mean(eddies_a.amplitude * 100), 2)} cm\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean radius of untracked eddies
+        file.write(f"Mean radius of untracked AC eddies = {round(np.mean(ata.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean radius of untracked CC eddies = {round(np.mean(cta.effective_radius / 1000), 2)} km\n")
+        file.write(f"Mean radius of untracked eddies = {round(np.mean(eddies_a.effective_radius / 1000), 2)} km\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Mean surface area of untracked eddies
+        file.write(f"Mean surface occupied by untracked AC eddies = {round(np.mean(ata.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by untracked CC eddies = {round(np.mean(cta.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write(f"Mean surface occupied by untracked eddies = {round(np.mean(eddies_a.effective_area / (1000 * 1000)), 2)} km^2\n")
+        file.write("---------------------------------------------------------\n\n")
+        
+        # Matching results
+        file.write("MATCHING RESULTS\n")
+        file.write("---------------------------------------------------------\n")
+        file.write(f"Number of hits = {len(amplitude_AR_hits)}\n")
+        file.write(f"Number of misses = {len(amplitude_AR_misses)}\n")
+        file.write(f"Number of false alarms = {len(amplitude_AR_falarm)}\n")
+        file.write("---------------------------------------------------------\n\n")
+    
+        # Inform the user
+        print("Data has been saved to 'eddy_tracking_summary.txt'")
+
+    # Same info than ones saved in eddy_tracking_summary.txt displayed at screen for the user    
+    #
     print("GENERAL DETECTION AND TRACKING INFO")
     print("AC stands for AntiCyclonic & CC for CyClonic")
     print("---------------------------------------------------------")

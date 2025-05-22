@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# ============================================================================
+###############################################################################
 #
 #                      EDDY MONITORING MAIN SCRIPT
 #
-# ============================================================================
+###############################################################################
 #
 # Description : run the different components for the eddy diagnostics
 #               used i the quarterly FC bulletin QUOVADIS:
@@ -15,12 +15,13 @@
 #                  - makes diagnostics & plots
 #
 # Authors     : S. Cailleau
+#
 # Version     : 05/2025
 #
-# ===========================================================================
+##############################################################################
 #
 # ---------------
-# Used Libraries
+#    IMPORT
 # ---------------
 #
 import subprocess
@@ -77,7 +78,7 @@ def main():
    proc4 = subprocess.run([r'eddy_track', model_acro, data_dir])
    #    - Obs eddy detection
    proc5 = subprocess.run([r'eddy_track', obs_acro, data_dir])
-   #    - eddy dia#gnostics model vs obs
+   #    - eddy diagnostics model vs obs
    proc6 = subprocess.run([r'eddy_diags', date_start, xmin, xmax, ymin, ymax, model_acro, obs_acro, data_dir])
    #
 # Run the main code

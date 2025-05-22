@@ -1,4 +1,20 @@
 #!/usr/bin/env python3
+################################################################################
+#                            EDDY DETECTION                                    #
+################################################################################
+#
+#   Description : creates cyclonic and anti-cyclonic detection files / day
+#
+#   Authors     : S. Cailleau, F. Dubost, C. Reignier
+#
+#   Version     : 05/2025
+#
+#################################################################################
+#
+# ----------
+#   IMPORT
+# ----------
+#
 import os
 import sys
 import glob
@@ -20,7 +36,7 @@ import eddy_detect.my_functions as fn # use of homemade function modules
 
 import warnings 
 warnings.filterwarnings("ignore")
-
+#
 # ---------------
 # USER PARAMETERS
 # ---------------

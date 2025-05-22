@@ -1,10 +1,31 @@
 #!/usr/bin/env python3
+###########################################################
+#
+#                     EDDY TRACKING
+#
+###########################################################
+#
+# Description : Creates cyclonic and anticyclonic 
+#               tracking files by using overlap tracking  
+#               method
+#
+# Authors     : S. Cailleau, F. Dubost, C. Reignier
+#
+# Version     : 05/2025
+#
+############################################################
+#
+# ---------------
+#     IMPORT
+# ---------------
+#
 import os
 import sys
 import shutil
 from pathlib import Path
 #
 def main():
+   #
    # ---------------
    # USER PARAMETERS
    # --------------- 
