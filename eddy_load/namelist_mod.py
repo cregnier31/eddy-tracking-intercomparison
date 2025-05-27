@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # ---------------
 # USER PARAMETERS
 # ---------------
@@ -13,17 +14,37 @@
 #xmax=180.
 #ymin=-70.
 #ymax=70.
-zmin=0.5
-zmax=0.5
-# Input MDS GLO12 data set
-#DATASET_ID_MOD_SSV = "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m"
-#DATASET_ID_MOD_SSH = "cmems_mod_glo_phy_anfc_0.083deg_P1D-m"
-# Input MDS IBI data set
-#DATASET_ID_MOD_SSV = "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m"
-#DATASET_ID_MOD_SSH = "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m"
-ssu_mod_name = "uo"
-ssv_mod_name = "vo"
-ssh_mod_name = "zos"
+#    - MED
+#xmin=17.29
+#xmax=36.30
+#ymin=30.18
+#ymax=45.98
+#   - NWS
+#xmin=-16
+#xmax=10
+#ymin=46
+#ymax=61
+#   - BAL
+#xmin=9
+#xmax=30
+#ymin=53
+#ymax=66
+#   - BLK
+#xmin=27.25
+#xmax=41.1
+#ymin=40.5
+#ymax=47
+#
+# Input MDS data set
+# data_mod_dict = { model_acro : [ DATASET_ID_MOD_SSV,  DATASET_ID_MOD_SSH, ssu_mod_name, ssv_mod_name, ssh_mod_name, zmin, zmax ] }
+data_mod_dict = dict()
+data_mod_dict = { "GLO" : [ "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m", "cmems_mod_glo_phy_anfc_0.083deg_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+              "IBI" : [ "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+              "MED" : [ "cmems_mod_med_phy-cur_anfc_4.2km_P1D-m", "cmems_mod_med_phy-ssh_anfc_4.2km_P1D-m", "uo", "vo", "zos", 1.02, 1.02 ],
+              "NWS" : [ "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+              "BAL" : [ "cmems_mod_bal_phy_anfc_P1D-m", "cmems_mod_bal_phy-ssh_anfc_detided_P1D-m", "uo", "vo", "zos_detided", 0.51, 0.51 ],
+              "BLK" : [ "cmems_mod_blk_phy-cur_anfc_2.5km_P1D-m", "cmems_mod_blk_phy-ssh_anfc_2.5km_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ] }
+#
 time_mod_name = "time"
 depth_mod_name = "depth"
 lat_mod_name = "latitude"
@@ -37,12 +58,6 @@ dimx_mod_name = "longitude"
 res_mod = 1 / 12.
 #   - IBI
 #res_mod = 1 / 36.
-# Output files
-#   - filename
-#dirout_mod = "/home/jovyan/work/DATA/GLO/"
-#fileout_mod_pre = "GLO"
-#dirout_mod = "/home/jovyan/work/DATA/IBI/"
-#fileout_mod_pre = "IBI"
 #   - attributes
 unit_ssu_attr = "m/s"
 lname_ssu_attr = "Eastward velocity"

@@ -35,6 +35,8 @@ from eddy_load.my_classes import *  # use of homemade class modules
 #
 from eddy_load.namelist_mod import *
 from eddy_load.namelist_obs import *
+print ("data_mod_dict = ",data_mod_dict["GLO"][0])
+exit()
 #
 def main():
    #
@@ -73,27 +75,17 @@ def main():
       print ("Argument 9 = Downloaded file directory")
       sys.exit()
    #
-   #   - Copernicus dataset IDs from the model chosen data 
+   #   - Copernicus dataset from the model chosen data 
+   DATASET_ID_MOD_SSV = data_mod_dict[model_acro][0]
+   DATASET_ID_MOD_SSH = data_mod_dict[model_acro][1]
+   ssu_mod_name = data_mod_dict[model_acro][2]
+   ssv_mod_name = data_mod_dict[model_acro][3]
+   ssh_mod_name = data_mod_dict[model_acro][4]
+   zmin = data_mod_dict[model_acro][5]
+   zmax =data_mod_dict[model_acro][6]
    #
-   match model_acro:
-      case 'GLO':
-         # Input MDS GLO data set
-         DATASET_ID_MOD_SSV = "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m"
-         DATASET_ID_MOD_SSH = "cmems_mod_glo_phy_anfc_0.083deg_P1D-m"
-      case 'IBI':
-         # Input MDS IBI data set
-         DATASET_ID_MOD_SSV = "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m"
-         DATASET_ID_MOD_SSH = "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m"
-   #
-   #   - Copernicus dataset IDs from the obs chosen data 
-   #
-   match obs_acro:
-      case 'AVISO':
-         # AVISO GLOBAL
-         DATASET_ID_OBS = "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"
-      case 'AVISO_EU':
-         # AVISO EUROPE
-         DATASET_ID_OBS = "cmems_obs-sl_eur_phy-ssh_nrt_allsat-l4-duacs-0.0625deg_P1D"
+   #   - Copernicus dataset IDs from the obs chosen data (AVISO, AVISO_EU
+   DATASET_ID_OBS = data_obs_dict[obs_acro]
    #
    # ----------------------------------
    #
@@ -161,13 +153,13 @@ def main():
          maximum_depth = data_request["depth"][1],
          start_datetime = data_request["time"][0],
          end_datetime = data_request["time"][1],
-         variables = data_request["variables"]
-         )
+         variables = data_request["variables"])
+       
       ssu_mod = data_mod_ssv.variables[ssu_mod_name].values
       ssv_mod = data_mod_ssv.variables[ssv_mod_name].values
-      time_mod = [jul * 24] # hours since 1950-01-01T00:00:00
       depth_mod = data_mod_ssv.variables[depth_mod_name].values
-      lat_mod = data_mod_ssv.variables[lat_mod_name].values   
+      time_mod = [jul * 24] # hours since 1950-01-01T00:00:00
+      lat_mod = data_mod_ssv.variables[lat_mod_name].values
       lon_mod = data_mod_ssv.variables[lon_mod_name].values
       #
       print("-----------------------------------------------")
