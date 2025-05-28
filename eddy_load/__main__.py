@@ -35,8 +35,6 @@ from eddy_load.my_classes import *  # use of homemade class modules
 #
 from eddy_load.namelist_mod import *
 from eddy_load.namelist_obs import *
-print ("data_mod_dict = ",data_mod_dict["GLO"][0])
-exit()
 #
 def main():
    #

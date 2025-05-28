@@ -38,7 +38,7 @@
 # Input MDS data set
 # data_mod_dict = { model_acro : [ DATASET_ID_MOD_SSV,  DATASET_ID_MOD_SSH, ssu_mod_name, ssv_mod_name, ssh_mod_name, zmin, zmax ] }
 data_mod_dict = dict()
-data_mod_dict = { "GLO" : [ "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m", "cmems_mod_glo_phy_anfc_0.083deg_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+data_mod_dict ={ "GLO" : [ "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m", "cmems_mod_glo_phy_anfc_0.083deg_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
               "IBI" : [ "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
               "MED" : [ "cmems_mod_med_phy-cur_anfc_4.2km_P1D-m", "cmems_mod_med_phy-ssh_anfc_4.2km_P1D-m", "uo", "vo", "zos", 1.02, 1.02 ],
               "NWS" : [ "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
