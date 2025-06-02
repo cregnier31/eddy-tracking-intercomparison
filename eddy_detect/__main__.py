@@ -58,14 +58,14 @@ def main():
       print ("Input data directory = ", data_dir)
    else:
       print ("!!! ERROR: 2 arguments to be chosen !!!")
-      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO-EU)")
+      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO_EU)")
       print ("Argument 2 = Idata directory")
       sys.exit()
    #
    #    - Var name depending on the kind of data (model or obs) ==> !!! to be updated following the Copernicus MDS updates !!!
    # 
    #       - for MDS adt AVISO obs data (SL-TAC)
-   if ( ( data_acro == "AVISO" ) or ( data_acro == "AVISO-EU" ) ):
+   if ( ( data_acro == "AVISO" ) or ( data_acro == "AVISO_EU" ) ):
       var_adt = "adt"
       VAR_U = "ugos"
       VAR_V = "vgos"

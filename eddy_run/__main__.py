@@ -33,17 +33,18 @@ def main():
    #    Main parameters in arguments
    # -----------------------------------   
    #
-   if (len(sys.argv)==10):
+   if (len(sys.argv)==11):
       # Considered period (in arguments)
       date_start = str(sys.argv[1])
       date_end = str(sys.argv[2])
       xmin = str(sys.argv[3])
       xmax = str(sys.argv[4])
       ymin = str(sys.argv[5])
-      ymax = str(sys.argv[6]) 
-      model_acro = str(sys.argv[7])
-      obs_acro = str(sys.argv[8])
-      data_dir = str(sys.argv[9])
+      ymax = str(sys.argv[6])
+      mode = str(sys.argv[7])
+      model_acro = str(sys.argv[8])
+      obs_acro = str(sys.argv[9])
+      data_dir = str(sys.argv[10])
       print ("Date start = ",date_start)
       print ("Longitude min = ",xmin)
       print ("Longitude max = ",xmax)
@@ -53,23 +54,24 @@ def main():
       print ("Altimetric satellite data = ",obs_acro)
       print ("Downloaded file directory = ",data_dir)
    else:
-      print ("!!! ERROR: 9 arguments to be chosen !!!")
+      print ("!!! ERROR: 10 arguments to be chosen !!!")
       print ("Argument 1 = Date start (yyyy-mm-dd)")
       print ("Argument 2 = Date end (yyyy-mm-dd)") 
       print ("Argument 3 = Longitude min (-180/180° longitude convention)")
       print ("Argument 4 = Longitude max (-180/180° longitude convention)")
       print ("Argument 5 = Latitude min (-90/90° latitude convention)")
       print ("Argument 6 = Latitude max (-90/90° latitude convention)")
-      print ("Argument 7 = Analysis & Forecasting system (GLO, IBI)")
-      print ("Argument 8 = Altimetric satellite data (AVISO, AVISO_EU)")
-      print ("Argument 9 = Downloaded file directory")
+      print ("Argument 7 = NRT or MY datasets") 
+      print ("Argument 8 = Analysis & Forecasting system (GLO, IBI, ...)")
+      print ("Argument 9 = Altimetric satellite data (AVISO, AVISO_EU)")
+      print ("Argument 10 = Downloaded file directory")
       sys.exit()
    #
    # ------------------------------------
    #   Run of the different components
    # ------------------------------------
    #    - Input data loading
-   proc1 = subprocess.run([r'eddy_load', date_start, date_end, xmin, xmax, ymin, ymax, model_acro, obs_acro, data_dir])
+   proc1 = subprocess.run([r'eddy_load', date_start, date_end, xmin, xmax, ymin, ymax, mode, model_acro, obs_acro, data_dir])
    #    - Model eddy detection
    proc2 = subprocess.run([r'eddy_detect', model_acro, data_dir])
    #    - Obs eddy detection

@@ -40,7 +40,7 @@ def main():
    #
    #   - Main parameters in arguments
    #     
-   if (len(sys.argv)==10):
+   if (len(sys.argv)==11):
       # Considered period (in arguments)
       date_start = str(sys.argv[1])
       date_end = str(sys.argv[2])
@@ -48,42 +48,57 @@ def main():
       xmax = float(sys.argv[4])
       ymin = float(sys.argv[5])
       ymax = float(sys.argv[6])
-      model_acro = str(sys.argv[7])
-      obs_acro = str(sys.argv[8])
-      data_dir = str(sys.argv[9])
+      mode = str(sys.argv[7])
+      model_acro = str(sys.argv[8])
+      obs_acro = str(sys.argv[9])
+      data_dir = str(sys.argv[10])
       print ("Date start = ",date_start)
       print ("Date end = ",date_end)
       print ("Longitude min = ",xmin)
       print ("Longitude max = ",xmax)
       print ("Latitude min = ",ymin)
       print ("Latitude max = ",ymax)
-      print ("Analysis & Forecasting system = ",model_acro)
+      print ("Mode = ",mode)
+      print ("Analysis & Forecasting or reanalysis system = ",model_acro)
       print ("Altimetric satellite data = ",obs_acro)
       print ("Downloaded file directory = ",data_dir)
    else:
-      print ("!!! ERROR: 9 arguments to be chosen !!!")
+      print ("!!! ERROR: 10 arguments to be chosen !!!")
       print ("Argument 1 = Date start (yyyy-mm-dd)")
       print ("Argument 2 = Date end (yyyy-mm-dd)")
       print ("Argument 3 = Longitude min (-180/180° longitude convention)")
       print ("Argument 4 = Longitude max (-180/180° longitude convention)")
       print ("Argument 5 = Latitude min (-90/90° latitude convention)")
       print ("Argument 6 = Latitude max (-90/90° latitude convention)")
-      print ("Argument 7 = Analysis & Forecasting system (GLO, IBI)")
-      print ("Argument 8 = Altimetric satellite data (AVISO, AVISO_EU)")
-      print ("Argument 9 = Downloaded file directory")
+      print ("Argument 7 = NRT or MY datasets")
+      print ("Argument 8 = Analysis & Forecasting system (GLO, IBI, ...)")
+      print ("Argument 9 = Altimetric satellite data (AVISO, AVISO_EU)")
+      print ("Argument 10 = Downloaded file directory")
       sys.exit()
    #
    #   - Copernicus dataset from the model chosen data 
-   DATASET_ID_MOD_SSV = data_mod_dict[model_acro][0]
-   DATASET_ID_MOD_SSH = data_mod_dict[model_acro][1]
-   ssu_mod_name = data_mod_dict[model_acro][2]
-   ssv_mod_name = data_mod_dict[model_acro][3]
-   ssh_mod_name = data_mod_dict[model_acro][4]
-   zmin = data_mod_dict[model_acro][5]
-   zmax =data_mod_dict[model_acro][6]
+   if mode == 'NRT':
+      DATASET_ID_MOD_SSV = data_mod_dict_NRT[model_acro][0]
+      DATASET_ID_MOD_SSH = data_mod_dict_NRT[model_acro][1]
+      ssu_mod_name = data_mod_dict_NRT[model_acro][2]
+      ssv_mod_name = data_mod_dict_NRT[model_acro][3]
+      ssh_mod_name = data_mod_dict_NRT[model_acro][4]
+      zmin = data_mod_dict_NRT[model_acro][5]
+      zmax =data_mod_dict_NRT[model_acro][6] 
+   elif mode == 'MY':
+      DATASET_ID_MOD_SSV = data_mod_dict_MY[model_acro][0]
+      DATASET_ID_MOD_SSH = data_mod_dict_MY[model_acro][1]
+      ssu_mod_name = data_mod_dict_MY[model_acro][2]
+      ssv_mod_name = data_mod_dict_MY[model_acro][3]
+      ssh_mod_name = data_mod_dict_MY[model_acro][4]
+      zmin = data_mod_dict_MY[model_acro][5]
+      zmax =data_mod_dict_MY[model_acro][6]
    #
-   #   - Copernicus dataset IDs from the obs chosen data (AVISO, AVISO_EU
-   DATASET_ID_OBS = data_obs_dict[obs_acro]
+   #   - Copernicus dataset IDs from the obs chosen data (AVISO, AVISO_EU)
+   if mode == 'NRT':
+      DATASET_ID_OBS = data_obs_dict_NRT[obs_acro]
+   elif mode == 'MY':
+      DATASET_ID_OBS = data_obs_dict_MY[obs_acro]
    #
    # ----------------------------------
    #

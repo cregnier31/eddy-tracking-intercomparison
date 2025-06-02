@@ -38,12 +38,22 @@
 # Input MDS data set
 # data_mod_dict = { model_acro : [ DATASET_ID_MOD_SSV,  DATASET_ID_MOD_SSH, ssu_mod_name, ssv_mod_name, ssh_mod_name, zmin, zmax ] }
 data_mod_dict = dict()
-data_mod_dict ={ "GLO" : [ "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m", "cmems_mod_glo_phy_anfc_0.083deg_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
-              "IBI" : [ "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
-              "MED" : [ "cmems_mod_med_phy-cur_anfc_4.2km_P1D-m", "cmems_mod_med_phy-ssh_anfc_4.2km_P1D-m", "uo", "vo", "zos", 1.02, 1.02 ],
-              "NWS" : [ "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
-              "BAL" : [ "cmems_mod_bal_phy_anfc_P1D-m", "cmems_mod_bal_phy-ssh_anfc_detided_P1D-m", "uo", "vo", "zos_detided", 0.51, 0.51 ],
-              "BLK" : [ "cmems_mod_blk_phy-cur_anfc_2.5km_P1D-m", "cmems_mod_blk_phy-ssh_anfc_2.5km_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ] }
+# MFC NRT datasets
+# NB.: ARC not available in regular mercator grid, only on stereographic grid ==> ARC removed from the MFC choice
+data_mod_dict_NRT = { "GLO" : [ "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m", "cmems_mod_glo_phy_anfc_0.083deg_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+                      "IBI" : [ "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_ibi_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+                      "MED" : [ "cmems_mod_med_phy-cur_anfc_4.2km_P1D-m", "cmems_mod_med_phy-ssh_anfc_4.2km_P1D-m", "uo", "vo", "zos", 1.02, 1.02 ],
+                      "NWS" : [ "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "cmems_mod_nws_phy_anfc_0.027deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+                      "BAL" : [ "cmems_mod_bal_phy_anfc_P1D-m", "cmems_mod_bal_phy-ssh_anfc_detided_P1D-m", "uo", "vo", "zos_detided", 0.51, 0.51 ],
+                      "BLK" : [ "cmems_mod_blk_phy-cur_anfc_2.5km_P1D-m", "cmems_mod_blk_phy-ssh_anfc_2.5km_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ] }
+#
+# MFC MY datasets !!! not interim ==> delayed mode from 1993 !!!
+# NB. ssh for BAL isn't available, only sla ==> BAL is remove from this choice for MY datasets
+data_mod_dict_MY = { "GLO" : [ "cmems_mod_glo_phy_my_0.083deg_P1D-m", "cmems_mod_glo_phy_my_0.083deg_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+                     "IBI" : [ "cmems_mod_ibi_phy_my_0.083deg-3D_P1D-m", "cmems_mod_ibi_phy_my_0.083deg-3D_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ],
+                     "MED" : [ "med-cmcc-cur-rean-d", "med-cmcc-ssh-rean-d", "uo", "vo", "zos", 1.02, 1.02 ],
+                     "NWS" : [ "cmems_mod_nws_phy-uv_my_7km-3D_P1D-m", "cmems_mod_nws_phy-ssh_my_7km-2D_P1D-m", "uo", "vo", "zos", 0., 0. ],
+                     "BLK" : [ "cmems_mod_blk_phy-cur_my_2.5km_P1D-m", "cmems_mod_blk_phy-ssh_my_2.5km_P1D-m", "uo", "vo", "zos", 0.51, 0.51 ] }
 #
 time_mod_name = "time"
 depth_mod_name = "depth"

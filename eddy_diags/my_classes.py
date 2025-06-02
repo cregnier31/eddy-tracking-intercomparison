@@ -576,6 +576,9 @@ class Plots:
             max(misses_histogram[0]),
             max(falarm_histogram[0])
             )
+
+        print ("maxvlue = ",max_value)
+        
         # Lissage des donn??es
         f_hits = interp1d(hits_x, hits_y, kind='cubic')
         f_misses = interp1d(misses_x, misses_y, kind='cubic')
@@ -601,10 +604,10 @@ class Plots:
         # ax.plot(misses_x, misses_y, 'o', color='red')
         # ax.plot(falarm_x, falarm_y, 'o', color='orange')
         
-        #ax.set_ylim(0, max_value + 1000)
-        ax.set_ylim(0, 300)
+        #ax.set_ylim(0, max_value + 100)
+        ax.set_ylim(0, 30)
         #ax.set_xlim(0, 130)
-        ax.set_xlim(0, 80)
+        ax.set_xlim(0, 8)
         ax.set_xlabel("Radius (km)")
         ax.set_ylabel("Occurences")
         ax.set_title(f"{self.model} Reference {self.reference}")

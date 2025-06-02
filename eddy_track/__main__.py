@@ -40,7 +40,7 @@ def main():
       print ("Input data directory = ", data_dir)
    else:
       print ("!!! ERROR: 2 arguments to be chosen !!!")
-      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO-EU)")
+      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO_EU)")
       print ("Argument 2 = data directory")
       sys.exit()
    #
