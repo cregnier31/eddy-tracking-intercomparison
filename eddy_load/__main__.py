@@ -71,7 +71,7 @@ def main():
       print ("Argument 5 = Latitude min (-90/90° latitude convention)")
       print ("Argument 6 = Latitude max (-90/90° latitude convention)")
       print ("Argument 7 = NRT or MY datasets")
-      print ("Argument 8 = Analysis & Forecasting system (GLO, IBI, ...)")
+      print ("Argument 8 = Analysis & Forecasting system (GLO, IBI, ... (for MDS))")
       print ("Argument 9 = Altimetric satellite data (AVISO, AVISO_EU)")
       print ("Argument 10 = Downloaded file directory")
       sys.exit()
