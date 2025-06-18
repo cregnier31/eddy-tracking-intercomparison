@@ -1,7 +1,0 @@
--r requirements.txt
-isort
-black
-blackdoc
-flake8
-pytest
-pytest-cov
