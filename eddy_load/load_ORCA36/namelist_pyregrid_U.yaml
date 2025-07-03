@@ -1,0 +1,19 @@
+{
+    "GENERAL": {
+        "SYSid_in": "ORCA36_NG",
+        "SYSid_out": "ORCA36_RG",
+        "dirlog": "/home/jovyan/data/",
+        "dirweights": "/home/jovyan/data/",
+        "dirout": "/home/jovyan/data/",
+        "complevel": 0,
+        "lg_drown": true
+        },
+    "GRID": {
+        "maskin": "/home/jovyan/data/meshmask_ORCA36_NG.nc",
+        "maskout": "/home/jovyan/data/meshmask_ORCA36_RG.nc",
+        "lg_cgridout": false
+        },
+    "CONFIG_MODES_KWARGS": {
+        "orca36": "-v uos --vgrid u --vector-axis x --method bilin --conservative-method True --max-proc-per-task 1"
+        }
+}
