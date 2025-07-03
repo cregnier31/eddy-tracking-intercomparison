@@ -21,6 +21,46 @@ import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 #
+# ---------------------------------
+# FIND NEAREST POINT FROM ORCA GRID
+# ---------------------------------
+def nearest_orca_point(lon0, lat0, longitude, latitude):
+   #
+   # Parameters: 
+   #
+   #    lon0 = longitude of the considered point 
+   #    lat0 = Latitude of the considered point
+   #    longitude = 2D array longitude of the chosen orca grid
+   #    latitude = 2D array latiitude of the chosen orca grid
+   #
+   rpi=2*np.arcsin(1.)  # pi  
+   degrad = rpi/180 # Conversion of degrees to radian
+   ra = 6371.229  #  Average earth radius in kms
+   # Compute spherical distance:
+   lon0 = lon0*degrad
+   lat0 = lat0*degrad
+   longitude = longitude*degrad
+   latitude = latitude*degrad
+
+   dist = np.zeros_like(latitude)
+   dlon = lon0 - longitude
+
+   term1 = (np.cos(lat0) * np.sin(dlon))**2
+   term2 = (np.cos(latitude) * np.sin(lat0) - np.sin(latitude) * np.cos(lat0) * np.cos(dlon))**2
+   numerator = np.sqrt(term1 + term2)
+   denominator = np.sin(latitude) * np.sin(lat0) + np.cos(latitude) * np.cos(lat0) * np.cos(dlon)
+
+   dist = np.arctan2(numerator, denominator)
+
+   # Trouver les indices où dist est minimal (équivalent à MAXLOC(..., .eq. MINVAL))
+   min_val = np.min(dist)
+   ijfound = np.argwhere(dist == min_val)
+
+   # Pour récupérer un seul couple d'indices (le premier trouvé)
+   iji_found = tuple(ijfound[0])
+    
+   return(iji_found)
+#
 # --------------------
 # GEOSTROPHIC CURRENT 
 # --------------------
