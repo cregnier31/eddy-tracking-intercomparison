@@ -165,33 +165,19 @@ def main():
           #   - Load native orca grid model data through edito S3 bucket
           #     --------------------------------------------------------
           # 
-          # Parameters
-          #
-          model = model_acro
-          resol = res_mod
-          # Period : 20160101 => 20181231
-          date_orca36 = date
-          dataset_ID = DATASET_ID_MOD_SSH
-          var_lon_name = 'nav_lon'
-          dimx_name = 'x'
-          var_lat_name = 'nav_lat'
-          dimy_name = 'y'
-          var_ssh_name = 'sossheig'
-          var_ssu_name = 'uos'
-          var_ssv_name = 'vos'
-          dirout = data_dir
+          #      NB.: ORCA36 available simulation period : 20160101 => 20181231
           #
           # Input files
           #
-          filein_ssu = dataset_ID+"_"+date+"-"+date+"_"+var_ssu_name+".zarr"
-          filein_ssv = dataset_ID+"_"+date+"-"+date+"_"+var_ssv_name+".zarr"
-          filein_ssh = dataset_ID+"_"+date+"-"+date+"_"+var_ssh_name+".zarr"
+          filein_ssu = DATASET_ID_MOD_SSV+"_"+date+"-"+date+"_"+ssu_mod_name+".zarr"
+          filein_ssv = DATASET_ID_MOD_SSV+"_"+date+"-"+date+"_"+ssv_mod_name+".zarr"
+          filein_ssh = DATASET_ID_MOD_SSH+"_"+date+"-"+date+"_"+ssh_mod_name+".zarr"
           #
           # Spatial extraction
           #
           dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(time_counter=slice(0,1))
-          longitude = dataset[var_lon_name].values
-          latitude = dataset[var_lat_name].values
+          longitude = dataset[lon_mod_name].values
+          latitude = dataset[lat_mod_name].values
           indexes = fn.nearest_orca_point(xmin, ymin, longitude, latitude)
           imin = indexes[0]
           jmin = indexes[1]
@@ -206,50 +192,42 @@ def main():
           shutil.copyfile("namelist_pyregrid_T.yaml", "namelist_pyregrid.yaml")
           #
           dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-          var_name = var_ssh_name
-
-          lon_mod = dataset[var_lon_name].values # orca grid T
-          var_lon = lon_mod
-
-          lat_mod = dataset[var_lat_name].values
-          var_lat = lat_mod
-
+          lon_mod = dataset[lon_mod_name].values # orca grid T
+          lat_mod = dataset[lat_mod_name].values
           ssh_mod = dataset[var_name].values
           ssh_mod = np.mean(ssh_mod, axis = (0)) # daily mean from hourly data
-          var = ssh_mod
 
           data_vars = {
-            var_name: ((dimy_name, dimx_name), var),
-            var_lat_name: ((dimy_name, dimx_name),var_lat),
-            var_lon_name: ((dimy_name, dimx_name),var_lon)
+            ssh_mod_name: ((dimy_mod_name, dimx_mod_name), ssh_mod),
+            lat_mod_name: ((dimy_mod_name, dimx_mod_name),lat_mod),
+            lon_mod_name: ((dimy_mod_name, dimx_mod_name),lon_mod)
             }
           # New dataset
           ds = xr.Dataset(data_vars)
           #
-          ds.to_netcdf(dirout+"ssh_tmp.nc")
+          ds.to_netcdf(dirout_mod+"ssh_tmp.nc")
           #
           # parameters for interpolation
-          f = dirout+"ssh_tmp.nc"
-          name_grid_in = model+"_NG"
-          name_grid_out = model+"_RG"
-          var_in = var_name
+          f = dirout_mod+"ssh_tmp.nc"
+          name_grid_in = model_acro+"_NG"
+          name_grid_out = model_acro+"_RG"
           method = "bilin"
           lg_drown = False
           conservative_method = "None"
           maskin = "meshmask_"+name_grid_in+".nc"
-          maskout = dirout+"meshmask_"+name_grid_out+".nc"
+          maskout = dirout_mod+"meshmask_"+name_grid_out+".nc"
           #
-          if not os.path.exists(dirout+maskin):
+          if not os.path.exists(dirout_mod+maskin):
              # Make mesh maskin/out if not available (To do be done only once!):
              # Creation of meshmask_{name_grid_in}.nc
              fillvalue = np.nan
-             make_mask(name_grid_in, f, var_in, fillvalue)
-             shutil.move(maskin, dirout)
+             make_mask(name_grid_in, f, ssh_mod_name, fillvalue)
+             shutil.move(maskin, dirout_mod)
 
-             stepy = resol
+             stepy = resol_mod
              lat = np.arange(ymin, ymax, stepy)
              stepx = np.ones(len(lat))   # zonal model resolution in ° (vs latitude, for regular Mercator grid)
-             stepx[:] = resol * np.cos(lat[:] * np.pi / 180.)
+             stepx[:] = resol_mod * np.cos(lat[:] * np.pi / 180.)
              lon = np.arange(xmin, xmax, stepx)
     
              mask = np.ones((1, 1, len(lat), len(lon)))
@@ -263,10 +241,10 @@ def main():
           #
           # Interpolation
           #
-          maskin = dirout+maskin
+          maskin = dirout_mod+maskin
           op = interp(
               f,
-              var_in,
+              ssh_mod_name,
               "t",
               "",
               name_grid_in,
@@ -291,33 +269,30 @@ def main():
           #
           # namelist
           shutil.copyfile("namelist_pyregrid_U.yaml", "namelist_pyregrid.yaml")
-          var_name = var_ssu_name
           dataset = (xr.open_dataset(filein_ssu, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
           #lon_mod = dataset['nav_lon'].values # orca grid u
           #lat_mod = dataset['nav_lat'].values
           ssu_mod = dataset[var_name].values
           ssu_mod = np.mean(ssu_mod, axis = (0)) # daily mean from hourly data
-          var = ssu_mod
 
           data_vars = {
-                      var_name: ((dimy_name, dimx_name), var),
-                      var_lat_name: ((dimy_name, dimx_name),var_lat),
-                      var_lon_name: ((dimy_name, dimx_name),var_lon)
+                      ssu_mod_name: ((dimy_mod_name, dimx_mod_name), ssu_mod),
+                      lat_mod_name: ((dimy_mod_name, dimx_mod_name), lat_mod),
+                      lon_mod_name: ((dimy_mod_name, dimx_mod_name), lon_mod)
                       }
           # New dataset
           ds = xr.Dataset(data_vars)
           #
-          ds.to_netcdf(dirout+"ssu_tmp.nc")
+          ds.to_netcdf(dirout_mod+"ssu_tmp.nc")
           #
           # parameters for interpolation
-          f = dirout+"ssu_tmp.nc"
-          var_in = var_name
+          f = dirout_mod+"ssu_tmp.nc"
           #
           # Interpolation
           #
           op = interp(
               f,
-              var_in,
+              ssu_mod_name,
               "u",
               "x",
               name_grid_in,
@@ -331,88 +306,86 @@ def main():
               np.array([0])
           )
           #    - Make weights if not available (To do be done only once!)
-#if not os.path.isfile(op.wfile):
-op.make_vertices()
-#if not os.path.isfile(op.projection_wfile):
-op.make_projection_weights()
-#    - Interpolation
-data = op.read_file()
-ssu_interp = op.horizontal_interp(data)
-ssu_interp_x, ssu_interp_y = op.projection(ssu_interp)
-#
-# Meridian surface model current  
-# ------------------------------
-#
-# namelist
-shutil.copyfile("namelist_pyregrid_V.yaml", "namelist_pyregrid.yaml")
-var_name = var_ssv_name
-dataset = (xr.open_dataset(filein_ssv, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-#lon_mod = dataset['nav_lon'].values # orca grid v
-#lat_mod = dataset['nav_lat'].values
-ssv_mod = dataset[var_name].values
-ssv_mod = np.mean(ssv_mod, axis = (0)) # daily mean from hourly data
-var = ssv_mod
+          #if not os.path.isfile(op.wfile):
+          op.make_vertices()
+          #if not os.path.isfile(op.projection_wfile):
+          op.make_projection_weights()
+          #    - Interpolation
+          data = op.read_file()
+          ssu_interp = op.horizontal_interp(data)
+          ssu_interp_x, ssu_interp_y = op.projection(ssu_interp)
+          #
+          # Meridian surface model current  
+          # ------------------------------
+          #
+          # namelist
+          shutil.copyfile("namelist_pyregrid_V.yaml", "namelist_pyregrid.yaml")
+          dataset = (xr.open_dataset(filein_ssv, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
+          #lon_mod = dataset['nav_lon'].values # orca grid v
+          #lat_mod = dataset['nav_lat'].values
+          ssv_mod = dataset[ssv_mod_name].values
+          ssv_mod = np.mean(ssv_mod, axis = (0)) # daily mean from hourly data
 
-data_vars = {
-            var_name: ((dimy_name, dimx_name), var),
-            var_lat_name: ((dimy_name, dimx_name),var_lat),
-            var_lon_name: ((dimy_name, dimx_name),var_lon)
-            }
-# New dataset
-ds = xr.Dataset(data_vars)
-#
-ds.to_netcdf(dirout+"ssv_tmp.nc")
-#
-# parameters for interpolation
-f = dirout+"ssv_tmp.nc"
-var_in = var_name
-#
-# Interpolation
-#
-op = interp(
-    f,
-    var_in,
-    "v",
-    "y",
-    name_grid_in,
-    maskin,
-    name_grid_out,
-    maskout,
-    method,
-    conservative_method,
-    lg_drown,
-    False,
-    np.array([0])
-)
-#    - Make weights (for vector) if not available (To do be done only once!)
-#if not os.path.isfile(op.wfile):
-op.make_vertices()
-#if not os.path.isfile(op.projection_wfile):
-op.make_projection_weights()
-#    - Interpolation
-data = op.read_file()
-ssv_interp = op.horizontal_interp(data)
-# vector projection 
-ssv_interp_x, ssv_interp_y = op.projection(ssv_interp)
-#
-# final vector rotation from native grid to regular one
-ssu_interp = ssu_interp_x + ssv_interp_x
-ssv_interp = ssu_interp_y + ssv_interp_y
-ssu_mod = np.ones((1, 1, len(lat_mod), len(lon_mod)))  # 4D array
-ssv_mod = np.ones((1, 1, len(lat_mod), len(lon_mod)))  # 4D array
-ssu_mod[0,0,:,:] = ssu_interp[:,:]
-ssv_mod[0,0,:,:] = ssv_interp[:,:]
+          data_vars = {
+                      ssv_mod_name: ((dimy_mod_name, dimx_mod_name), ssv_mod),
+                      lat_mod_name: ((dimy_mod_name, dimx_mod_name), lat_mod),
+                      lon_mod_name: ((dimy_mod_name, dimx_mod_name), lon_mod)
+                      }
+          # New dataset
+          ds = xr.Dataset(data_vars)
+          #
+          ds.to_netcdf(dirout_mod+"ssv_tmp.nc")
+          #
+          # parameters for interpolation
+          f = dirout_mod+"ssv_tmp.nc"
+          #
+          # Interpolation
+          #
+          op = interp(
+              f,
+              ssv_mod_name,
+              "v",
+              "y",
+              name_grid_in,
+              maskin,
+              name_grid_out,
+              maskout,
+              method,
+              conservative_method,
+              lg_drown,
+              False,
+              np.array([0])
+          )
+          #    - Make weights (for vector) if not available (To do be done only once!)
+          #if not os.path.isfile(op.wfile):
+          op.make_vertices()
+          #if not os.path.isfile(op.projection_wfile):
+          op.make_projection_weights()
+          #    - Interpolation
+          data = op.read_file()
+          ssv_interp = op.horizontal_interp(data)
+          # vector projection 
+          ssv_interp_x, ssv_interp_y = op.projection(ssv_interp)
+          #
+          # final vector rotation from native grid to regular one
+          ssu_interp = ssu_interp_x + ssv_interp_x
+          ssv_interp = ssu_interp_y + ssv_interp_y
+          ssu_mod = np.ones((1, 1, len(lat_mod), len(lon_mod)))  # 4D array
+          ssv_mod = np.ones((1, 1, len(lat_mod), len(lon_mod)))  # 4D array
+          ssu_mod[0,0,:,:] = ssu_interp[:,:]
+          ssv_mod[0,0,:,:] = ssv_interp[:,:]
 
-lon_mod = lon
-lat_mod = lat
+          lon_mod = lon
+          lat_mod = lat
+          depth_mod = zmin
+          time_mod =  jul * 24 # hours since 1950-01-01T00:00:00
 
-depth_mod = 0.
-
-#time_mod =  [jul * 24] # hours since 1950-01-01T00:00:00
-time_mod = 0
-
-dirout_mod = dirout
-fileout_mod =  model+'_'+d_date+'.nc
+          # cleanning : remove tmp files from dirout_mod
+          os.remove(dirout_mod+ssh_tmp.nc)
+          os.remove(dirout_mod+ssu_tmp.nc)
+          os.remove(dirout_mod+ssv_tmp.nc)
+          for f in os.listdir(dirout_mod):
+             os.remove(dirout_mod+f)
           #   
        else:
           # 
@@ -721,6 +694,16 @@ fileout_mod =  model+'_'+d_date+'.nc
             plt.close()
       #
       jul += 1
+   # Cleanning : remove weight, mask and projection files from dirout_mod
+   if model_acro == "ORCA36":
+       os.remove(dirout_mod+"meshmask_"+model_acro+"_NG.nc")
+       os.remove(dirout_mod+"meshmask_"+model_acro+"_RG.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridv.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridt.nc")
+       os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridv.nc")
+       os.remove(dirout_mod+"projection_weights_"+model_acro+"_NG_to_"+model_acro+"ORCA36_RG_gridu.nc")
 #
 # Run the main code
 if __name__ == "__main__":
