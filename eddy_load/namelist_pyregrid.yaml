@@ -11,9 +11,9 @@
     "GRID": {
         "maskin": "/home/jovyan/data/meshmask_ORCA36_NG.nc",
         "maskout": "/home/jovyan/data/meshmask_ORCA36_RG.nc",
-        "lg_cgridout": false
+        "lg_cgridout": true
         },
     "CONFIG_MODES_KWARGS": {
-        "orca36": "-v vos --vgrid v --vector-axis y --method bilin --conservative-method True --max-proc-per-task 1"
+        "orca36": "-v sossheig --vgrid t --method bilin --conservative-method True --max-proc-per-task 1"
         }
 }

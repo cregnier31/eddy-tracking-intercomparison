@@ -261,7 +261,7 @@ data_mod_dict_MY = { "GLO" : [ "cmems_mod_glo_phy_my_0.083deg_P1D-m",
                                "depth",
                                "y",
                                "x",
-                               1 / 12.
+                               1 / 36.
                              ] }
 #   - attributes
 unit_ssu_attr = "m/s"
