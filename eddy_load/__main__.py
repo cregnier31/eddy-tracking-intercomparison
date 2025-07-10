@@ -177,6 +177,10 @@ def main():
           # Spatial extraction
           #
           dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(time_counter=slice(0,1))
+
+          
+
+          
           longitude = dataset[lon_mod_name].values
           latitude = dataset[lat_mod_name].values
           indexes = fn.nearest_orca_point(xmin, ymin, longitude, latitude)
@@ -186,6 +190,14 @@ def main():
           imax = indexes[0]
           jmax = indexes[1]
 
+
+          #ssh_mod = dataset[ssh_mod_name].values
+         # print("ssh avant extraction")
+         # print("ssh_mod[imin,jmin] = ",ssh_mod[0,jmin,imin])
+          #print("ssh_mod[imax,jmax] = ",ssh_mod[0,jmax-1,imax-1])
+         # print("ssh_mod[imax,jmax] = ",ssh_mod[0,jmax,imax])
+
+          
 
           print("lon min = ",longitude[imin,jmin])
           print("lat min = ",latitude[imin,jmin])
@@ -199,10 +211,33 @@ def main():
           shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_T.yaml", workdir+"namelist_pyregrid.yaml")
           #
           dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-          lon_mod = dataset[lon_mod_name].values # orca grid T
-          lat_mod = dataset[lat_mod_name].values
+          #dataset = (xr.open_dataset(filein_ssh, engine="zarr"))
+
+          lon_mod = np.ones((imax-imin, jmax-jmin))
+          lat_mod = np.ones((imax-imin, jmax-jmin))
+          lon_mod[:, :] = longitude[imin:imax, jmin:jmax]
+          lon_mod = lon_mod.transpose()
+          lat_mod[:, :] = latitude[imin:imax, jmin:jmax]
+          lat_mod = lat_mod.transpose()
+
+          
+          
+          #lon_mod = dataset[lon_mod_name].values # orca grid T
+          #lat_mod = dataset[lat_mod_name].values
+          #ssh_mod = dataset[ssh_mod_name].values
+          #lat_mod = dataset[lat_mod_name].values
           ssh_mod = dataset[ssh_mod_name].values
+          print("ssh apres extraction")
+          print("ssh_mod[0,0] = ",ssh_mod[0,0,0])
+          #print("ssh_mod[imax-imin,jmax-jmin] = ",ssh_mod[0,jmax-jmin-1,imax-imin-1])
+          #print("ssh_mod[imax-imin,jmax-jmin] = ",ssh_mod[0,jmax-jmin,imax-imin])
+          
+          #lon_mod[:, :] = lon_mod_tot[jmin:jmax, imin:imax]
+          #lat_mod[:, :] = lat_mod_tot[jmin:jmax, imin:imax]
+          #ssh_mod[0, :, :] = ssh_mod_tot[0, jmin:jmax, imin:imax]
+          
           ssh_mod = np.mean(ssh_mod, axis = (0)) # daily mean from hourly data
+          #ssh_mod = ssh_mod.transpose()
           
 
 
@@ -211,21 +246,20 @@ def main():
           print("jmin = ",jmin)
           print("jmax = ",jmax)
 
-          print("lon mod min = ",lon_mod[0,0])
-          print("lat mod min = ",lat_mod[0,0])
-          print("lon mod max = ", lon_mod[273,605])
-          print("lat mod max = ", lat_mod[273,605])
+          #print("lon mod min = ",min(lon_mod))
+          #print("lat mod min = ",min(lat_mod))
+          #print("lon mod max = ", max(lon_mod))
+          #print("lat mod max = ", max(lat_mod))
           
           data_vars = {
             ssh_mod_name: ((dimy_mod_name, dimx_mod_name), ssh_mod),
-            lat_mod_name: ((dimy_mod_name, dimx_mod_name),lat_mod),
-            lon_mod_name: ((dimy_mod_name, dimx_mod_name),lon_mod)
+            lat_mod_name: ((dimy_mod_name, dimx_mod_name), lat_mod),
+            lon_mod_name: ((dimy_mod_name, dimx_mod_name), lon_mod)
             }
 
-          print("shape(lat_mod) = ",np.shape(lat_mod))
-          print("shape(lon_mod) = ",np.shape(lon_mod))
+          print("shape(lat_mod) = ", np.shape(lat_mod))
+          print("shape(lon_mod) = ", np.shape(lon_mod))
           print("shape(ssh_mod) = ", np.shape(ssh_mod))
-          exit()
           
 
           
@@ -233,6 +267,8 @@ def main():
           ds = xr.Dataset(data_vars)
           #
           ds.to_netcdf(dirout_mod+"ssh_tmp.nc")
+
+          
           #
           # parameters for interpolation
           f = dirout_mod+"ssh_tmp.nc"
@@ -249,36 +285,24 @@ def main():
              # Creation of meshmask_{name_grid_in}.nc
              fillvalue = np.nan
              make_mask(name_grid_in, f, ssh_mod_name, fillvalue)
+
+
+              
              shutil.move(maskin, dirout_mod)
 
              stepy = res_mod
              stepx = res_mod
-             lat = np.arange(xmin, xmax, stepx)
+             lat = np.arange(ymin, ymax, stepy)
              lon = np.arange(xmin, xmax, stepx)
-
-              
-             #lon = np.ones(imax - imin + 1)
-             #stepx = np.ones(len(lat))   # zonal model resolution in ° (vs latitude, for regular Mercator grid)
-             #for i in range(imax - imin + 1):
-             #   stepx[i] = res_mod * np.cos(lat[i] * np.pi / 180.)
-             #   lon [i] = xmin + i * stepx[i]
-             #   print ("stepx = ", stepx[i])
-             #   print ("lon = ", lon[i])
-
-             #for j in range(len(lat)):
-             #   stepx[j] = res_mod * np.cos(lat[j] * np.pi / 180.)
-            # for i in range(imax - imin + 1):
-             #   for j in range(len(lat)):
-              #     lon [i] = xmin + j * stepx[j]
-              #     print ("stepx = ", stepx[i])
-              #     print ("lon = ", lon[i]) 
     
+             #mask = np.ones((1, 1, len(lat), len(lon)))
              mask = np.ones((1, 1, len(lat), len(lon)))
 
              mesh = xr.Dataset()
              mesh['lon'] = ('x', lon)
              mesh['lat'] = ('y', lat)
              mesh['depth'] = ('z', [0])
+             #mesh['mask'] = (('t', 'z', 'y', 'x'), mask)
              mesh['mask'] = (('t', 'z', 'y', 'x'), mask)
              mesh.to_netcdf(maskout)
           #
@@ -306,7 +330,7 @@ def main():
           #    - Interpolation
           data = op.read_file()
           ssh_interp = op.horizontal_interp(data)
-          ssh_mod = np.ones((1, len(lon), len(lat)))  # 3D array (t, y, x) on regular lon/lat grid
+          ssh_mod = np.ones((1, len(lat), len(lon)))  # 3D array (t, y, x) on regular lon/lat grid
           ssh_mod[0,:,:] = ssh_interp[:,:]
 
 
@@ -441,7 +465,7 @@ def main():
           #for f in os.listdir(dirout_mod):
           #   os.remove(dirout_mod+f)
 
-          print("ssh_mod = ", ssh_mod)
+          #print("ssh_mod = ", ssh_mod)
 
           #exit()    
           #   
