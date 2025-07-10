@@ -173,36 +173,25 @@ def main():
           filein_ssu = DATASET_ID_MOD_SSV+"_"+date+"-"+date+"_"+ssu_mod_name+".zarr"
           filein_ssv = DATASET_ID_MOD_SSV+"_"+date+"-"+date+"_"+ssv_mod_name+".zarr"
           filein_ssh = DATASET_ID_MOD_SSH+"_"+date+"-"+date+"_"+ssh_mod_name+".zarr"
-          #
-          # Spatial extraction
-          #
-          dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(time_counter=slice(0,1))
 
-          
+          if jul == jul_start:
+             #
+             # Spatial extraction (one times)
+             #
+             dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(time_counter=slice(0,1)) # time extraction (dim time index = 0) just while defining spatial extraction indexes
+             longitude = dataset[lon_mod_name].values
+             latitude = dataset[lat_mod_name].values
+             indexes = fn.nearest_orca_point(xmin, ymin, longitude, latitude)
+             imin = indexes[0]
+             jmin = indexes[1]
+             indexes = fn.nearest_orca_point(xmax, ymax, longitude, latitude)
+             imax = indexes[0]
+             jmax = indexes[1]
 
-          
-          longitude = dataset[lon_mod_name].values
-          latitude = dataset[lat_mod_name].values
-          indexes = fn.nearest_orca_point(xmin, ymin, longitude, latitude)
-          imin = indexes[0]
-          jmin = indexes[1]
-          indexes = fn.nearest_orca_point(xmax, ymax, longitude, latitude)
-          imax = indexes[0]
-          jmax = indexes[1]
-
-
-          #ssh_mod = dataset[ssh_mod_name].values
-         # print("ssh avant extraction")
-         # print("ssh_mod[imin,jmin] = ",ssh_mod[0,jmin,imin])
-          #print("ssh_mod[imax,jmax] = ",ssh_mod[0,jmax-1,imax-1])
-         # print("ssh_mod[imax,jmax] = ",ssh_mod[0,jmax,imax])
-
-          
-
-          print("lon min = ",longitude[imin,jmin])
-          print("lat min = ",latitude[imin,jmin])
-          print("lon max = ", longitude[imax,jmax])
-          print("lat max = ", latitude[imax, jmax])
+             print("lon min = ",longitude[imin,jmin])
+             print("lat min = ",latitude[imin,jmin])
+             print("lon max = ", longitude[imax,jmax])
+             print("lat max = ", latitude[imax, jmax])
           #
           # Model sea surface height
           # ------------------------
@@ -211,64 +200,25 @@ def main():
           shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_T.yaml", workdir+"namelist_pyregrid.yaml")
           #
           dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-          #dataset = (xr.open_dataset(filein_ssh, engine="zarr"))
 
           lon_mod = np.ones((imax-imin, jmax-jmin))
           lat_mod = np.ones((imax-imin, jmax-jmin))
           lon_mod[:, :] = longitude[imin:imax, jmin:jmax]
-          lon_mod = lon_mod.transpose()
+          lon_mod = lon_mod.transpose()  # longitude(y,x) instead of (x,y): same dim order than ssh, ssu, ssv variables
           lat_mod[:, :] = latitude[imin:imax, jmin:jmax]
-          lat_mod = lat_mod.transpose()
-
-          
-          
-          #lon_mod = dataset[lon_mod_name].values # orca grid T
-          #lat_mod = dataset[lat_mod_name].values
-          #ssh_mod = dataset[ssh_mod_name].values
-          #lat_mod = dataset[lat_mod_name].values
+          lat_mod = lat_mod.transpose()  # latitude(y,x) instead of (x,y): same dim order than ssh, ssu, ssv variables
           ssh_mod = dataset[ssh_mod_name].values
-          print("ssh apres extraction")
-          print("ssh_mod[0,0] = ",ssh_mod[0,0,0])
-          #print("ssh_mod[imax-imin,jmax-jmin] = ",ssh_mod[0,jmax-jmin-1,imax-imin-1])
-          #print("ssh_mod[imax-imin,jmax-jmin] = ",ssh_mod[0,jmax-jmin,imax-imin])
-          
-          #lon_mod[:, :] = lon_mod_tot[jmin:jmax, imin:imax]
-          #lat_mod[:, :] = lat_mod_tot[jmin:jmax, imin:imax]
-          #ssh_mod[0, :, :] = ssh_mod_tot[0, jmin:jmax, imin:imax]
-          
           ssh_mod = np.mean(ssh_mod, axis = (0)) # daily mean from hourly data
-          #ssh_mod = ssh_mod.transpose()
-          
-
-
-          print("imin = ",imin)
-          print("imax = ",imax)
-          print("jmin = ",jmin)
-          print("jmax = ",jmax)
-
-          #print("lon mod min = ",min(lon_mod))
-          #print("lat mod min = ",min(lat_mod))
-          #print("lon mod max = ", max(lon_mod))
-          #print("lat mod max = ", max(lat_mod))
           
           data_vars = {
             ssh_mod_name: ((dimy_mod_name, dimx_mod_name), ssh_mod),
             lat_mod_name: ((dimy_mod_name, dimx_mod_name), lat_mod),
             lon_mod_name: ((dimy_mod_name, dimx_mod_name), lon_mod)
             }
-
-          print("shape(lat_mod) = ", np.shape(lat_mod))
-          print("shape(lon_mod) = ", np.shape(lon_mod))
-          print("shape(ssh_mod) = ", np.shape(ssh_mod))
-          
-
-          
           # New dataset
           ds = xr.Dataset(data_vars)
           #
           ds.to_netcdf(dirout_mod+"ssh_tmp.nc")
-
-          
           #
           # parameters for interpolation
           f = dirout_mod+"ssh_tmp.nc"
@@ -285,8 +235,6 @@ def main():
              # Creation of meshmask_{name_grid_in}.nc
              fillvalue = np.nan
              make_mask(name_grid_in, f, ssh_mod_name, fillvalue)
-
-
               
              shutil.move(maskin, dirout_mod)
 
@@ -330,13 +278,9 @@ def main():
           #    - Interpolation
           data = op.read_file()
           ssh_interp = op.horizontal_interp(data)
+          
           ssh_mod = np.ones((1, len(lat), len(lon)))  # 3D array (t, y, x) on regular lon/lat grid
           ssh_mod[0,:,:] = ssh_interp[:,:]
-
-
-          print("ssh_interp = ", ssh_interp)
-          #exit()
-          
           #
           # Zonal surface model current
           # ---------------------------
@@ -399,8 +343,6 @@ def main():
           #lat_mod = dataset['nav_lat'].values
           ssv_mod = dataset[ssv_mod_name].values
           ssv_mod = np.mean(ssv_mod, axis = (0)) # daily mean from hourly data
-          lat_mod = dataset[lat_mod_name].values
-          lon_mod = dataset[lon_mod_name].values
 
           data_vars = {
                       ssv_mod_name: ((dimy_mod_name, dimx_mod_name), ssv_mod),
@@ -459,15 +401,9 @@ def main():
           time_mod =  [jul * 24] # hours since 1950-01-01T00:00:00
 
           # cleanning : remove tmp files from dirout_mod
-          #os.remove(dirout_mod+"ssh_tmp.nc")
+          os.remove(dirout_mod+"ssh_tmp.nc")
           os.remove(dirout_mod+"ssu_tmp.nc")
           os.remove(dirout_mod+"ssv_tmp.nc")
-          #for f in os.listdir(dirout_mod):
-          #   os.remove(dirout_mod+f)
-
-          #print("ssh_mod = ", ssh_mod)
-
-          #exit()    
           #   
       else:
          # 
@@ -780,12 +716,13 @@ def main():
    if model_acro == "ORCA36":
        os.remove(dirout_mod+"meshmask_"+model_acro+"_NG.nc")
        os.remove(dirout_mod+"meshmask_"+model_acro+"_RG.nc")
-    #    os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridu.nc")
-    #    os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridv.nc")
-     #   os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridt.nc")
-     #   os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
-     #   os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridv.nc")
-      #  os.remove(dirout_mod+"projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridv.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridt.nc")
+       os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridv.nc")
+       os.remove(dirout_mod+"projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridv.nc")
 #
 # Run the main code
 if __name__ == "__main__":

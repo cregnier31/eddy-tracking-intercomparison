@@ -3,7 +3,7 @@
 # USER PARAMETERS
 # ---------------
 #
-# Geo. domain
+# Geo. domain (reminding for arguments)
 #    - IBI
 #xmin=-19.
 #xmax=5.
