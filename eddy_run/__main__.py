@@ -73,9 +73,9 @@ def main():
    #    - Input data loading
    proc1 = subprocess.run([r'eddy_load', date_start, date_end, xmin, xmax, ymin, ymax, mode, model_acro, obs_acro, data_dir])
    #    - Model eddy detection
-   proc2 = subprocess.run([r'eddy_detect', model_acro, data_dir])
+   proc2 = subprocess.run([r'eddy_detect', mode, model_acro, data_dir])
    #    - Obs eddy detection
-   proc3 = subprocess.run([r'eddy_detect', obs_acro, data_dir])
+   proc3 = subprocess.run([r'eddy_detect', mode, obs_acro, data_dir])
    #    - Model eddy tracking
    proc4 = subprocess.run([r'eddy_track', model_acro, data_dir])
    #    - Obs eddy detection

@@ -475,7 +475,10 @@ def main():
          #
       #
       #   - Write nc file gathering ssu, ssv and ssh 
-      #     with the right units following the Eddy_Tracking file format        
+      #     with the right units following the Eddy_Tracking file format     
+      #ssu_mod_name = uo
+      #ssv_mod_name = vo
+      #ssh_mod_name = zos
       fn.mds2eddy_track(dirout_mod,
                      fileout_mod,
                      ssu_mod,

@@ -50,30 +50,40 @@ def main():
    #
    #    - Main parameters in arguments
    #  
-   if (len(sys.argv)==3):
+   if (len(sys.argv)==4):
       # Considered period (in arguments)
-      data_acro = str(sys.argv[1])
-      data_dir = str(sys.argv[2])
+      mode = str(sys.argv[1])
+      data_acro = str(sys.argv[2])
+      data_dir = str(sys.argv[3])
       print ("Input data = ", data_acro)
       print ("Input data directory = ", data_dir)
    else:
-      print ("!!! ERROR: 2 arguments to be chosen !!!")
-      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO_EU)")
-      print ("Argument 2 = Idata directory")
+      print ("!!! ERROR: 3 arguments to be chosen !!!")
+      print ("Argument 1 = NRT or MY datasets") 
+      print ("Argument 2 = Input data acronym (GLO, IBI, AVISO, AVISO_EU)")
+      print ("Argument 3 = Idata directory")
       sys.exit()
    #
-   #    - Var name depending on the kind of data (model or obs) ==> !!! to be updated following the Copernicus MDS updates !!!
+   #    - Var name depending on the kind of data (model or obs) ==> !!! to be updated following the Copernicus MDS updates for AVISO data !!!
    # 
    #       - for MDS adt AVISO obs data (SL-TAC)
    if ( ( data_acro == "AVISO" ) or ( data_acro == "AVISO_EU" ) ):
       var_adt = "adt"
       VAR_U = "ugos"
       VAR_V = "vgos"
-   #       - for MDS ssh model data (MFCs)
+   #       - for model data
    else:
-      var_adt = "zos"
-      VAR_U = "uo"
-      VAR_V = "vo"
+      #var_adt = "zos"
+      #VAR_U = "uo"
+      #VAR_V = "vo"
+      if mode == 'NRT': 
+         VAR_U = data_mod_dict_NRT[data_acro][0]
+         VAR_V = data_mod_dict_NRT[data_acro][1]
+         var_adt = data_mod_dict_NRT[model_acro][2]
+      elif mode == 'MY':
+         VAR_U = data_mod_dict_MY[data_acro][0]
+         VAR_V = data_mod_dict_MY[data_acro][1]
+         var_adt = data_mod_dict_MY[data_acro][2]
    #
    # ---------------------
    # Make data directories

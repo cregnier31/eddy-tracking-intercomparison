@@ -35,7 +35,7 @@
 #ymin=40.5
 #ymax=47
 #
-# Input MDS data set
+# Input data set
 # data_mod_dict = { model_acro : [ DATASET_ID_MOD_SSV,  
 #                                  DATASET_ID_MOD_SSH, 
 #                                  ssu_mod_name, 
