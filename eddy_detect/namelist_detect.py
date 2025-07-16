@@ -74,7 +74,7 @@ data_obs_dict_NRT = { "AVISO" : [ "ugos",
                                   "vgos", 
                                   "adt" 
                                ],
-                      "AVISO-EU" : [ "ugos", 
+                      "AVISO_EU" : [ "ugos", 
                                      "vgos", 
                                      "adt" 
                                ] }
@@ -83,7 +83,7 @@ data_obs_dict_MY = { "AVISO" : [ "ugos",
                                  "vgos", 
                                  "adt" 
                                ],
-                     "AVISO-EU" : [ "ugos", 
+                     "AVISO_EU" : [ "ugos", 
                                     "vgos", 
                                     "adt" 
                                ] }

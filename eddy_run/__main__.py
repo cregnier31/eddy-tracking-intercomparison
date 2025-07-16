@@ -8,7 +8,7 @@
 # Description : run the different components for the eddy diagnostics
 #               used i the quarterly FC bulletin QUOVADIS:
 #                  - Loads the uo, vo & ssh of the MDS model (GLO or IBI) 
-#                    & obs (AVISO or AVISO-EU) & write in the right input 
+#                    & obs (AVISO or AVISO_EU) & write in the right input 
 #                    format for "py-eddy-tracker"
 #                  - Applies detection to these data (for model & obs data)
 #                  - Applies tracking to these data (for model & obs data)

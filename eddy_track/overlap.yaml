@@ -1,7 +1,7 @@
 # Example pour le tracking par overlap
 PATHS:
-  FILES_PATTERN: /home/jovyan/work/data//AVISO/DETECT//Anticyclonic*.nc
-  SAVE_DIR: /home/jovyan/work/data//AVISO/TRACK/
+  FILES_PATTERN: /home/jovyan/data//AVISO_EU/DETECT//Anticyclonic*.nc
+  SAVE_DIR: /home/jovyan/data//AVISO_EU/TRACK/
 # Number of timestep for missing detection
 VIRTUAL_LENGTH_MAX: 2
 # Minimal time to consider as a full track

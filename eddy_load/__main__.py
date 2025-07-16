@@ -26,8 +26,8 @@ import os
 import sys
 import shutil
 import matplotlib.pyplot as plt
-from pyregrid.make_mask import make_mask
-from pyregrid.interp import interp
+#from pyregrid.make_mask import make_mask
+#from pyregrid.interp import interp
 sys.path.append("./")
 import eddy_load.my_functions as fn # use of homemade function modules
 from eddy_load.my_classes import *  # use of homemade class modules
@@ -79,8 +79,10 @@ def main():
       print ("Argument 10 = Downloaded file directory")
       sys.exit()
    #
-   #   - Dataset from the model chosen data 
+   #    
    if mode == 'NRT':
+      # 
+      # - Dataset from the model chosen data
       DATASET_ID_MOD_SSV = data_mod_dict_NRT[model_acro][0]
       DATASET_ID_MOD_SSH = data_mod_dict_NRT[model_acro][1]
       ssu_mod_name = data_mod_dict_NRT[model_acro][2]
@@ -97,7 +99,23 @@ def main():
       dimy_mod_name = data_mod_dict_NRT[model_acro][13]
       dimx_mod_name = data_mod_dict_NRT[model_acro][14]
       res_mod = data_mod_dict_NRT[model_acro][15]
+      # 
+      # - Copernicus dataset from the obs chosen data (AVISO, AVISO_EU)
+      DATASET_ID_OBS = data_obs_dict_NRT[obs_acro][0]
+      ssu_obs_name = data_obs_dict_NRT[obs_acro][1]
+      ssv_obs_name = data_obs_dict_NRT[obs_acro][2]
+      ssh_obs_name = data_obs_dict_NRT[obs_acro][3]
+      time_obs_name = data_obs_dict_NRT[obs_acro][4]
+      lat_obs_name = data_obs_dict_NRT[obs_acro][5]
+      lon_obs_name = data_obs_dict_NRT[obs_acro][6]
+      dimt_obs_name = data_obs_dict_NRT[obs_acro][7]
+      dimy_obs_name = data_obs_dict_NRT[obs_acro][8]
+      dimx_obs_name = data_obs_dict_NRT[obs_acro][9]
+      res_obs = data_obs_dict_NRT[obs_acro][10]
+      scale_fac_obs =  data_obs_dict_NRT[obs_acro][11]
    elif mode == 'MY':
+      # 
+      # - Dataset from the model chosen data
       DATASET_ID_MOD_SSV = data_mod_dict_MY[model_acro][0]
       DATASET_ID_MOD_SSH = data_mod_dict_MY[model_acro][1]
       ssu_mod_name = data_mod_dict_MY[model_acro][2]
@@ -113,13 +131,21 @@ def main():
       dimz_mod_name = data_mod_dict_MY[model_acro][12]       
       dimy_mod_name = data_mod_dict_MY[model_acro][13]
       dimx_mod_name = data_mod_dict_MY[model_acro][14]
-      res_mod = data_mod_dict_MY[model_acro][15] 
-   #
-   #   - Copernicus dataset IDs from the obs chosen data (AVISO, AVISO_EU)
-   if mode == 'NRT':
-      DATASET_ID_OBS = data_obs_dict_NRT[obs_acro]
-   elif mode == 'MY':
-      DATASET_ID_OBS = data_obs_dict_MY[obs_acro]
+      res_mod = data_mod_dict_MY[model_acro][15]
+      # 
+      # - Copernicus dataset from the obs chosen data (AVISO, AVISO_EU) 
+      DATASET_ID_OBS = data_obs_dict_MY[obs_acro][0]
+      ssu_obs_name = data_obs_dict_MY[obs_acro][1]
+      ssv_obs_name = data_obs_dict_MY[obs_acro][2]
+      ssh_obs_name = data_obs_dict_MY[obs_acro][3]
+      time_obs_name = data_obs_dict_MY[obs_acro][4]
+      lat_obs_name = data_obs_dict_MY[obs_acro][5]
+      lon_obs_name = data_obs_dict_MY[obs_acro][6]
+      dimt_obs_name = data_obs_dict_MY[obs_acro][7]
+      dimy_obs_name = data_obs_dict_MY[obs_acro][8]
+      dimx_obs_name = data_obs_dict_MY[obs_acro][9]
+      res_obs = data_obs_dict_MY[obs_acro][10]
+      scale_fac_obs =  data_obs_dict_MY[obs_acro][11]
    #
    # ----------------------------------
    #
@@ -288,8 +314,6 @@ def main():
           # namelist
           shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_U.yaml", workdir+"namelist_pyregrid.yaml")
           dataset = (xr.open_dataset(filein_ssu, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-          #lon_mod = dataset['nav_lon'].values # orca grid u
-          #lat_mod = dataset['nav_lat'].values
           ssu_mod = dataset[ssu_mod_name].values
           ssu_mod = np.mean(ssu_mod, axis = (0)) # daily mean from hourly data
 
@@ -339,8 +363,6 @@ def main():
           # namelist
           shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_V.yaml", workdir+"namelist_pyregrid.yaml")
           dataset = (xr.open_dataset(filein_ssv, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-          #lon_mod = dataset['nav_lon'].values # orca grid v
-          #lat_mod = dataset['nav_lat'].values
           ssv_mod = dataset[ssv_mod_name].values
           ssv_mod = np.mean(ssv_mod, axis = (0)) # daily mean from hourly data
 
@@ -476,10 +498,7 @@ def main():
       #
       #   - Write nc file gathering ssu, ssv and ssh 
       #     with the right units following the Eddy_Tracking file format     
-      #ssu_mod_name = uo
-      #ssv_mod_name = vo
-      #ssh_mod_name = zos
-      fn.mds2eddy_track(dirout_mod,
+      fn.mds2eddy_track_mod(dirout_mod,
                      fileout_mod,
                      ssu_mod,
                      ssv_mod,
@@ -549,19 +568,77 @@ def main():
          "file" : fileout_obs
       }   
       #    - Download MDS file of the obs dataset by using subsetting to extract ssu, ssv and ssh
-      data_obs = cm.subset(
-         dataset_id = data_request["dataset_id_obs"],
-         minimum_longitude = data_request["longitude"][0],
-         maximum_longitude = data_request["longitude"][1],
-         minimum_latitude = data_request["latitude"][0],
-         maximum_latitude = data_request["latitude"][1],
-         start_datetime = data_request["time"][0],
-         end_datetime = data_request["time"][1],
-         variables = data_request["variables"],
-         output_filename = data_request["file"],
-         output_directory = data_request["directory"],
-         force_download=True
-      )
+       
+      #if mode == "NRT":
+      #   data_obs = cm.subset(
+      #      dataset_id = data_request["dataset_id_obs"],
+      #      minimum_longitude = data_request["longitude"][0],
+      #      maximum_longitude = data_request["longitude"][1],
+      #      minimum_latitude = data_request["latitude"][0],
+      #      maximum_latitude = data_request["latitude"][1],
+      #      start_datetime = data_request["time"][0],
+      #      end_datetime = data_request["time"][1],
+      #      variables = data_request["variables"],
+      #      output_filename = data_request["file"],
+      #      output_directory = data_request["directory"],
+      #      force_download=True
+      #   )
+      #elif mode == "MY":
+
+      data_obs = cm.open_dataset(
+            dataset_id = data_request["dataset_id_obs"],
+            minimum_longitude = data_request["longitude"][0],
+            maximum_longitude = data_request["longitude"][1],
+            minimum_latitude = data_request["latitude"][0],
+            maximum_latitude = data_request["latitude"][1],
+            start_datetime = data_request["time"][0],
+            end_datetime = data_request["time"][1],
+            variables = data_request["variables"]
+            )
+      ssu_obs = data_obs.variables[ssu_obs_name].values * scale_fac_obs
+      ssv_obs = data_obs.variables[ssv_obs_name].values * scale_fac_obs
+      ssh_obs = data_obs.variables[ssh_obs_name].values * scale_fac_obs
+      time_obs = [jul * 24] # hours since 1950-01-01T00:00:00
+      lat_obs = data_obs.variables[lat_obs_name].values
+      lon_obs = data_obs.variables[lon_obs_name].values
+          
+      # from the MDS obs file, the obs file is re-written in applying the scale factor to ssu, ssv & ssh
+      fn.mds2eddy_track_obs(dirout_obs,
+                     fileout_obs,
+                     ssu_obs,
+                     ssv_obs,
+                     ssh_obs,
+                     time_obs,
+                     lat_obs,
+                     lon_obs,        
+                     dimt_obs_name,
+                     dimy_obs_name,
+                     dimx_obs_name,
+                     ssu_obs_name,
+                     ssv_obs_name,
+                     ssh_obs_name,
+                     time_obs_name,
+                     lat_obs_name,
+                     lon_obs_name,
+                     unit_ssu_attr,
+                     lname_ssu_attr,
+                     sname_ssu_attr,
+                     unit_ssv_attr,
+                     lname_ssv_attr,
+                     sname_ssv_attr,
+                     unit_ssh_attr,
+                     lname_ssh_attr,
+                     sname_ssh_attr,
+                     unit_time_attr,
+                     lname_time_attr,
+                     sname_time_attr,
+                     unit_lat_attr,
+                     lname_lat_attr,
+                     sname_lat_attr,
+                     unit_lon_attr,
+                     lname_lon_attr,
+                     sname_lon_attr
+                     )
       #
       # -------------------------
       # MODEL/OBS EQUIVALENT DATA
@@ -713,7 +790,7 @@ def main():
             fn.three_panel_plt_color(ssh_mod_name, jul, xmin, xmax, ymin, ymax, lon_mod, lat_mod, ssh_mod_2D, minvalue_ssh, maxvalue_ssh, colorbar, title_1, date_mds, lon_mod_interp, lat_mod_interp, ssh_mod_interp_2D, title_2, unit_txt_ssh, lon_obs, lat_obs, ssh_obs_2D, title_3, stepvalue_ssh, stepformat, X_TIME, Y_TIME, x_unit, y_unit)
             plt.savefig(dirout_mod_equi+"FIG/ssh_equi.png",dpi=100,bbox_inches="tight",pad_inches=0.2)
             plt.close()
-      #
+      # Time loop
       jul += 1
    # Cleanning : remove weight, mask and projection files from dirout_mod
    if model_acro == "ORCA36":

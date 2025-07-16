@@ -115,7 +115,7 @@ def geos_current(res, lat, ssh):
 # ---------------------------------------------
 # MDS TO EDDY_TRACKING INPUT MODEL FILE FORMAT
 # ---------------------------------------------
-def mds2eddy_track(
+def mds2eddy_track_mod(
              dirout,
              fileout,
              var_ssu,
@@ -182,6 +182,80 @@ def mds2eddy_track(
                   {'units': unit_depth_attr, 
                    'long_name': lname_depth_attr,
                    'standard_name': sname_depth_attr}),  
+                 var_lat_name: ((dimy_name),var_lat,
+                  {'units': unit_lat_attr, 
+                   'long_name': lname_lat_attr,
+                   'standard_name': sname_lat_attr}),
+                 var_lon_name: ((dimx_name),var_lon,
+                  {'units': unit_lon_attr, 
+                   'long_name': lname_lon_attr,
+                   'standard_name': sname_lon_attr})
+                 }
+   # New dataset
+   ds = xr.Dataset(data_vars)
+   #
+   ds.to_netcdf(dirout+fileout)
+#
+# ---------------------------------------------
+# MDS TO EDDY_TRACKING INPUT OBS FILE FORMAT
+# ---------------------------------------------
+def mds2eddy_track_obs(
+             dirout,
+             fileout,
+             var_ssu,
+             var_ssv,
+             var_ssh,
+             var_time,
+             var_lat,
+             var_lon,
+             dimt_name,
+             dimy_name,
+             dimx_name,
+             var_ssu_name,
+             var_ssv_name,
+             var_ssh_name, 
+             var_time_name,             
+             var_lat_name,
+             var_lon_name,
+             unit_ssu_attr,
+             lname_ssu_attr,
+             sname_ssu_attr,
+             unit_ssv_attr,
+             lname_ssv_attr,
+             sname_ssv_attr,
+             unit_ssh_attr,
+             lname_ssh_attr,
+             sname_ssh_attr,
+             unit_time_attr,
+             lname_time_attr,
+             sname_time_attr,
+             unit_lat_attr,
+             lname_lat_attr,
+             sname_lat_attr,                        
+             unit_lon_attr,
+             lname_lon_attr,
+             sname_lon_attr
+             ):
+   #
+   # Definition of the dictionnaries : variables and coordinates + their attributes
+   #  
+   data_vars = {
+                var_ssu_name: ((dimt_name, dimy_name, dimx_name), var_ssu,
+                  {'units': unit_ssu_attr, 
+                   'long_name': lname_ssu_attr,
+                   'standard_name': sname_ssu_attr}),
+                 var_ssv_name: ((dimt_name, dimy_name, dimx_name), var_ssv,
+                  {'units': unit_ssv_attr, 
+                   'long_name': lname_ssv_attr,
+                   'standard_name': sname_ssv_attr}),
+                 var_ssh_name: ((dimt_name, dimy_name, dimx_name), var_ssh,
+                  {'units': unit_ssh_attr, 
+                   'long_name': lname_ssh_attr,
+                   'standard_name': sname_ssh_attr}),
+                 var_time_name: ((dimt_name), var_time,
+                  {'units': unit_time_attr, 
+                   'long_name': lname_time_attr,
+                   'standard_name': sname_time_attr}),
                  var_lat_name: ((dimy_name),var_lat,
                   {'units': unit_lat_attr, 
                    'long_name': lname_lat_attr,
