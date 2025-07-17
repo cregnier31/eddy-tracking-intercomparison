@@ -68,18 +68,20 @@ def main():
    # 
    #       - for MDS adt AVISO obs data (SL-TAC)
    if ( ( data_acro == "AVISO" ) or ( data_acro == "AVISO_EU" ) ):
-      var_adt = "adt"
-      VAR_U = "ugos"
-      VAR_V = "vgos"
+      if mode == 'NRT': 
+         VAR_U = data_obs_dict_NRT[data_acro][0]
+         VAR_V = data_obs_dict_NRT[data_acro][1]
+         var_adt = data_obs_dict_NRT[data_acro][2]
+      elif mode == 'MY':
+         VAR_U = data_obs_dict_MY[data_acro][0]
+         VAR_V = data_obs_dict_MY[data_acro][1]
+         var_adt = data_obs_dict_MY[data_acro][2]
    #       - for model data
    else:
-      #var_adt = "zos"
-      #VAR_U = "uo"
-      #VAR_V = "vo"
       if mode == 'NRT': 
          VAR_U = data_mod_dict_NRT[data_acro][0]
          VAR_V = data_mod_dict_NRT[data_acro][1]
-         var_adt = data_mod_dict_NRT[model_acro][2]
+         var_adt = data_mod_dict_NRT[data_acro][2]
       elif mode == 'MY':
          VAR_U = data_mod_dict_MY[data_acro][0]
          VAR_V = data_mod_dict_MY[data_acro][1]

@@ -26,8 +26,8 @@ import os
 import sys
 import shutil
 import matplotlib.pyplot as plt
-#from pyregrid.make_mask import make_mask
-#from pyregrid.interp import interp
+from pyregrid.make_mask import make_mask
+from pyregrid.interp import interp
 sys.path.append("./")
 import eddy_load.my_functions as fn # use of homemade function modules
 from eddy_load.my_classes import *  # use of homemade class modules
@@ -570,7 +570,7 @@ def main():
       #    - Download MDS file of the obs dataset by using subsetting to extract ssu, ssv and ssh
        
       #if mode == "NRT":
-      #   data_obs = cm.subset(
+      #data_obs = cm.subset(
       #      dataset_id = data_request["dataset_id_obs"],
       #      minimum_longitude = data_request["longitude"][0],
       #      maximum_longitude = data_request["longitude"][1],
@@ -595,9 +595,10 @@ def main():
             end_datetime = data_request["time"][1],
             variables = data_request["variables"]
             )
-      ssu_obs = data_obs.variables[ssu_obs_name].values * scale_fac_obs
-      ssv_obs = data_obs.variables[ssv_obs_name].values * scale_fac_obs
-      ssh_obs = data_obs.variables[ssh_obs_name].values * scale_fac_obs
+      ssu_obs = data_obs.variables[ssu_obs_name].values
+      ssv_obs = data_obs.variables[ssv_obs_name].values
+      #ssh_obs = data_obs.variables[ssh_obs_name].values * scale_fac_obs
+      ssh_obs = data_obs.variables[ssh_obs_name].values
       time_obs = [jul * 24] # hours since 1950-01-01T00:00:00
       lat_obs = data_obs.variables[lat_obs_name].values
       lon_obs = data_obs.variables[lon_obs_name].values
@@ -638,7 +639,7 @@ def main():
                      unit_lon_attr,
                      lname_lon_attr,
                      sname_lon_attr
-                     )
+                    )
       #
       # -------------------------
       # MODEL/OBS EQUIVALENT DATA

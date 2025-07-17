@@ -10,8 +10,6 @@ import sys
 import glob
 import re
 from datetime import datetime
-#from configparser import ConfigParser
-#import argparse
 import multiprocessing as mp
 from functools import partial
 import logging
@@ -20,6 +18,8 @@ from py_eddy_tracker.dataset.grid import RegularGridDataset
 from py_eddy_tracker import start_logger
 from netCDF4 import Dataset
 import pandas as pd
+#from configparser import ConfigParser
+#import argparse
 #import numba
 
 import warnings 
