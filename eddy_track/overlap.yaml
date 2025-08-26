@@ -1,7 +1,7 @@
 # Example pour le tracking par overlap
 PATHS:
-  FILES_PATTERN: /home/jovyan/data//IBI/DETECT//Anticyclonic*.nc
-  SAVE_DIR: /home/jovyan/data//IBI/TRACK/
+  FILES_PATTERN: /home/jovyan/data/ORCA36/DETECT//Anticyclonic*.nc
+  SAVE_DIR: /home/jovyan/data/ORCA36/TRACK/
 # Number of timestep for missing detection
 VIRTUAL_LENGTH_MAX: 2
 # Minimal time to consider as a full track

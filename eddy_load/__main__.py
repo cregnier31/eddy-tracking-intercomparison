@@ -204,20 +204,32 @@ def main():
              #
              # Spatial extraction (one times)
              #
-             dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(time_counter=slice(0,1)) # time extraction (dim time index = 0) just while defining spatial extraction indexes
+             dataset = xr.open_dataset(filein_ssh, engine="zarr").isel(time_counter=slice(0,1)) # time extraction (dim time index = 0) just while defining spatial extraction indexes
              longitude = dataset[lon_mod_name].values
              latitude = dataset[lat_mod_name].values
-             indexes = fn.nearest_orca_point(xmin, ymin, longitude, latitude)
-             imin = indexes[0]
-             jmin = indexes[1]
-             indexes = fn.nearest_orca_point(xmax, ymax, longitude, latitude)
-             imax = indexes[0]
-             jmax = indexes[1]
+             ssh_mod = dataset[ssh_mod_name].values
+             print("shape(ssh_mod) = ",np.shape(ssh_mod))
+             #indexes = fn.nearest_orca_point(xmin, ymin, longitude, latitude)
+             #imin = indexes[0]
+             #jmin = indexes[1]
+             #indexes = fn.nearest_orca_point(xmax, ymax, longitude, latitude)
+             #imax = indexes[0]
+             #jmax = indexes[1]
 
-             print("lon min = ",longitude[imin,jmin])
-             print("lat min = ",latitude[imin,jmin])
-             print("lon max = ", longitude[imax,jmax])
-             print("lat max = ", latitude[imax, jmax])
+             geotest = (longitude > xmin) & (longitude < xmax) & (latitude > ymin) & (latitude < ymax)
+             geoindex = np.argwhere(geotest)
+             imin = min(geoindex[:,1])
+             imax = max(geoindex[:,1])
+             jmin = min(geoindex[:,0])
+             jmax = max(geoindex[:,0])
+             print("imin = ",imin)
+             print("jmin = ",jmin)
+             print("imax = ",imax)
+             print("jmax = ",jmax)
+             print("lon min = ",longitude[jmin,imin])
+             print("lat min = ",latitude[jmin,imin])
+             print("lon max = ", longitude[jmax,imax])
+             print("lat max = ", latitude[jmax, imax]) 
           #
           # Model sea surface height
           # ------------------------
@@ -226,21 +238,25 @@ def main():
           shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_T.yaml", workdir+"namelist_pyregrid.yaml")
           #
           dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
-
-          lon_mod = np.ones((imax-imin, jmax-jmin))
-          lat_mod = np.ones((imax-imin, jmax-jmin))
-          lon_mod[:, :] = longitude[imin:imax, jmin:jmax]
-          lon_mod = lon_mod.transpose()  # longitude(y,x) instead of (x,y): same dim order than ssh, ssu, ssv variables
-          lat_mod[:, :] = latitude[imin:imax, jmin:jmax]
-          lat_mod = lat_mod.transpose()  # latitude(y,x) instead of (x,y): same dim order than ssh, ssu, ssv variables
+          lon_mod = dataset[lon_mod_name].values
+          lat_mod = dataset[lat_mod_name].values
           ssh_mod = dataset[ssh_mod_name].values
           ssh_mod = np.mean(ssh_mod, axis = (0)) # daily mean from hourly data
+
+          dataset[ssh_mod_name].isel(time_counter=0).plot()
+          plt.savefig('toto.jpg')
+          #exit()
+          print("lon min = ",lon_mod[0,0])
+          print("lat min = ",lat_mod[0,0])
+          print("lon max = ", lon_mod[jmax-jmin-1,imax-imin-1])
+          print("lat max = ", lat_mod[jmax-jmin-1, imax-imin-1])
           
           data_vars = {
             ssh_mod_name: ((dimy_mod_name, dimx_mod_name), ssh_mod),
             lat_mod_name: ((dimy_mod_name, dimx_mod_name), lat_mod),
             lon_mod_name: ((dimy_mod_name, dimx_mod_name), lon_mod)
             }
+
           # New dataset
           ds = xr.Dataset(data_vars)
           #
@@ -269,14 +285,12 @@ def main():
              lat = np.arange(ymin, ymax, stepy)
              lon = np.arange(xmin, xmax, stepx)
     
-             #mask = np.ones((1, 1, len(lat), len(lon)))
              mask = np.ones((1, 1, len(lat), len(lon)))
 
              mesh = xr.Dataset()
              mesh['lon'] = ('x', lon)
              mesh['lat'] = ('y', lat)
              mesh['depth'] = ('z', [0])
-             #mesh['mask'] = (('t', 'z', 'y', 'x'), mask)
              mesh['mask'] = (('t', 'z', 'y', 'x'), mask)
              mesh.to_netcdf(maskout)
           #
@@ -417,8 +431,6 @@ def main():
 
           lon_mod = lon
           lat_mod = lat
-          lon_mod_name = "longitude"
-          lat_mod_name = "latitude"
           depth_mod = [zmin]
           time_mod =  [jul * 24] # hours since 1950-01-01T00:00:00
 
@@ -516,8 +528,8 @@ def main():
                      ssh_mod_name,
                      time_mod_name,
                      depth_mod_name,
-                     lat_mod_name,
-                     lon_mod_name,
+                     'latitude',
+                     'longitude',
                      unit_ssu_attr,
                      lname_ssu_attr,
                      sname_ssu_attr,
