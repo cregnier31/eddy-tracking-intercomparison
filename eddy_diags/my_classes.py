@@ -604,7 +604,8 @@ class Plots:
         # ax.plot(misses_x, misses_y, 'o', color='red')
         # ax.plot(falarm_x, falarm_y, 'o', color='orange')
         
-        ax.set_ylim(0, max_value + 10)
+        #ax.set_ylim(0, max_value + 10)
+        ax.set_ylim(0, 70)
         ax.set_xlim(0, 80)
         ax.set_xlabel("Radius (km)")
         ax.set_ylabel("Occurences")

@@ -31,7 +31,7 @@ fs = s3fs.S3FileSystem(
 #                           
 #  Uploading to S3 My File
 #
-for file in glob.glob( os.path.join(local_dir, '*.jpeg') ):
+for file in glob.glob( os.path.join(local_dir, 'AVISO_EU_20200101.nc') ):
    fs.upload(file, my_file_dir)
 #                           
 # ============================================================
