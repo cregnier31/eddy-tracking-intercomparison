@@ -24,10 +24,7 @@ import datetime
 import datetime as dt
 import os
 import sys
-#import shutil
 import matplotlib.pyplot as plt
-#from pyregrid.make_mask import make_mask
-#from pyregrid.interp import interp
 sys.path.append("./")
 import eddy_load.my_functions as fn # use of homemade function modules
 from eddy_load.my_classes import *  # use of homemade class modules

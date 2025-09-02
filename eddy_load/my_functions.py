@@ -112,7 +112,7 @@ def load_ORCA36(
    # ------------------------
    #
    # pyregrid namelist for interpolating ORCA gridT to regular grid
-   shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_T.yaml", workdir+"namelist_pyregrid.yaml")
+   shutil.copyfile(os.path.join(os.path.dirname(__file__), "namelist_pyregrid_T.yaml"), os.path.join(os.path.dirname(__file__), workdir+"namelist_pyregrid.yaml"))
    #
    dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
    lon_mod = dataset[lon_mod_name].values
@@ -199,7 +199,7 @@ def load_ORCA36(
    # ---------------------------
    #
    # namelist
-   shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_U.yaml", workdir+"namelist_pyregrid.yaml")
+   shutil.copyfile(os.path.join(os.path.dirname(__file__), "namelist_pyregrid_U.yaml"), os.path.join(os.path.dirname(__file__), workdir+"namelist_pyregrid.yaml"))
    dataset = (xr.open_dataset(filein_ssu, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
    ssu_mod = dataset[ssu_mod_name].values
    ssu_mod = np.mean(ssu_mod, axis = (0)) # daily mean from hourly data
@@ -248,7 +248,8 @@ def load_ORCA36(
    # ------------------------------
    #
    # namelist
-   shutil.copyfile(workdir+"eddy_load/namelist_pyregrid_V.yaml", workdir+"namelist_pyregrid.yaml")
+   
+   shutil.copyfile(os.path.join(os.path.dirname(__file__), "namelist_pyregrid_V.yaml"), os.path.join(os.path.dirname(__file__), workdir+"namelist_pyregrid.yaml"))
    dataset = (xr.open_dataset(filein_ssv, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
    ssv_mod = dataset[ssv_mod_name].values
    ssv_mod = np.mean(ssv_mod, axis = (0)) # daily mean from hourly data

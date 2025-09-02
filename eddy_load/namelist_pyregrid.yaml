@@ -2,15 +2,15 @@
     "GENERAL": {
         "SYSid_in": "ORCA36_NG",
         "SYSid_out": "ORCA36_RG",
-        "dirlog": "/home/jovyan/data/",
-        "dirweights": "/home/jovyan/data/",
-        "dirout": "/home/jovyan/data/",
+        "dirlog": "/home/jovyan/data/ORCA36/",
+        "dirweights": "/home/jovyan/data/ORCA36/",
+        "dirout": "/home/jovyan/data/ORCA36/",
         "complevel": 0,
         "lg_drown": true
         },
     "GRID": {
-        "maskin": "/home/jovyan/data/meshmask_ORCA36_NG.nc",
-        "maskout": "/home/jovyan/data/meshmask_ORCA36_RG.nc",
+        "maskin": "/home/jovyan/data/ORCA36/meshmask_ORCA36_NG.nc",
+        "maskout": "/home/jovyan/data/ORCA36/meshmask_ORCA36_RG.nc",
         "lg_cgridout": true
         },
     "CONFIG_MODES_KWARGS": {
