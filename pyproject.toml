@@ -18,7 +18,7 @@ description = "Package to perform regional and global eddy detection and model/o
 authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
 readme = "README.md"
 dependencies = [
-    "numpy",
+    "numpy<2,>=1.20",
     "matplotlib" ]
 # The Python version required by the project
 requires-python = "==3.10.0"
@@ -37,9 +37,9 @@ eddy_run = "eddy_run.__main__:main"
 # Project URLs
 # ------------
 [project.urls]
-homepage = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
-documentation  =" https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
-repository = "https://gitlab.mercator-ocean.fr/fdubost/eddy-tracking-intercomparison.git"
+homepage = "https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
+documentation  ="https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
+repository = "https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
 #
 # -------------------------------------
 # Hatch build configuration & metadata
