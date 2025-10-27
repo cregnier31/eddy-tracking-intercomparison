@@ -1,0 +1,514 @@
+#!/usr/bin/env python3
+###########################################################
+#
+#                         LOADER
+#
+###########################################################
+#
+# Description : Load MDS model and obs files and put them 
+#               into the right format for py_eddy-tracking
+#               tool with uo, vo, and ssh variables in the 
+#               required units.
+# Authors     : S. Cailleau
+# Version     : 06/08/2024
+#
+############################################################
+#
+# ---------------
+#    IMPORT
+# ---------------
+import copernicusmarine as cm
+import xarray as xr
+import numpy as np
+import datetime
+import datetime as dt
+import os
+import sys
+import matplotlib.pyplot as plt
+sys.path.append("./")
+import eddy_load.my_functions as fn # use of homemade function modules
+from eddy_load.my_classes import *  # use of homemade class modules
+#
+# ---------------
+# USER PARAMETERS
+# ---------------
+#
+from eddy_load.namelist_mod import *
+from eddy_load.namelist_obs import *
+#
+def main():
+   #
+   #   - Main parameters in arguments
+   #     
+   if (len(sys.argv)==11):
+      # Considered period (in arguments)
+      date_start = str(sys.argv[1])
+      date_end = str(sys.argv[2])
+      xmin = float(sys.argv[3])
+      xmax = float(sys.argv[4])
+      ymin = float(sys.argv[5])
+      ymax = float(sys.argv[6])
+      mode = str(sys.argv[7])
+      model_acro = str(sys.argv[8])
+      obs_acro = str(sys.argv[9])
+      data_dir = str(sys.argv[10])
+      print ("Date start = ",date_start)
+      print ("Date end = ",date_end)
+      print ("Longitude min = ",xmin)
+      print ("Longitude max = ",xmax)
+      print ("Latitude min = ",ymin)
+      print ("Latitude max = ",ymax)
+      print ("Mode = ",mode)
+      print ("Analysis & Forecasting or reanalysis system = ",model_acro)
+      print ("Altimetric satellite data = ",obs_acro)
+      print ("Downloaded file directory = ",data_dir)
+   else:
+      print ("!!! ERROR: 10 arguments to be chosen !!!")
+      print ("Argument 1 = Date start (yyyy-mm-dd)")
+      print ("Argument 2 = Date end (yyyy-mm-dd)")
+      print ("Argument 3 = Longitude min (-180/180° longitude convention)")
+      print ("Argument 4 = Longitude max (-180/180° longitude convention)")
+      print ("Argument 5 = Latitude min (-90/90° latitude convention)")
+      print ("Argument 6 = Latitude max (-90/90° latitude convention)")
+      print ("Argument 7 = NRT or MY datasets")
+      print ("Argument 8 = Analysis & Forecasting system (GLO, IBI, ... (for MDS))")
+      print ("Argument 9 = Altimetric satellite data (AVISO, AVISO_EU)")
+      print ("Argument 10 = Downloaded file directory")
+      sys.exit()
+   #
+   #    
+   if mode == 'NRT':
+      # 
+      # - Dataset from the model chosen data
+      DATASET_ID_MOD_SSV = data_mod_dict_NRT[model_acro][0]
+      DATASET_ID_MOD_SSH = data_mod_dict_NRT[model_acro][1]
+      ssu_mod_name = data_mod_dict_NRT[model_acro][2]
+      ssv_mod_name = data_mod_dict_NRT[model_acro][3]
+      ssh_mod_name = data_mod_dict_NRT[model_acro][4]
+      zmin = data_mod_dict_NRT[model_acro][5]
+      zmax =data_mod_dict_NRT[model_acro][6] 
+      time_mod_name = data_mod_dict_NRT[model_acro][7]
+      depth_mod_name = data_mod_dict_NRT[model_acro][8]
+      lat_mod_name = data_mod_dict_NRT[model_acro][9]
+      lon_mod_name = data_mod_dict_NRT[model_acro][10]
+      dimt_mod_name = data_mod_dict_NRT[model_acro][11]
+      dimz_mod_name = data_mod_dict_NRT[model_acro][12]       
+      dimy_mod_name = data_mod_dict_NRT[model_acro][13]
+      dimx_mod_name = data_mod_dict_NRT[model_acro][14]
+      res_mod = data_mod_dict_NRT[model_acro][15]
+      # 
+      # - Copernicus dataset from the obs chosen data (AVISO, AVISO_EU)
+      DATASET_ID_OBS = data_obs_dict_NRT[obs_acro][0]
+      ssu_obs_name = data_obs_dict_NRT[obs_acro][1]
+      ssv_obs_name = data_obs_dict_NRT[obs_acro][2]
+      ssh_obs_name = data_obs_dict_NRT[obs_acro][3]
+      time_obs_name = data_obs_dict_NRT[obs_acro][4]
+      lat_obs_name = data_obs_dict_NRT[obs_acro][5]
+      lon_obs_name = data_obs_dict_NRT[obs_acro][6]
+      dimt_obs_name = data_obs_dict_NRT[obs_acro][7]
+      dimy_obs_name = data_obs_dict_NRT[obs_acro][8]
+      dimx_obs_name = data_obs_dict_NRT[obs_acro][9]
+      res_obs = data_obs_dict_NRT[obs_acro][10]
+      scale_fac_obs =  data_obs_dict_NRT[obs_acro][11]
+   elif mode == 'MY':
+      # 
+      # - Dataset from the model chosen data
+      DATASET_ID_MOD_SSV = data_mod_dict_MY[model_acro][0]
+      DATASET_ID_MOD_SSH = data_mod_dict_MY[model_acro][1]
+      ssu_mod_name = data_mod_dict_MY[model_acro][2]
+      ssv_mod_name = data_mod_dict_MY[model_acro][3]
+      ssh_mod_name = data_mod_dict_MY[model_acro][4]
+      zmin = data_mod_dict_MY[model_acro][5]
+      zmax =data_mod_dict_MY[model_acro][6]
+      time_mod_name = data_mod_dict_MY[model_acro][7]
+      depth_mod_name = data_mod_dict_MY[model_acro][8]
+      lat_mod_name = data_mod_dict_MY[model_acro][9]
+      lon_mod_name = data_mod_dict_MY[model_acro][10]
+      dimt_mod_name = data_mod_dict_MY[model_acro][11]
+      dimz_mod_name = data_mod_dict_MY[model_acro][12]       
+      dimy_mod_name = data_mod_dict_MY[model_acro][13]
+      dimx_mod_name = data_mod_dict_MY[model_acro][14]
+      res_mod = data_mod_dict_MY[model_acro][15]
+      # 
+      # - Copernicus dataset from the obs chosen data (AVISO, AVISO_EU) 
+      DATASET_ID_OBS = data_obs_dict_MY[obs_acro][0]
+      ssu_obs_name = data_obs_dict_MY[obs_acro][1]
+      ssv_obs_name = data_obs_dict_MY[obs_acro][2]
+      ssh_obs_name = data_obs_dict_MY[obs_acro][3]
+      time_obs_name = data_obs_dict_MY[obs_acro][4]
+      lat_obs_name = data_obs_dict_MY[obs_acro][5]
+      lon_obs_name = data_obs_dict_MY[obs_acro][6]
+      dimt_obs_name = data_obs_dict_MY[obs_acro][7]
+      dimy_obs_name = data_obs_dict_MY[obs_acro][8]
+      dimx_obs_name = data_obs_dict_MY[obs_acro][9]
+      res_obs = data_obs_dict_MY[obs_acro][10]
+      scale_fac_obs =  data_obs_dict_MY[obs_acro][11]
+   #
+   # ----------------------------------
+   #
+   # Make data directories
+   dirout_mod = data_dir+"/"+model_acro+"/"
+   dirout_obs = data_dir+"/"+obs_acro+"/"
+   dirout_mod_equi = data_dir+"/"+model_acro+"_EQUI/" 
+   if not os.path.exists(dirout_mod):
+      os.mkdir(dirout_mod)
+   if not os.path.exists(dirout_obs):
+      os.mkdir(dirout_obs)
+   if mod_obs_equi:
+      if not os.path.exists(dirout_mod_equi):
+         os.mkdir(dirout_mod_equi)
+      if not os.path.exists(dirout_mod_equi+"FIG/"):    
+         os.mkdir(dirout_mod_equi+"FIG/")
+   # Absolute Workdir
+   workdir = os.getcwd()+"/"
+   #
+   # Time Loop
+   #
+   d_date = CnesJulianCal()
+   d_start = date_start[0:4]+date_start[5:7]+date_start[8:10]
+   d_end = date_end[0:4]+date_end[5:7]+date_end[8:10]
+   jul_start = d_date.tojulian(d_start)
+   jul_end = d_date.tojulian(d_end)
+   jul = jul_start
+   while jul <= jul_end:
+      time_mod = []
+      date = d_date.fromjulian(jul)
+      date_mds = date[0:4]+"-"+date[4:6]+"-"+date[6:8]  # mds date format yyyy-mm-dd
+      print("*******************")
+      print("DATE = ",date_mds)
+      print("*******************")
+      #
+      # ----------
+      # MODEL DATA
+      # ----------
+      #   
+      fileout_mod = model_acro+"_"+date+".nc"
+      if os.path.isfile(dirout_mod+fileout_mod):
+         os.remove(dirout_mod+fileout_mod)
+      #
+      if model_acro == "ORCA36":
+          # 
+          #   - Load native orca grid model data through edito S3 bucket
+          #     --------------------------------------------------------
+          # 
+          # !!! imin, imax, jmin, jmax, lon, lat variables are declared as global var inside load_ORCA36 fct
+          # since they calculated ones by this fct and reused for each time interation !!!
+          ssu_mod, ssv_mod, ssh_mod, time_mod, lat_mod, lon_mod, depth_mod = fn.load_ORCA36(workdir, 
+                                                                                            dirout_mod, 
+                                                                                            DATASET_ID_MOD_SSV, 
+                                                                                            DATASET_ID_MOD_SSH, 
+                                                                                            model_acro, 
+                                                                                            date_mds, date, 
+                                                                                            jul, 
+                                                                                            jul_start, 
+                                                                                            xmin,
+                                                                                            xmax, 
+                                                                                            ymin, 
+                                                                                            ymax, 
+                                                                                            zmin, 
+                                                                                            zmax, 
+                                                                                            ssu_mod_name, 
+                                                                                            ssv_mod_name, 
+                                                                                            ssh_mod_name,
+                                                                                            lat_mod_name, 
+                                                                                            lon_mod_name, 
+                                                                                            depth_mod_name, 
+                                                                                            dimy_mod_name, 
+                                                                                            dimx_mod_name, 
+                                                                                            res_mod)
+          #   
+      else:
+         # 
+         #   - Load standard model data through MDS API
+         #     ----------------------------------------
+         #
+         ssu_mod, ssv_mod, ssh_mod, time_mod, lat_mod, lon_mod, depth_mod = fn.load_MFC(DATASET_ID_MOD_SSV, 
+                                                                                        DATASET_ID_MOD_SSH, 
+                                                                                        model_acro, 
+                                                                                        date_mds, 
+                                                                                        jul, 
+                                                                                        xmin,
+                                                                                        xmax, 
+                                                                                        ymin, 
+                                                                                        ymax, 
+                                                                                        zmin, 
+                                                                                        zmax, 
+                                                                                        ssu_mod_name, 
+                                                                                        ssv_mod_name, 
+                                                                                        ssh_mod_name,
+                                                                                        lat_mod_name, 
+                                                                                        lon_mod_name, 
+                                                                                        depth_mod_name)
+      #
+      #   - Write nc file gathering ssu, ssv and ssh 
+      #     with the right units following the Eddy_Tracking file format     
+      fn.mds2eddy_track_mod(dirout_mod,
+                            fileout_mod,
+                            ssu_mod,
+                            ssv_mod,
+                            ssh_mod,
+                            time_mod,
+                            depth_mod,
+                            lat_mod,
+                            lon_mod,        
+                            dimt_mod_name,
+                            dimz_mod_name,
+                            dimy_mod_name,
+                            dimx_mod_name,
+                            ssu_mod_name,
+                            ssv_mod_name,
+                            ssh_mod_name,
+                            time_mod_name,
+                            depth_mod_name,
+                            'latitude',
+                            'longitude',
+                            unit_ssu_attr,
+                            lname_ssu_attr,
+                            sname_ssu_attr,
+                            unit_ssv_attr,
+                            lname_ssv_attr,
+                            sname_ssv_attr,
+                            unit_ssh_attr,
+                            lname_ssh_attr,
+                            sname_ssh_attr,
+                            unit_time_attr,
+                            lname_time_attr,
+                            sname_time_attr,
+                            unit_depth_attr,
+                            lname_depth_attr,
+                            sname_depth_attr,
+                            unit_lat_attr,
+                            lname_lat_attr,
+                            sname_lat_attr,
+                            unit_lon_attr,
+                            lname_lon_attr,
+                            sname_lon_attr
+                            )
+      #
+      # ----------------
+      # OBSERVATION DATA
+      # ----------------
+      #   
+      fileout_obs = obs_acro+"_"+date+".nc"
+      if os.path.isfile(dirout_obs+fileout_obs):
+         os.remove(dirout_obs+fileout_obs) 
+      ssu_obs, ssv_obs, ssh_obs, time_obs, lat_obs, lon_obs = fn.load_AVISO(DATASET_ID_OBS, 
+                                                                            obs_acro, 
+                                                                            date_mds, 
+                                                                            jul, 
+                                                                            xmin,
+                                                                            xmax, 
+                                                                            ymin, 
+                                                                            ymax, 
+                                                                            ssu_obs_name, 
+                                                                            ssv_obs_name, 
+                                                                            ssh_obs_name,
+                                                                            lat_obs_name, 
+                                                                            lon_obs_name)
+      # from the MDS obs file, the obs file is re-written in applying the scale factor to ssu, ssv & ssh
+      fn.mds2eddy_track_obs(dirout_obs,
+                            fileout_obs,
+                            ssu_obs,
+                            ssv_obs,
+                            ssh_obs,
+                            time_obs,
+                            lat_obs,
+                            lon_obs,        
+                            dimt_obs_name,
+                            dimy_obs_name,
+                            dimx_obs_name,
+                            ssu_obs_name,
+                            ssv_obs_name,
+                            ssh_obs_name,
+                            time_obs_name,
+                            lat_obs_name,
+                            lon_obs_name,
+                            unit_ssu_attr,
+                            lname_ssu_attr,
+                            sname_ssu_attr,
+                            unit_ssv_attr,
+                            lname_ssv_attr,
+                            sname_ssv_attr,
+                            unit_ssh_attr,
+                            lname_ssh_attr,
+                            sname_ssh_attr,
+                            unit_time_attr,
+                            lname_time_attr,
+                            sname_time_attr,
+                            unit_lat_attr,
+                            lname_lat_attr,
+                            sname_lat_attr,
+                            unit_lon_attr,
+                            lname_lon_attr,
+                            sname_lon_attr
+                           )
+      #
+      # -------------------------
+      # MODEL/OBS EQUIVALENT DATA
+      # -------------------------
+      #  
+      if mod_obs_equi:
+         #
+         #     - Load xarray obs dataset
+         #
+         data_obs = xr.open_dataset(dirout_obs+fileout_obs)
+         ssu_obs = data_obs.variables[ssu_obs_name].values
+         ssv_obs = data_obs.variables[ssv_obs_name].values  
+         ssh_obs = data_obs.variables[ssh_obs_name].values
+         lat_obs = data_obs.variables[lat_obs_name].values
+         lon_obs = data_obs.variables[lon_obs_name].values   
+         #
+         #    - Model/obs ssh shift
+         #
+         ssh_shift = np.nanmean(ssh_obs) - np.nanmean(ssh_mod)
+         print("ssh shift mod/obs = ", ssh_shift)
+         #
+         #    - Geostrophic model current from ssh
+         #
+         #         py-eddy-tracker tool uses ssh, ugos and vgos from obs data such as AVISO for its detection creteria. So to be fully consistent with obs, we must also consider ugos and vgos from model data, and then here the geostrophic model current is calculated from the model ssh to get the model/obs equivalent. 
+         #
+         ugos, vgos = fn.geos_current(res_mod, lat_mod, ssh_mod)
+         # reset ssu_mod and ssv_mod to replace by ugos and vgos values
+         ugos_mod = np.ones((1, 1, len(lat_mod), len(lon_mod)))  # 4D array
+         vgos_mod = np.ones((1, 1, len(lat_mod), len(lon_mod)))  # 4D array
+         ugos_mod[0,0,:,:] = ugos[:,:]
+         vgos_mod[0,0,:,:] = vgos[:,:]
+         #
+         if res_mod < res_obs:
+            #
+            #   - Shapiro filter
+            #
+            #        higher resolution model data must be smoothed before interpolating
+            #        on coarser obs grid data to prevent sampling errors. To smooth, we will choose
+            #        a nb of Shapiro filter loops to reach approximately the effective resolution of the obs data
+            missval = np.nan
+            ugos_mod_filt = fn.shapiro_1d(ugos_mod, nb_shapi, missval, True)
+            vgos_mod_filt = fn.shapiro_1d(vgos_mod, nb_shapi, missval, True)
+            ssh_mod_filt = fn.shapiro_1d(ssh_mod, nb_shapi, missval, False)
+            #
+            #   - Interpolation on a common model/obs grid
+            #       
+            #         Data interpolation on the coarser grid following a nearest point method
+            #         If ref model regular grid resolution > obs regular grid resolution 
+            #         => model dataset fitted to the obs grid for the equivalent model/obs
+            #
+            list_i_interp = []
+            list_j_interp = []
+            ugos_mod_interp = np.ones((1, 1, len(lat_obs), len(lon_obs)))
+            vgos_mod_interp = np.ones((1, 1, len(lat_obs), len(lon_obs))) 
+            ssh_mod_interp = np.ones((1, len(lat_obs), len(lon_obs)))
+            lat_mod_interp = lat_obs
+            lon_mod_interp = lon_obs 
+            #      
+            for target_lat in lat_obs:
+               list_j_interp.append(fn.get_nearest_position_sorted_array_float(lat_mod, target_lat))
+            for target_lon in lon_obs:
+               list_i_interp.append(fn.get_nearest_position_sorted_array_float(lon_mod, target_lon))
+            for j in range(len(lat_obs)):
+               j_interp = list_j_interp[j]
+               for i in range(len(lon_obs)):
+                  i_interp = list_i_interp[i]
+                  ugos_mod_interp[0, 0, j, i] = ugos_mod_filt[0, 0, j_interp, i_interp]
+                  vgos_mod_interp[0, 0, j, i] = vgos_mod_filt[0, 0, j_interp, i_interp]
+                  ssh_mod_interp[0, j, i] = ssh_mod_filt[0, j_interp, i_interp]
+         else:
+            ugos_mod_interp = ugos_mod
+            vgos_mod_interp = vgos_mod
+            ssh_mod_interp = ssh_mod
+            lat_mod_interp = lat_mod
+            lon_mod_interp = lon_mod
+         #
+         #   - Write nc file gathering ssu, ssv and ssh model/obs equivalent
+         #     with the right units following the Eddy_Tracking file format 
+         #
+         fileout_mod_equi = model_acro+"_EQUI_"+date+".nc"      
+         fn.mds2eddy_track(dirout_mod_equi,
+                     fileout_mod_equi,
+                     ugos_mod_interp,
+                     vgos_mod_interp,
+                     ssh_mod_interp,
+                     time_mod,
+                     depth_mod,
+                     lat_mod_interp,
+                     lon_mod_interp,        
+                     dimt_mod_name,
+                     dimz_mod_name,
+                     dimy_mod_name,
+                     dimx_mod_name,
+                     ugos_mod_name,
+                     vgos_mod_name,
+                     ssh_mod_name,
+                     time_mod_name,
+                     depth_mod_name,
+                     lat_mod_name,
+                     lon_mod_name,
+                     unit_ssu_attr,
+                     lname_ugos_attr,
+                     sname_ugos_attr,
+                     unit_ssv_attr,
+                     lname_vgos_attr,
+                     sname_vgos_attr,
+                     unit_ssh_attr,
+                     lname_ssh_attr,
+                     sname_ssh_attr,
+                     unit_time_attr,
+                     lname_time_attr,
+                     sname_time_attr,
+                     unit_depth_attr,
+                     lname_depth_attr,
+                     sname_depth_attr,
+                     unit_lat_attr,
+                     lname_lat_attr,
+                     sname_lat_attr,
+                     unit_lon_attr,
+                     lname_lon_attr,
+                     sname_lon_attr
+                     )
+         #
+         #   - Plot to monitor the processing (filter + interpolation)
+         #
+         if jul == jul_start: # plot to monitor the processing (geos current + filter + interpolation)
+            # 2D dimension data for plot function
+            ugos_mod_interp_2D = ugos_mod_interp[0, 0, :, :]
+            ssu_mod_2D = ssu_mod[0, 0, :, :]
+            ssu_obs_2D = ssu_obs[0, :, :]
+            # plot for ssu    
+            fn.three_panel_plt_color(ssu_mod_name, jul, xmin, xmax, ymin, ymax, lon_mod, lat_mod, ssu_mod_2D, minvalue_ssu, maxvalue_ssu, colorbar, title_1, date_mds, lon_mod_interp, lat_mod_interp, ugos_mod_interp_2D, title_2, unit_txt_ssu, lon_obs, lat_obs, ssu_obs_2D, title_3, stepvalue_ssu, stepformat, X_TIME, Y_TIME, x_unit, y_unit)
+            plt.savefig(dirout_mod_equi+"FIG/ssu_equi.png",dpi=100,bbox_inches="tight",pad_inches=0.2)
+            plt.close()
+            # 2D dimension data for plot function
+            vgos_mod_interp_2D = vgos_mod_interp[0, 0, :, :]
+            ssv_mod_2D = ssv_mod[0, 0, :, :]
+            ssv_obs_2D = ssv_obs[0, :, :]         
+            # plot for ssv
+            fn.three_panel_plt_color(ssv_mod_name, jul, xmin, xmax, ymin, ymax, lon_mod, lat_mod, ssv_mod_2D, minvalue_ssv, maxvalue_ssv, colorbar, title_1, date_mds, lon_mod_interp, lat_mod_interp, vgos_mod_interp_2D, title_2, unit_txt_ssv, lon_obs, lat_obs, ssv_obs_2D, title_3, stepvalue_ssv, stepformat, X_TIME, Y_TIME, x_unit, y_unit)
+            plt.savefig(dirout_mod_equi+"FIG/ssv_equi.png",dpi=100,bbox_inches="tight",pad_inches=0.2)
+            plt.close()
+            # 2D dimension data for plot function
+            ssh_mod_interp_2D = ssh_mod_interp[0, :, :]
+            ssh_mod_2D = ssh_mod[0, :, :]
+            ssh_obs_2D = ssh_obs[0, :, :]
+            ssh_obs_2D = ssh_obs_2D - ssh_shift
+            # plot for ssh
+            fn.three_panel_plt_color(ssh_mod_name, jul, xmin, xmax, ymin, ymax, lon_mod, lat_mod, ssh_mod_2D, minvalue_ssh, maxvalue_ssh, colorbar, title_1, date_mds, lon_mod_interp, lat_mod_interp, ssh_mod_interp_2D, title_2, unit_txt_ssh, lon_obs, lat_obs, ssh_obs_2D, title_3, stepvalue_ssh, stepformat, X_TIME, Y_TIME, x_unit, y_unit)
+            plt.savefig(dirout_mod_equi+"FIG/ssh_equi.png",dpi=100,bbox_inches="tight",pad_inches=0.2)
+            plt.close()
+      # Time loop
+      jul += 1
+   # Cleanning : remove weight, mask and projection files from dirout_mod
+   if model_acro == "ORCA36":
+       os.remove(dirout_mod+"meshmask_"+model_acro+"_NG.nc")
+       os.remove(dirout_mod+"meshmask_"+model_acro+"_RG.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridv.nc")
+       os.remove(dirout_mod+"weights_bilin_"+model_acro+"_NG-"+model_acro+"_RG_gridt.nc")
+       os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"nc_projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridv.nc")
+       os.remove(dirout_mod+"projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridu.nc")
+       os.remove(dirout_mod+"projection_weights_"+model_acro+"_NG_to_"+model_acro+"_RG_gridv.nc")
+#
+# Run the main code
+if __name__ == "__main__":
+    main()
+#
+# =========================================================================

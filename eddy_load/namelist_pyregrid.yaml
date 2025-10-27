@@ -1,0 +1,19 @@
+{
+    "GENERAL": {
+        "SYSid_in": "ORCA36_NG",
+        "SYSid_out": "ORCA36_RG",
+        "dirlog": "/home/jovyan/data/ORCA36/",
+        "dirweights": "/home/jovyan/data/ORCA36/",
+        "dirout": "/home/jovyan/data/ORCA36/",
+        "complevel": 0,
+        "lg_drown": true
+        },
+    "GRID": {
+        "maskin": "/home/jovyan/data/ORCA36/meshmask_ORCA36_NG.nc",
+        "maskout": "/home/jovyan/data/ORCA36/meshmask_ORCA36_RG.nc",
+        "lg_cgridout": true
+        },
+    "CONFIG_MODES_KWARGS": {
+        "orca36": "-v sossheig --vgrid t --method bilin --conservative-method True --max-proc-per-task 1"
+        }
+}
