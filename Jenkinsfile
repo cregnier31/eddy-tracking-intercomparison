@@ -34,8 +34,9 @@ pipeline {
                 sh """#!/bin/bash
                 . ~/.bashrc
                 set -e
-                . ~/.bashrc
+
                 conda activate hatch_cicd
+
                 echo " *** Bump version"
                 hatch version minor
 
@@ -46,11 +47,8 @@ pipeline {
 		hatch publish -r pypi-internal
 
                 echo "*** Commit changes"
-		git config user.email "gitlab-ci@mercator-ocean.fr"
-                git config user.name "gitlab-ci"
-                git remote set-url origin git@gitlab.mercator-ocean.fr:/internal-shared-group/validation/eddy-tracking-intercomparison.git
-                git push origin HEAD:master
-                git push --tags
+		git push git@gitlab.mercator-ocean.fr:/internal-shared-group/validation/eddy-tracking-intercomparison.git HEAD:master
+                git push git@gitlab.mercator-ocean.fr:/internal-shared-group/validation/eddy-tracking-intercomparison.git --tags
                 """
             }
         }
