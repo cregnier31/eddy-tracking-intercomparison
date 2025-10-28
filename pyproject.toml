@@ -5,7 +5,7 @@
 # Build system configuration
 # --------------------------
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling",  "hatch-regex-commit"]
 build-backend = "hatchling.build"
 #
 # ------------------------------
@@ -22,8 +22,10 @@ dependencies = [
     "matplotlib<3.7",
     "py-eddy-tracker",
     "pyregrid==1.2.27" ]
+
 # The Python version required by the project
 #
+
 # ----------------------------------------
 # Main scripts of the project to be launch
 # ----------------------------------------
@@ -34,6 +36,7 @@ eddy_track = "eddy_track.__main__:main"
 eddy_diags = "eddy_diags.__main__:main"
 eddy_run = "eddy_run.__main__:main"
 #
+
 # ------------
 # Project URLs
 # ------------
@@ -42,16 +45,11 @@ homepage = "https://gitlab.mercator-ocean.fr/internal-shared-group/validation/ed
 documentation  ="https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
 repository = "https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
 #
+
 # -------------------------------------
 # Hatch build configuration & metadata
 # ------------------------------------
 #
-#   - metadata---
-[tool.hatch.metadata]
-name = "eddy_project"
-version = "0.1.0"
-description = "Package to perform regional & global eddy detection and model/obs eddy matching"
-authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
 #   - versionning
 [tool.hatch.version]
 source = "regex_commit"
