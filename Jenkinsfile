@@ -46,7 +46,10 @@ pipeline {
 		hatch publish -r pypi-internal
 
                 echo "*** Commit changes"
-                git push git@gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git HEAD:master
+		git config user.email "gitlab-ci@mercator-ocean.fr"
+                git config user.name "gitlab-ci"
+                git remote set-url origin git@gitlab.mercator-ocean.fr:/internal-shared-group/validation/eddy-tracking-intercomparison.git
+                git push origin HEAD:master
                 git push --tags
                 """
             }
