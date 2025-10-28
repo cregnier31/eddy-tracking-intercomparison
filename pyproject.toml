@@ -13,7 +13,7 @@ build-backend = "hatchling.build"
 # ------------------------------
 [project]
 name = "eddy_project"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Package to perform regional and global eddy detection and model/obs eddy matching"
 authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
 readme = "README.md"
@@ -54,8 +54,15 @@ description = "Package to perform regional & global eddy detection and model/obs
 authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
 #   - versionning
 [tool.hatch.version]
-# Define versioning scheme
-version = "0.1.0"
+source = "regex_commit"
+path = "eddy_run/version.py"
+check_dirty = false
+commit = true
+commit_message = "[ci skip] Version bump committed by Jenkins"
+tag = true
+tag_message = "Tagged for deployment by Jenkins"
+tag_sign = false
+
 #
 #   - VCS settings for versioning (e.g., Git integration)
 [tool.hatch.vcs]
