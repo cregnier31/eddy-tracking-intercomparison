@@ -12,7 +12,7 @@ build-backend = "hatchling.build"
 # Project descript & metadataion
 # ------------------------------
 [project]
-name = "eddy_project"
+name = "eddy_intercomparison"
 dynamic = ["version"]
 description = "Package to perform regional and global eddy detection and model/obs eddy matching"
 authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
