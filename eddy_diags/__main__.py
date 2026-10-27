@@ -183,8 +183,9 @@ def main():
     a_ref.position_filter(median_half_window=1, loess_half_window=5)
     c_ref.position_filter(median_half_window=1, loess_half_window=5)
 
-    dates = np.arange(a_ref.obs["time"].min(), a_ref.obs["time"].max())
-    datesb = np.arange(at.obs["time"].min(), at.obs["time"].max())
+    datesb = np.arange(at.obs["time"].min(), at.obs["time"].max() + 1)
+    # Compare only days covered by both model and reference observations.
+    reference_days = set(np.arange(a_ref.obs["time"].min(), a_ref.obs["time"].max() + 1))
 
     # Hits, Misses, False Alarm
     ## GLO12
@@ -204,11 +205,11 @@ def main():
     amplitude_AR_falarm = []
     amplitude_AR_misses = []
 
-    i = 0
     for ind_date, date in enumerate(datesb):
-      if i < 3:
+        if date not in reference_days:
+            continue
         print(f"{ind_date} {date}")
-        index = int(date - dates[0])
+        index = ind_date
         # Extract by date
         ## Anticyclonic
         reference_ac = a_ref.extract_with_period((date, date))
@@ -239,6 +240,10 @@ def main():
         model_ac_junk = model_ac.index(model_id_junk)
         model_ac = model_ac.index(model_id)
 
+        radius_AR_hits = np.append(radius_AR_hits, model_ac.obs["radius_e"] / 1000)
+        radius_AR_misses = np.append(radius_AR_misses, reference_ac_junk.obs["radius_e"] / 1000)
+        radius_AR_falarm = np.append(radius_AR_falarm, model_ac_junk.obs["radius_e"] / 1000)
+
         amplitude_AR_hits = np.append(
             amplitude_AR_hits, model_ac.obs["amplitude"] * 100
         )
@@ -254,9 +259,9 @@ def main():
         reference_id_junk, model_id_junk = fn.reverse_index(
             reference_id, len(reference_cc)
         ), fn.reverse_index(model_id, len(model_cc))
-        Hits[i] += len(reference_id)
-        Misses[i] += len(reference_id_junk)
-        Falarms[i] += len(model_id_junk)
+        Hits[-1] += len(reference_id)
+        Misses[-1] += len(reference_id_junk)
+        Falarms[-1] += len(model_id_junk)
         AR_hits[index] += len(reference_id)
         AR_misses[index] += len(reference_id_junk)
         AR_falarm[index] += len(model_id_junk)
@@ -283,7 +288,6 @@ def main():
             amplitude_AR_falarm, model_cc_junk.obs["amplitude"] * 100
         )
 
-        i += 1
         print("Date OK")
     bins = np.arange(0, 400, 1)
     hist_hits, bins_hits = np.histogram(amplitude_AR_hits, bins=bins)
