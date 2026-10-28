@@ -41,7 +41,7 @@ class CurvilinearToRegular:
         if source_lon.shape != source_lat.shape or source_lon.ndim != 2:
             raise ValueError("GLOENS longitude/latitude must be matching 2D arrays")
         self.source_shape = source_lon.shape
-        self.valid_coordinates = np.isfinite(source_lon) & np.isfinite(source_lat)
+        # Restrict the triangulation to the requested geographic region.\n        # A global GLOENS grid contains ~1.5 million points.\n        margin = max(2.0, 3 * max(np.diff(self.lon).max(), np.diff(self.lat).max()))\n        self.valid_coordinates = (\n            np.isfinite(source_lon) & np.isfinite(source_lat)\n            & (source_lon >= self.lon.min() - margin)\n            & (source_lon <= self.lon.max() + margin)\n            & (source_lat >= self.lat.min() - margin)\n            & (source_lat <= self.lat.max() + margin)\n        )
         if np.count_nonzero(self.valid_coordinates) < 3:
             raise ValueError("At least three valid source grid points are needed")
         self.points = np.column_stack(
