@@ -166,3 +166,28 @@ def detect_gloens(store, data_dir, lon_min, lon_max, lat_min, lat_max,
                 "zos", "uo", "vo", SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX,
                 AMP_MIN, WAVELENGTH, ORDER_FILTER,
             )
+
+
+def main(argv=None):
+    import argparse
+    from eddy_load.gloens_mean import DEFAULT_ENDPOINT
+    parser = argparse.ArgumentParser(description="Detect GLOENS eddies inline from ensemble mean SSH")
+    parser.add_argument("store", help="s3://MOISICEEF/...2DT-oce...zarr")
+    parser.add_argument("data_dir", help="Detection output and ensemble mean cache root")
+    parser.add_argument("--lon-min", type=float, required=True)
+    parser.add_argument("--lon-max", type=float, required=True)
+    parser.add_argument("--lat-min", type=float, required=True)
+    parser.add_argument("--lat-max", type=float, required=True)
+    parser.add_argument("--resolution", type=float, default=0.25)
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    parser.add_argument("--authenticated", action="store_true")
+    args = parser.parse_args(argv)
+    detect_gloens(
+        args.store, args.data_dir, args.lon_min, args.lon_max,
+        args.lat_min, args.lat_max, resolution=args.resolution,
+        endpoint=args.endpoint, anonymous=not args.authenticated,
+    )
+
+
+if __name__ == "__main__":
+    main()
