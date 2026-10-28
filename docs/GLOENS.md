@@ -24,7 +24,7 @@ Anonymous CloudFerro S3 access is attempted by default, as in your example.
 If the bucket needs credentials, export suitable AWS environment variables
 and append `--authenticated`; **never commit keys to Git**.
 
-**Important: not yet directly consumable by eddy_detect.** GLOENS carries
+**Original cached mean files alone are not directly consumable by eddy_detect.** GLOENS carries
 2D `latitude(y,x)` and `longitude(y,x)` coordinates. The current detector
 uses py-eddy-tracker's `RegularGridDataset`, which expects a regular grid
 with suitable 1D longitude/latitude dimensions, and its eddy-identification
@@ -36,4 +36,40 @@ before running full detection.
 
 ```bash
 python -m pytest -q tests/test_gloens_mean.py
+```
+
+
+## Inline eddy detection (no separate preprocessing command)
+
+```bash
+python -m eddy_detect.gloens_grid \
+  s3://MOISICEEF/glo4-ens50_ng_1d-m_20261022-20261118_2DT-oce_fcst_R20261022.zarr \
+  ./data --lon-min -19 --lon-max 5 --lat-min 26 --lat-max 56 --resolution 0.25
+```
+
+This command processes each lead in one workflow: load or compute/cache its 50-member
+`zos` mean, interpolate SSH from the native 2D curvilinear grid to a regional
+regular lon/lat grid, derive eastward/northward **geostrophic** currents from
+SSH gradients, and run the existing eddy detector. Temporary regular-grid
+files are deleted after detection. Daily detections are written to
+`data/GLOENS/DETECT/`.
+
+**Vector rotation:** `zos` is a scalar and is never rotated. Since this
+2DT-oce store contains no U/V fields, geostrophic currents are calculated
+*after* interpolation in geographic east/north coordinates; no grid-vector
+rotation is needed. `rotate_grid_vectors` is available if future companion
+native-grid U/V data are added, but requires a scientifically verified
+grid-orientation angle and must not be applied to already east/north velocities.
+
+**Scientific limitations:** Linear triangulation is regional and does not
+currently handle dateline-crossing bounds. NaN/land boundaries can create
+invalid interpolation triangles; inspect coastlines and masks. Geostrophic
+velocities are masked within 5 degrees of the equator and are not equivalent
+to model total surface currents. Verify whether SSH needs a geoid/MDT
+correction for the intended detection algorithm and compare against a
+known benchmark before production use. The default 0.25 degree grid is an
+example, not a validated optimal detection resolution.
+
+```bash
+python -m pytest -q tests/test_gloens_mean.py tests/test_gloens_grid.py
 ```
