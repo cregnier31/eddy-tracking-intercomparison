@@ -41,7 +41,16 @@ class CurvilinearToRegular:
         if source_lon.shape != source_lat.shape or source_lon.ndim != 2:
             raise ValueError("GLOENS longitude/latitude must be matching 2D arrays")
         self.source_shape = source_lon.shape
-        # Restrict the triangulation to the requested geographic region.\n        # A global GLOENS grid contains ~1.5 million points.\n        margin = max(2.0, 3 * max(np.diff(self.lon).max(), np.diff(self.lat).max()))\n        self.valid_coordinates = (\n            np.isfinite(source_lon) & np.isfinite(source_lat)\n            & (source_lon >= self.lon.min() - margin)\n            & (source_lon <= self.lon.max() + margin)\n            & (source_lat >= self.lat.min() - margin)\n            & (source_lat <= self.lat.max() + margin)\n        )
+        # Restrict the triangulation to the requested geographic region.
+        # A global GLOENS grid contains ~1.5 million points.
+        margin = max(2.0, 3 * max(np.diff(self.lon).max(), np.diff(self.lat).max()))
+        self.valid_coordinates = (
+            np.isfinite(source_lon) & np.isfinite(source_lat)
+            & (source_lon >= self.lon.min() - margin)
+            & (source_lon <= self.lon.max() + margin)
+            & (source_lat >= self.lat.min() - margin)
+            & (source_lat <= self.lat.max() + margin)
+        )
         if np.count_nonzero(self.valid_coordinates) < 3:
             raise ValueError("At least three valid source grid points are needed")
         self.points = np.column_stack(
@@ -120,7 +129,10 @@ def iter_gloens_detection_grids(store, cache_root, lon_regular, lat_regular,
         interp = CurvilinearToRegular(
             ds["longitude"].values, ds["latitude"].values, lon_regular, lat_regular
         )
-        stop = ds.sizes["time"] if last_day is None else min(last_day, ds.sizes["time"])\n        if not 0 <= first_day < stop:\n            raise ValueError("Invalid forecast lead range")\n        for lead in range(first_day, stop):
+        stop = ds.sizes["time"] if last_day is None else min(last_day, ds.sizes["time"])
+        if not 0 <= first_day < stop:
+            raise ValueError("Invalid forecast lead range")
+        for lead in range(first_day, stop):
             with get_or_compute_mean(ds, store, cache_root, lead, endpoint=endpoint) as mean:
                 date = str(mean.time.dt.strftime("%Y%m%d").item())
                 regular = regularize_ssh(
@@ -132,7 +144,8 @@ def iter_gloens_detection_grids(store, cache_root, lon_regular, lat_regular,
 
 
 def detect_gloens(store, data_dir, lon_min, lon_max, lat_min, lat_max,
-                  resolution=0.25, endpoint=None, anonymous=True,\n                  first_day=0, last_day=None):
+                  resolution=0.25, endpoint=None, anonymous=True,
+                  first_day=0, last_day=None):
     """Run daily eddy detection directly from GLOENS, with mean SSH cache.
 
     Intermediate regular-grid files are temporary, not a preprocessing product.
@@ -151,7 +164,9 @@ def detect_gloens(store, data_dir, lon_min, lon_max, lat_min, lat_max,
     output = Path(data_dir) / "GLOENS" / "DETECT"
     output.mkdir(parents=True, exist_ok=True)
     for date, grid in iter_gloens_detection_grids(
-        store, data_dir, lon, lat, endpoint=endpoint, anonymous=anonymous,\n        first_day=first_day, last_day=last_day,\n    ):
+        store, data_dir, lon, lat, endpoint=endpoint, anonymous=anonymous,
+        first_day=first_day, last_day=last_day,
+    ):
         anticyclonic = output / f"Anticyclonic_GLOENS_{date}.nc"
         cyclonic = output / f"Cyclonic_GLOENS_{date}.nc"
         if anticyclonic.exists() and cyclonic.exists():
@@ -179,12 +194,16 @@ def main(argv=None):
     parser.add_argument("--lat-max", type=float, required=True)
     parser.add_argument("--resolution", type=float, default=0.25)
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
-    parser.add_argument("--authenticated", action="store_true")\n    parser.add_argument("--first-day", type=int, default=0)\n    parser.add_argument("--last-day", type=int, help="Exclusive forecast lead index")
+    parser.add_argument("--authenticated", action="store_true")
+    parser.add_argument("--first-day", type=int, default=0)
+    parser.add_argument("--last-day", type=int, help="Exclusive forecast lead index")
     args = parser.parse_args(argv)
     detect_gloens(
         args.store, args.data_dir, args.lon_min, args.lon_max,
         args.lat_min, args.lat_max, resolution=args.resolution,
-        endpoint=args.endpoint, anonymous=not args.authenticated,\n        first_day=args.first_day, last_day=args.last_day,\n    )
+        endpoint=args.endpoint, anonymous=not args.authenticated,
+        first_day=args.first_day, last_day=args.last_day,
+    )
 
 
 if __name__ == "__main__":
