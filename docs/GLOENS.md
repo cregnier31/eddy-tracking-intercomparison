@@ -15,7 +15,7 @@ python -m eddy_load.gloens_mean \
 ```
 
 The first command exports **one forecast day** for inspection; omit `--last-day 1`
-to process all 28. Outputs follow `data/GLOENS/GLOENS_YYYYMMDD.nc` (one per lead).
+to process all 28. Outputs are cached under `data/GLOENS/<forecast-store-name>_<source-hash>/GLOENS_YYYYMMDD.nc` (one per lead), so different forecast runs cannot overwrite each other. Existing valid daily files are opened and reused without recomputing the mean. Missing or invalid files are recreated. Add `--force` to regenerate the cache.
 The code opens the Zarr lazily, loads only `zos`, reduces over `ens`, and
 writes one daily NetCDF file at a time; missing member values are ignored
 by the mean.
