@@ -73,3 +73,20 @@ example, not a validated optimal detection resolution.
 ```bash
 python -m pytest -q tests/test_gloens_mean.py tests/test_gloens_grid.py
 ```
+
+
+## January 2024 one-day smoke test
+
+This command **discovers** the forecast initialized on 2024-01-15 in the
+MOISICEEF bucket and runs detection for its first forecast lead only:
+
+```bash
+python -m eddy_detect.gloens_date_test 20240115 ./data \
+  --lon-min -19 --lon-max 5 --lat-min 26 --lat-max 56 \
+  --resolution 0.25 --first-day 0 --last-day 1
+```
+
+The exact 2024-01-15 store has **not** been verified to exist. If no
+matching Zarr is available, the command stops with a clear error and does
+not substitute a different forecast. The `MOISICEEF` bucket may contain
+only recent forecasts; check the actual archive inventory if needed.
