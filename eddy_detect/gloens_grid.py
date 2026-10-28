@@ -129,3 +129,40 @@ def iter_gloens_detection_grids(store, cache_root, lon_regular, lat_regular,
                     lon_regular, lat_regular, interpolator=interp,
                 )
                 yield date, regular
+
+
+def detect_gloens(store, data_dir, lon_min, lon_max, lat_min, lat_max,
+                  resolution=0.25, endpoint=None, anonymous=True):
+    """Run daily eddy detection directly from GLOENS, with mean SSH cache.
+
+    Intermediate regular-grid files are temporary, not a preprocessing product.
+    The existing py-eddy-tracker detection code is reused unchanged.
+    """
+    import tempfile
+    from pathlib import Path
+    from eddy_detect.my_functions import compute_eddy
+    from eddy_detect.namelist_detect import (
+        SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER,
+    )
+    if resolution <= 0 or lon_max <= lon_min or lat_max <= lat_min:
+        raise ValueError("Invalid regular-grid bounds or resolution")
+    lon = np.arange(lon_min, lon_max + resolution * 0.25, resolution)
+    lat = np.arange(lat_min, lat_max + resolution * 0.25, resolution)
+    output = Path(data_dir) / "GLOENS" / "DETECT"
+    output.mkdir(parents=True, exist_ok=True)
+    for date, grid in iter_gloens_detection_grids(
+        store, data_dir, lon, lat, endpoint=endpoint, anonymous=anonymous
+    ):
+        anticyclonic = output / f"Anticyclonic_GLOENS_{date}.nc"
+        cyclonic = output / f"Cyclonic_GLOENS_{date}.nc"
+        if anticyclonic.exists() and cyclonic.exists():
+            print(f"Detection exists for {date}; skipping")
+            continue
+        with tempfile.TemporaryDirectory(prefix="gloens-detect-") as temporary:
+            path = Path(temporary) / f"GLOENS_{date}.nc"
+            grid.to_netcdf(path)
+            compute_eddy(
+                str(path), "GLOENS", temporary, str(output) + "/",
+                "zos", "uo", "vo", SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX,
+                AMP_MIN, WAVELENGTH, ORDER_FILTER,
+            )
