@@ -72,3 +72,27 @@ def test_cached_file_is_loaded_instead_of_recomputed(tmp_path, monkeypatch):
     monkeypatch.setattr(xr.Dataset, "to_netcdf", unexpected_write)
     module.export_daily_mean(store, str(tmp_path))
     assert produced[0].stat().st_mtime_ns == original_modification
+
+
+def test_inline_mean_is_computed_once_and_reused(tmp_path, monkeypatch):
+    import eddy_load.gloens_mean as module
+
+    store = "s3://MOISICEEF/inline-test.zarr"
+    ds = xr.Dataset(
+        {"zos": (("time", "ens", "y", "x"),
+                 np.arange(1, 51, dtype="float32").reshape(1, 50, 1, 1))},
+        coords={
+            "time": np.array(["2026-10-22"], dtype="datetime64[ns]"),
+            "latitude": (("y", "x"), [[45.0]]),
+            "longitude": (("y", "x"), [[0.0]]),
+        },
+    )
+    with module.get_or_compute_mean(ds, store, str(tmp_path), 0) as first:
+        np.testing.assert_allclose(first["zos"].values, 25.5)
+
+    def fail_on_recompute(_ds):
+        raise AssertionError("Ensemble mean should not be recomputed on cache hit")
+
+    monkeypatch.setattr(module, "ensemble_mean_ssh", fail_on_recompute)
+    with module.get_or_compute_mean(ds, store, str(tmp_path), 0) as second:
+        np.testing.assert_allclose(second["zos"].values, 25.5)
