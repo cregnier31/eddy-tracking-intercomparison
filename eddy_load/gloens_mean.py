@@ -63,6 +63,52 @@ def load_cached_mean(path: Path) -> xr.Dataset:
     return xr.open_dataset(path, chunks={})
 
 
+def get_or_compute_mean(ds: xr.Dataset, store: str, output_root: str, day_index: int,
+                        endpoint: str = DEFAULT_ENDPOINT, force: bool = False) -> xr.Dataset:
+    """Return one day's cached or newly computed ensemble-mean SSH.
+
+    Called *inside* the detection workflow. The caller must close the returned
+    dataset. No standalone preprocessing invocation is required.
+    """
+    date = str(ds["time"].isel(time=day_index).dt.strftime("%Y%m%d").item())
+    dest = cached_mean_path(store, output_root, date, endpoint)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists() and not force:
+        try:
+            cached = load_cached_mean(dest)
+            if (cached.attrs.get("source_store") == store
+                    and cached.attrs.get("source_endpoint") == endpoint
+                    and cached.attrs.get("processing") == "mean(zos, dim='ens', skipna=True)"
+                    and "zos" in cached
+                    and cached.sizes.get("time") == 1
+                    and cached.sizes.get("y") == ds.sizes["y"]
+                    and cached.sizes.get("x") == ds.sizes["x"]
+                    and str(cached.time.dt.strftime("%Y%m%d").item()) == date):
+                print(f"Reusing cached ensemble mean: {dest}")
+                return cached
+            cached.close()
+        except (OSError, ValueError, KeyError):
+            pass
+    if "latitude" not in ds or "longitude" not in ds:
+        raise KeyError("GLOENS requires 2D latitude/longitude coordinates")
+    mean = ensemble_mean_ssh(ds).isel(time=slice(day_index, day_index + 1))
+    result = xr.Dataset(
+        {"zos": mean},
+        coords={"latitude": ds["latitude"], "longitude": ds["longitude"]},
+        attrs={"source_store": store, "source_endpoint": endpoint,
+               "processing": "mean(zos, dim='ens', skipna=True)"},
+    )
+    temp = dest.with_suffix(".nc.partial")
+    try:
+        result.to_netcdf(temp, encoding={"zos": {"zlib": True, "complevel": 3}})
+        os.replace(temp, dest)
+    finally:
+        if temp.exists():
+            temp.unlink()
+    print(f"Computed and cached ensemble mean: {dest}")
+    return load_cached_mean(dest)
+
+
 def export_daily_mean(store: str, output_root: str, endpoint: str = DEFAULT_ENDPOINT,
                       anonymous: bool = True, first_day: int = 0, last_day: int | None = None,
                       force: bool = False):
