@@ -109,13 +109,15 @@ def regularize_ssh(ssh, longitude, latitude, lon_regular, lat_regular,
     )
     zos = interpolator.scalar(ssh)
     u, v = geostrophic_velocity(zos, lon_regular, lat_regular, min_abs_latitude)
-    return xr.Dataset(
+    result = xr.Dataset(
         {"zos": (("latitude", "longitude"), zos.astype("float32")),
          "uo": (("latitude", "longitude"), u.astype("float32")),
          "vo": (("latitude", "longitude"), v.astype("float32"))},
         coords={"latitude": np.asarray(lat_regular), "longitude": np.asarray(lon_regular)},
         attrs={"note": "SSH scalar interpolation; east/north geostrophic currents derived from SSH"},
     )
+    result["zos"].attrs["units"] = "m"
+    return result
 
 
 def iter_gloens_detection_grids(store, cache_root, lon_regular, lat_regular,
