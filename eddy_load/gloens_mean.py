@@ -128,7 +128,7 @@ def export_daily_mean(store: str, output_root: str, endpoint: str = DEFAULT_ENDP
         if not 0 <= first_day < stop:
             raise ValueError(f"Invalid day slice [{first_day}:{stop}] for {total} forecast days")
         for i in range(first_day, stop):
-            day = mean.isel(time=i)
+            day = mean.isel(time=slice(i, i + 1))
             date = str(day.time.dt.strftime("%Y%m%d").item())
             dest = cached_mean_path(store, output_root, date, endpoint)
             if dest.exists() and not force:
