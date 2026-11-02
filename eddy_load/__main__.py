@@ -20,10 +20,11 @@
 import copernicusmarine as cm
 import xarray as xr
 import numpy as np
-import datetime
 import datetime as dt
+from datetime import datetime, timedelta
 import os
 import sys
+import argparse
 import matplotlib.pyplot as plt
 sys.path.append("./")
 import eddy_load.my_functions as fn # use of homemade function modules
@@ -40,41 +41,47 @@ def main():
    #
    #   - Main parameters in arguments
    #     
-   if (len(sys.argv)==11):
-      # Considered period (in arguments)
-      date_start = str(sys.argv[1])
-      date_end = str(sys.argv[2])
-      xmin = float(sys.argv[3])
-      xmax = float(sys.argv[4])
-      ymin = float(sys.argv[5])
-      ymax = float(sys.argv[6])
-      mode = str(sys.argv[7])
-      model_acro = str(sys.argv[8])
-      obs_acro = str(sys.argv[9])
-      data_dir = str(sys.argv[10])
-      print ("Date start = ",date_start)
-      print ("Date end = ",date_end)
-      print ("Longitude min = ",xmin)
-      print ("Longitude max = ",xmax)
-      print ("Latitude min = ",ymin)
-      print ("Latitude max = ",ymax)
-      print ("Mode = ",mode)
-      print ("Analysis & Forecasting or reanalysis system = ",model_acro)
-      print ("Altimetric satellite data = ",obs_acro)
-      print ("Downloaded file directory = ",data_dir)
-   else:
-      print ("!!! ERROR: 10 arguments to be chosen !!!")
-      print ("Argument 1 = Date start (yyyy-mm-dd)")
-      print ("Argument 2 = Date end (yyyy-mm-dd)")
-      print ("Argument 3 = Longitude min (-180/180° longitude convention)")
-      print ("Argument 4 = Longitude max (-180/180° longitude convention)")
-      print ("Argument 5 = Latitude min (-90/90° latitude convention)")
-      print ("Argument 6 = Latitude max (-90/90° latitude convention)")
-      print ("Argument 7 = NRT or MY datasets")
-      print ("Argument 8 = Analysis & Forecasting system (GLO, IBI, ... (for MDS))")
-      print ("Argument 9 = Altimetric satellite data (AVISO, AVISO_EU)")
-      print ("Argument 10 = Downloaded file directory")
-      sys.exit()
+   # Create the parser
+   parser = argparse.ArgumentParser()
+   # Add arguments
+   parser.add_argument('--date0', type=str, required=True, help='Start Date (yyyy-mm-dd)')
+   parser.add_argument('--date1', type=str, required=True, help='End Date (yyyy-mm-dd)') 
+   parser.add_argument('--lon0', type=float, required=True, help='Longitude min (-180°/180° convention)')
+   parser.add_argument('--lon1', type=float, required=True, help='Longitude max (-180°/180° convention)')
+   parser.add_argument('--lat0', type=float, required=True, help='Latitude min')
+   parser.add_argument('--lat1', type=float, required=True, help='Latitude max')
+   parser.add_argument('--mode', type=str, required=True, help='mode: Near Real Time (NRT) or Reanalysis (MY)') 
+   parser.add_argument('--model', type=str, required=True, help='Analysis & Forecasting system acronyme (eg.: GLO, IBI, MED, BAL, BLK, NWS, ORCA36)')
+   parser.add_argument('--obs', type=str, required=True, help='Altimetric satellite data acronyme (eg.: AVISO, AVISO_EU)')
+   parser.add_argument('--area', type=str, help='Area name you defined according to your coord lon0, lon1, lat0, lat1') 
+   parser.add_argument('--folder', type=str, required=True, help='Downloaded file directory')
+   parser.add_argument('--fc_index', type=int, required=False, help='FC Lead time ') 
+   # Parse the argument
+   args = parser.parse_args()
+   #
+   date_start = args.date0
+   date_end = args.date1
+   xmin = args.lon0
+   xmax = args.lon1
+   ymin = args.lat0
+   ymax = args.lat1
+   mode = args.mode
+   model_acro = args.model
+   obs_acro = args.obs
+   area = args.area
+   data_dir = args.folder
+   i_fc = args.fc_index 
+   print ("Start Date = ",date_start)
+   print ("End Date = ",date_end) 
+   print ("Longitude min = ",xmin)
+   print ("Longitude max = ",xmax)
+   print ("Latitude min = ",ymin)
+   print ("Latitude max = ",ymax)
+   print ("mode = ",mode)
+   print ("Analysis & Forecasting system = ",model_acro)
+   print ("Altimetric satellite data = ",obs_acro)
+   print ("Area name = ",area)
+   print ("Downloaded file directory = ",data_dir)
    #
    #    
    if mode == 'NRT':
@@ -147,18 +154,14 @@ def main():
    # ----------------------------------
    #
    # Make data directories
-   dirout_mod = data_dir+"/"+model_acro+"/"
-   dirout_obs = data_dir+"/"+obs_acro+"/"
-   dirout_mod_equi = data_dir+"/"+model_acro+"_EQUI/" 
-   if not os.path.exists(dirout_mod):
-      os.mkdir(dirout_mod)
-   if not os.path.exists(dirout_obs):
-      os.mkdir(dirout_obs)
+   dirout_mod = data_dir+"/"+model_acro+"/"+area+"/"
+   dirout_obs = data_dir+"/"+obs_acro+"/"+area+"/"
    if mod_obs_equi:
-      if not os.path.exists(dirout_mod_equi):
-         os.mkdir(dirout_mod_equi)
-      if not os.path.exists(dirout_mod_equi+"FIG/"):    
-         os.mkdir(dirout_mod_equi+"FIG/")
+      dirout_mod_equi = data_dir+"/"+model_acro+"_EQUI/"+area+"/"
+      os.makedirs(dirout_mod_equi+"FIG/", exist_ok=True)
+   os.makedirs(dirout_mod+"FIG/", exist_ok=True)
+   os.makedirs(dirout_obs, exist_ok=True)
+               
    # Absolute Workdir
    workdir = os.getcwd()+"/"
    #
@@ -177,15 +180,31 @@ def main():
       print("*******************")
       print("DATE = ",date_mds)
       print("*******************")
+
+
+
+      # FCs case => FC date = date + FC lead time
+      if i_fc:
+          date_run = date_mds
+          date_run = datetime.strptime(date_run, "%Y-%m-%d")
+          date_fc = date_run + timedelta(days=i_fc)
+          date_run = datetime.strftime(date_run, "%Y-%m-%d")
+          date_fc  = datetime.strftime(date_fc, "%Y-%m-%d")
+          
+
+
+
+       
       #
       # ----------
       # MODEL DATA
       # ----------
       #   
-      fileout_mod = model_acro+"_"+date+".nc"
-      if os.path.isfile(dirout_mod+fileout_mod):
-         os.remove(dirout_mod+fileout_mod)
-      #
+      if i_fc: # FC case
+          time_mod = [ (jul + i_fc) * 24 ]
+      else:
+          time_mod = [ jul * 24 ]
+      #    
       if model_acro == "ORCA36":
           # 
           #   - Load native orca grid model data through edito S3 bucket
@@ -198,7 +217,8 @@ def main():
                                                                                             DATASET_ID_MOD_SSV, 
                                                                                             DATASET_ID_MOD_SSH, 
                                                                                             model_acro, 
-                                                                                            date_mds, date, 
+                                                                                            date_mds, 
+                                                                                            date, 
                                                                                             jul, 
                                                                                             jul_start, 
                                                                                             xmin,
@@ -216,17 +236,40 @@ def main():
                                                                                             dimy_mod_name, 
                                                                                             dimx_mod_name, 
                                                                                             res_mod)
-          #   
+          # 
+      elif  model_acro == "GLONET":
+          #
+          #   - GLONET FCs case
+          #
+          ssu_mod, ssv_mod, ssh_mod, lat_mod, lon_mod, depth_mod = fn.load_GLONET(DATASET_ID_MOD_SSV,
+                                                                                            DATASET_ID_MOD_SSH,
+                                                                                            model_acro,
+                                                                                            date_run,
+                                                                                            date_fc,
+                                                                                            xmin,
+                                                                                            xmax,
+                                                                                            ymin,
+                                                                                            ymax,
+                                                                                            zmin,
+                                                                                            zmax,
+                                                                                            ssu_mod_name,
+                                                                                            ssv_mod_name,
+                                                                                            ssh_mod_name,
+                                                                                            lat_mod_name,
+                                                                                            lon_mod_name
+                                                                                            )
+      #      
       else:
          # 
          #   - Load standard model data through MDS API
          #     ----------------------------------------
          #
-         ssu_mod, ssv_mod, ssh_mod, time_mod, lat_mod, lon_mod, depth_mod = fn.load_MFC(DATASET_ID_MOD_SSV, 
+         ssu_mod, ssv_mod, ssh_mod, lat_mod, lon_mod, depth_mod = fn.load_MFC(DATASET_ID_MOD_SSV, 
                                                                                         DATASET_ID_MOD_SSH, 
                                                                                         model_acro, 
                                                                                         date_mds, 
                                                                                         jul, 
+                                                                                        jul_start,
                                                                                         xmin,
                                                                                         xmax, 
                                                                                         ymin, 
@@ -242,6 +285,14 @@ def main():
       #
       #   - Write nc file gathering ssu, ssv and ssh 
       #     with the right units following the Eddy_Tracking file format     
+      #
+      if i_fc:  # FC case
+          fileout_mod = model_acro+"_"+date_fc[0:4]+date_fc[5:7]+date_fc[8:10]+".nc"
+      else:
+          fileout_mod = model_acro+"_"+date+".nc"
+      if os.path.isfile(dirout_mod+fileout_mod):
+         os.remove(dirout_mod+fileout_mod)
+      print ("fileout_mod = ", fileout_mod) 
       fn.mds2eddy_track_mod(dirout_mod,
                             fileout_mod,
                             ssu_mod,
@@ -289,23 +340,34 @@ def main():
       # OBSERVATION DATA
       # ----------------
       #   
-      fileout_obs = obs_acro+"_"+date+".nc"
+      if i_fc: # FC case
+          date_mds = date_fc
+          time_obs = [ (jul + i_fc) * 24 ]
+      else:
+          time_obs = [ jul * 24 ]
+      ssu_obs, ssv_obs, ssh_obs, lat_obs, lon_obs = fn.load_AVISO(DATASET_ID_OBS, 
+                                                                  obs_acro, 
+                                                                  date_mds, 
+                                                                  xmin,
+                                                                  xmax, 
+                                                                  ymin, 
+                                                                  ymax, 
+                                                                  ssu_obs_name, 
+                                                                  ssv_obs_name, 
+                                                                  ssh_obs_name,
+                                                                  lat_obs_name, 
+                                                                  lon_obs_name)
+      #
+      #   - Write nc file gathering ssu, ssv and ssh 
+      #     with the right units following the Eddy_Tracking file format     
+      #
+      if i_fc: # FC case
+          fileout_obs = obs_acro+"_"+date_fc[0:4]+date_fc[5:7]+date_fc[8:10]+".nc"
+      else:    
+          fileout_obs = obs_acro+"_"+date+".nc"
       if os.path.isfile(dirout_obs+fileout_obs):
-         os.remove(dirout_obs+fileout_obs) 
-      ssu_obs, ssv_obs, ssh_obs, time_obs, lat_obs, lon_obs = fn.load_AVISO(DATASET_ID_OBS, 
-                                                                            obs_acro, 
-                                                                            date_mds, 
-                                                                            jul, 
-                                                                            xmin,
-                                                                            xmax, 
-                                                                            ymin, 
-                                                                            ymax, 
-                                                                            ssu_obs_name, 
-                                                                            ssv_obs_name, 
-                                                                            ssh_obs_name,
-                                                                            lat_obs_name, 
-                                                                            lon_obs_name)
-      # from the MDS obs file, the obs file is re-written in applying the scale factor to ssu, ssv & ssh
+          os.remove(dirout_obs+fileout_obs)
+      print ("fileout_obs = ", fileout_obs)
       fn.mds2eddy_track_obs(dirout_obs,
                             fileout_obs,
                             ssu_obs,

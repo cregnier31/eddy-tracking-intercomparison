@@ -2,6 +2,8 @@
 # Namelist for model & obs eddy detection
 # =======================================
 # Parameters for detection
+WAVELENGTH_INF = 30
+WAVELENGTH_SUP = 500
 WAVELENGTH  = 500
 ORDER_FILTER= 1
 SHAPE_ERROR = 55
@@ -39,7 +41,11 @@ data_mod_dict_NRT = { "GLO" : [ "uo",
                       "BLK" : [ "uo", 
                                 "vo", 
                                 "zos" 
-                              ] }
+                              ],
+                      "GLONET" : ["uo", 
+                                  "vo", 
+                                  "zos"
+                                 ]} 
 #
 # MFC MY datasets !!! not interim ==> delayed mode from 1993 !!!
 # NB. ssh for BAL isn't available, only sla ==> BAL is remove from this choice for MY datasets
@@ -66,7 +72,11 @@ data_mod_dict_MY = { "GLO" : [ "uo",
                   "ORCA36" : [ "uos", 
                                "vos", 
                                "sossheig"
-                             ] }
+                             ], 
+                  "GLONET" : ["uo", 
+                              "vo", 
+                              "zos"
+                             ]}
 #
 # Obs data 
 #   - NRT

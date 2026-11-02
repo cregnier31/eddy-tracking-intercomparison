@@ -23,9 +23,131 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import os
 import sys
 import copernicusmarine as cm
-from pyregrid.make_mask import make_mask
-from pyregrid.interp import interp
+#import datetime
+#from datetime import datetime, timedelta
+
+#from pyregrid.make_mask import make_mask
+#from pyregrid.interp import interp
+
+
+
+
+
+
+
+
+
 import shutil
+#
+# -------------------------------------
+# LOAD GLONET DATA FROM EDITO S3 BUCKET
+# -------------------------------------
+#
+def load_GLONET_hebdo(
+        DATASET_ID_MOD_SSV,
+        DATASET_ID_MOD_SSH,
+        model_acro,
+        date_mds,
+        date_start,
+        jul,
+        jul_start,
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        zmin,
+        zmax,
+        ssu_mod_name,
+        ssv_mod_name,
+        ssh_mod_name,
+        lat_mod_name,
+        lon_mod_name
+        ):
+   #date_mds = datetime.datetime.strptime(date_mds, "%Y-%m-%d")
+   #date_run = date_mds - timedelta(days=jul-jul_start)
+   
+   
+   
+   yyyy = date_start[0:4]
+   mm = date_start[5:7]
+   dd = date_start[8:10]
+   
+   #date_run = date_run.strftime("%Y%m%d")
+   #date_start = date_start.strftime("%Y%m%d")
+   i_fc = jul - jul_start
+   
+   print ("GLONET file = ", DATASET_ID_MOD_SSV+"/glonet_full_"+yyyy+"/"+yyyy+mm+dd+".zarr")
+   dataset = (xr.open_dataset(DATASET_ID_MOD_SSV+"/glonet_full_"+yyyy+"/"+yyyy+mm+dd+".zarr", engine="zarr")).sel(time=slice(date_mds,date_mds), lon=slice(xmin,xmax), lat=slice(ymin,ymax)) 
+   #dataset = (xr.open_dataset(DATASET_ID_MOD_SSV+"/glonet_full_"+yyyy+"/"+yyyy+mm+dd+".zarr", engine="zarr")).sel(time=slice(date_mds,date_mds), depth=slice(zmin,zmax), lon=slice(xmin,xmax), lat=slice(ymin,ymax))
+   #dataset = (xr.open_dataset(DATASET_ID_MOD_SSV+"/glonet_full_"+yyyy+"/"+yyyy+mm+dd+".zarr", engine="zarr")).sel(depth=slice(zmin,zmax), lon=slice(xmin,xmax), lat=slice(ymin,ymax))
+    
+    
+   ssu = dataset[ssu_mod_name].values
+   #ssu_mod = np.mean(ssu_mod, axis=1)
+   print ("shape(ssu) = ", np.shape(ssu))
+
+
+    
+   ssv = dataset[ssv_mod_name].values
+   ssh_mod = dataset[ssh_mod_name].values  
+   print ("shape(ssh) = ", np.shape(ssh_mod)) 
+   #print ("shape(ssh) = ", np.shape(ssh)) 
+   ssu_mod = ssu[:, 0:1, :, :]
+   print ("shape(ssu_mod) = ", np.shape(ssu_mod)) 
+   ssv_mod = ssv[:, 0:1, :, :]
+   #ssh_mod = ssh[i_fc, :, :]
+   #print ("shape(ssh_mod) = ", np.shape(ssh_mod)) 
+   time_mod = [ jul * 24 ] # hours since 1950-01-01T00:00:00
+   lat_mod = dataset[lat_mod_name].values
+   lon_mod = dataset[lon_mod_name].values
+   depth_mod = [zmin]
+   
+   return ssu_mod, ssv_mod, ssh_mod, time_mod, lat_mod, lon_mod, depth_mod     
+
+
+
+
+def load_GLONET(
+        DATASET_ID_MOD_SSV,
+        DATASET_ID_MOD_SSH,
+        model_acro,
+        date_run,
+        date_fc,
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        zmin,
+        zmax,
+        ssu_mod_name,
+        ssv_mod_name,
+        ssh_mod_name,
+        lat_mod_name,
+        lon_mod_name
+        ):
+   print ("GLONET file = ", DATASET_ID_MOD_SSV+"/"+str(date_run)+"/"+str(date_run)+".zarr")
+   dataset = (xr.open_dataset(DATASET_ID_MOD_SSV+"/"+str(date_run)+"/"+str(date_run)+".zarr", engine="zarr")).sel(time=slice(date_fc,date_fc), longitude=slice(xmin,xmax), latitude=slice(ymin,ymax)) 
+    
+   ssu = dataset[ssu_mod_name].values
+   #ssu_mod = np.mean(ssu_mod, axis=1)
+   print ("shape(ssu) = ", np.shape(ssu))
+
+
+    
+   ssv = dataset[ssv_mod_name].values
+   ssh_mod = dataset[ssh_mod_name].values  
+   print ("shape(ssh) = ", np.shape(ssh_mod)) 
+   #print ("shape(ssh) = ", np.shape(ssh)) 
+   ssu_mod = ssu[:, 0:1, :, :]
+   print ("shape(ssu_mod) = ", np.shape(ssu_mod)) 
+   ssv_mod = ssv[:, 0:1, :, :]
+   #ssh_mod = ssh[i_fc, :, :]
+   lat_mod = dataset[lat_mod_name].values
+   lon_mod = dataset[lon_mod_name].values
+   depth_mod = [zmin]
+
+   return ssu_mod, ssv_mod, ssh_mod, lat_mod, lon_mod, depth_mod
+    
 #
 # -------------------------------------
 # LOAD ORCA36 DATA FROM EDITO S3 BUCKET
@@ -113,6 +235,17 @@ def load_ORCA36(
    #
    # pyregrid namelist for interpolating ORCA gridT to regular grid
    shutil.copyfile(os.path.join(os.path.dirname(__file__), "namelist_pyregrid_T.yaml"), os.path.join(os.path.dirname(__file__), workdir+"namelist_pyregrid.yaml"))
+
+   with open(workdir+"namelist_pyregrid.yaml", "r") as file:
+      contenu = file.read()   
+   # Replace TMPDIR by dirout_mod in the namelist
+   contenu = contenu.replace("TMPDIR", dirout_mod)
+   with open(workdir+"namelist_pyregrid.yaml", "w") as file:
+      file.write(contenu)
+
+
+
+    
    #
    dataset = (xr.open_dataset(filein_ssh, engine="zarr")).isel(x=slice(imin, imax), y=slice(jmin, jmax))
    lon_mod = dataset[lon_mod_name].values
@@ -420,7 +553,6 @@ def load_AVISO(
         DATASET_ID_OBS,
         obs_acro,
         date_mds,
-        jul,
         xmin,
         xmax,
         ymin,
@@ -474,11 +606,11 @@ def load_AVISO(
    ssv_obs = data_obs.variables[ssv_obs_name].values
    #ssh_obs = data_obs.variables[ssh_obs_name].values * scale_fac_obs
    ssh_obs = data_obs.variables[ssh_obs_name].values
-   time_obs = [jul * 24] # hours since 1950-01-01T00:00:00
+   #time_obs = [jul * 24] # hours since 1950-01-01T00:00:00
    lat_obs = data_obs.variables[lat_obs_name].values
    lon_obs = data_obs.variables[lon_obs_name].values
     
-   return ssu_obs, ssv_obs, ssh_obs, time_obs, lat_obs, lon_obs
+   return ssu_obs, ssv_obs, ssh_obs, lat_obs, lon_obs
 #
 # ---------------------------------
 # FIND NEAREST POINT FROM ORCA GRID

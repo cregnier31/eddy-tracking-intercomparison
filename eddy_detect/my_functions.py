@@ -66,6 +66,7 @@ def compute_eddy(file, DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE
  
     # h.add_uv("zos")   # if no u vend v in files, the function compute geostrophic velocities
     h.bessel_high_filter(var_adt, WAVELENGTH, order=ORDER_FILTER)
+    #h.bessel_band_filter(var_adt, WAVELENGTH_INF, WAVELENGTH_SUP)
     print("h filtered")
     a, c = h.eddy_identification(
     	var_adt,
@@ -105,15 +106,15 @@ def detect_eddies(DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERRO
     print (INPUT_FILES)
     #
     # Sequential calculation / data file
-    #for FILE in INPUT_FILES: 
-    #   print ("input files = ", FILE)
-    #   compute_eddy(FILE, DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER)
+    for FILE in INPUT_FILES: 
+       print ("input files = ", FILE)
+       compute_eddy(FILE, DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER)
     #
     # Multiproc calculation for all data files
-    pool = mp.Pool()
-    pool.imap(partial(compute_eddy, DATA=DATA, INPUT_DIR=INPUT_DIR, OUTPUT_DIR=OUTPUT_DIR, var_adt=var_adt, VAR_U=VAR_U, VAR_V=VAR_V, SHAPE_ERROR=SHAPE_ERROR, PIXEL_MIN=PIXEL_MIN, PIXEL_MAX=PIXEL_MAX, AMP_MIN=AMP_MIN, WAVELENGTH=WAVELENGTH, ORDER_FILTER=ORDER_FILTER), INPUT_FILES)
-    pool.close()
-    pool.join()
+    #pool = mp.Pool()
+    #pool.imap(partial(compute_eddy, DATA=DATA, INPUT_DIR=INPUT_DIR, OUTPUT_DIR=OUTPUT_DIR, var_adt=var_adt, VAR_U=VAR_U, VAR_V=VAR_V, SHAPE_ERROR=SHAPE_ERROR, PIXEL_MIN=PIXEL_MIN, PIXEL_MAX=PIXEL_MAX, AMP_MIN=AMP_MIN, WAVELENGTH=WAVELENGTH, ORDER_FILTER=ORDER_FILTER), INPUT_FILES)
+    #pool.close()
+    #pool.join()
     print(f"{OUTPUT_DIR=}")
     print("oO Eddy Detection Done Oo")
 #

@@ -51,35 +51,42 @@ def main():
     #
     #   - Main parameters in arguments
     #     
-    if (len(sys.argv)==9):
-       # Considered period (in arguments)
-       date_start = str(sys.argv[1])
-       xmin = float(sys.argv[2])
-       xmax = float(sys.argv[3])
-       ymin = float(sys.argv[4])
-       ymax = float(sys.argv[5]) 
-       model_acro = str(sys.argv[6])
-       obs_acro = str(sys.argv[7])
-       data_dir = str(sys.argv[8])
-       print ("Date start = ",date_start)
-       print ("Longitude min = ",xmin)
-       print ("Longitude max = ",xmax)
-       print ("Latitude min = ",ymin)
-       print ("Latitude max = ",ymax)
-       print ("Analysis & Forecasting system = ",model_acro)
-       print ("Altimetric satellite data = ",obs_acro)
-       print ("Downloaded file directory = ",data_dir)
-    else:
-       print ("!!! ERROR: 8 arguments to be chosen !!!")
-       print ("Argument 1 = Date start (yyyy-mm-dd)")
-       print ("Argument 2 = Longitude min (-180/180° longitude convention)")
-       print ("Argument 3 = Longitude max (-180/180° longitude convention)")
-       print ("Argument 4 = Latitude min (-90/90° latitude convention)")
-       print ("Argument 5 = Latitude max (-90/90° latitude convention)")
-       print ("Argument 6 = Analysis & Forecasting system (GLO, IBI)")
-       print ("Argument 7 = Altimetric satellite data (AVISO, AVISO_EU)")
-       print ("Argument 8 = Downloaded file directory")
-       sys.exit()
+    # Create the parser
+    parser = argparse.ArgumentParser()
+    # Add arguments
+    parser.add_argument('--date0', type=str, required=True, help='Start Date (yyyy-mm-dd)')
+    parser.add_argument('--lon0', type=float, required=True, help='Longitude min (-180°/180° convention)')
+    parser.add_argument('--lon1', type=float, required=True, help='Longitude max (-180°/180° convention)')
+    parser.add_argument('--lat0', type=float, required=True, help='Latitude min')
+    parser.add_argument('--lat1', type=float, required=True, help='Latitude max')
+    parser.add_argument('--model', type=str, required=True, help='Analysis & Forecasting system acronyme (eg.: GLO, IBI, MED, BAL, BLK, NWS, ORCA36)')
+    parser.add_argument('--obs', type=str, required=True, help='Altimetric satellite data acronyme (eg.: AVISO, AVISO_EU)')
+    parser.add_argument('--area', type=str, help='Area name you defined according to your coord lon0, lon1, lat0, lat1')
+    parser.add_argument('--cells', type=float, required=True,  help='Size of cells for number of eddies by day and mean radius, GRID_SIZE° * GRID_SIZE°, ex: 1°*1°')
+    parser.add_argument('--folder', type=str, required=True, help='Downloaded file directory')
+    # Parse the argument
+    args = parser.parse_args()
+    #
+    date_start = args.date0
+    xmin = args.lon0
+    xmax = args.lon1
+    ymin = args.lat0
+    ymax = args.lat1
+    model_acro = args.model
+    obs_acro = args.obs
+    area = args.area
+    GRID_SIZE = args.cells
+    data_dir = args.folder
+    print ("Start Date = ",date_start)
+    print ("Longitude min = ",xmin)
+    print ("Longitude max = ",xmax)
+    print ("Latitude min = ",ymin)
+    print ("Latitude max = ",ymax)
+    print ("Analysis & Forecasting system = ",model_acro)
+    print ("Altimetric satellite data = ",obs_acro)
+    print ("Area name = ",area)
+    print ("Cells size = ",GRID_SIZE)
+    print ("Downloaded file directory = ",data_dir)
     #
     # ----------------------------------
     #
@@ -90,15 +97,16 @@ def main():
     LAT_MIN = ymin
     LAT_MAX = ymax
     MODEL = str(model_acro)
+    AREA = str(area)
     REFERENCE = str(obs_acro)
     # Data directories
-    PATH_DETECT_FILES = data_dir+"/"+MODEL+"/DETECT/"
-    PATH_DETECT_FILES_REF = data_dir+"/"+REFERENCE+"/DETECT/"
-    PATH_TRAJ_FILES = data_dir+"/"+MODEL+"/TRACK/"
-    PATH_REF_TRACK = data_dir+"/"+REFERENCE+"/TRACK/"
+    PATH_DETECT_FILES = data_dir+"/"+MODEL+"/"+AREA+"/DETECT/"
+    PATH_DETECT_FILES_REF = data_dir+"/"+REFERENCE+"/"+AREA+"/DETECT/"
+    PATH_TRAJ_FILES = data_dir+"/"+MODEL+"/"+AREA+"/TRACK/"
+    PATH_REF_TRACK = data_dir+"/"+REFERENCE+"/"+AREA+"/TRACK/"
     #path for output stats
-    PATH_STATS = data_dir+"/"+MODEL+"/STATS/"
-    PATH_PLOT = data_dir+"/"+MODEL+"/PLOTS/"
+    PATH_STATS = data_dir+"/"+MODEL+"/"+AREA+"/STATS/"
+    PATH_PLOT = data_dir+"/"+MODEL+"/"+AREA+"/PLOTS/"
     if not os.path.exists(PATH_STATS):
         os.mkdir(PATH_STATS)
     if not os.path.exists(PATH_PLOT):
@@ -131,12 +139,18 @@ def main():
     input_file_ac = sorted(glob.glob(PATH_DETECT_FILES + "Anticyclonic" + "*.nc"))
     for i, file in enumerate(input_file_ac[:]):
         a = EddiesObservations.load_file(file)
+        if i==0:
+            a0 = a # 1st anti-cyclonic eddy detection at date_start 
         NB_AC.append(len(a))
+    a1 = a  # last anti-cyclonic eddy detection at date_end   
 
     input_file_cc = sorted(glob.glob(PATH_DETECT_FILES + "Cyclonic" + "*.nc"))
     for i, file in enumerate(input_file_cc[:]):
         c = EddiesObservations.load_file(file)
+        if i==0:
+            c0 = c # 1st cyclonic eddy detection at date_start 
         NB_CC.append(len(c))
+    c1 = c # last cyclonic eddy detection at date_end 
 
     for i in range(len(NB_AC)):
         NB_EDDIES.append(NB_AC[i] + NB_CC[i])
@@ -177,6 +191,26 @@ def main():
     ########################################################################################################################
 
     ###  Data REFERENCE ##
+
+    input_file_acr = sorted(glob.glob(PATH_DETECT_FILES_REF + "Anticyclonic" + "*.nc"))
+    for i, file in enumerate(input_file_acr[:]):
+        ar = EddiesObservations.load_file(file)
+        if i==0:
+            ar0 = ar # 1st anti-cyclonic eddy detection at date_start 
+    ar1 = ar  # last anti-cyclonic eddy detection at date_end   
+
+    input_file_ccr = sorted(glob.glob(PATH_DETECT_FILES_REF + "Cyclonic" + "*.nc"))
+    for i, file in enumerate(input_file_ccr[:]):
+        cr = EddiesObservations.load_file(file)
+        if i==0:
+            cr0 = cr # 1st cyclonic eddy detection at date_start 
+    cr1 = cr # last cyclonic eddy detection at date_end 
+
+
+
+
+
+
 
     a_ref = TrackEddiesObservations.load_file(PATH_REF_TRACK + "Anticyclonic.nc")
     c_ref = TrackEddiesObservations.load_file(PATH_REF_TRACK + "Cyclonic.nc")
@@ -680,54 +714,67 @@ def main():
     ################################################################################################################
 
     plots = Plots(DATE_START, MODEL, REFERENCE, YEAR, PATH_DETECT_FILES, PATH_DETECT_FILES_REF, PATH_TRAJ_FILES, PATH_REF_TRACK, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, PATH_PLOT, GRID_SIZE, True)
+
+    if MODEL == "GLONET":
+       # Plots adapted to short term FCs
+       #
+       #   - 2D maps with eddy trajectory
+       print("plot_all_tracks_period")
+       plots.plot_all_tracks_period(at, ct)
+       #   - Plot one day detection
+       plots.plot_anticycl_track_and_detect(a0, a1, c0, ar0, ar1, a_ref)
+       plots.plot_cycl_track_and_detect(c0, c1, ct, cr0, cr1, c_ref)
+       plots.plot_histo_lisse(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
+
+    else:
+       exit()
+
+       ### PLOT ONE DAY DETECTION WITH ADT ###
+
+       # Make sure the filtering parameters are the same as in the detection script
+
+       # h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
+       # h.bessel_high_filter(var_adt, 500, order=1)
+       # a = EddiesObservations.load_file(AC_DETECTION)
+       # c = EddiesObservations.load_file(CC_DETECTION)
+
+       #plots.plot_one_day_adt(h, var_adt, a, c)
+       print("plot_all_tracks_period")
+       ### PLOT ALL TRACKS FOR THE PERIOD ###
+       plots.plot_all_tracks_period(at, ct)
+       ### PLOT HEATMAP FOR MODEL 
+       plots.plot_heatmap_model()
+       plots.plot_heatmap_ref()
+       plots.plot_heatmap_radius_model()
+       plots.plot_heatmap_radius_ref()
+       plots.plot_heatmap_amplitude_model()
+       plots.plot_heatmap_amplitude_ref()
     
-    ### PLOT ONE DAY DETECTION WITH ADT ###
+       ### NUMBER OF DETECTION BY TIME WITH MEAN ###
+       plots.plot_number_detection_time_mean(NB_EDDIES)
 
-    # Make sure the filtering parameters are the same as in the detection script
+       ### 2D HISTOGRAM RADIUS AMPLITUDE ###
+       plots.plot_2d_histo(at)
 
-    # h = RegularGridDataset(PATH_ADT_MODEL, "longitude", "latitude")
-    # h.bessel_high_filter(var_adt, 500, order=1)
-    # a = EddiesObservations.load_file(AC_DETECTION)
-    # c = EddiesObservations.load_file(CC_DETECTION)
-
-    #plots.plot_one_day_adt(h, var_adt, a, c)
-    print("plot_all_tracks_period")
-    ### PLOT ALL TRACKS FOR THE PERIOD ###
-    plots.plot_all_tracks_period(at, ct)
-    ### PLOT HEATMAP FOR MODEL 
-    plots.plot_heatmap_model()
-    plots.plot_heatmap_ref()
-    plots.plot_heatmap_radius_model()
-    plots.plot_heatmap_radius_ref()
-    plots.plot_heatmap_amplitude_model()
-    plots.plot_heatmap_amplitude_ref()
-    
-    ### NUMBER OF DETECTION BY TIME WITH MEAN ###
-    plots.plot_number_detection_time_mean(NB_EDDIES)
-
-    ### 2D HISTOGRAM RADIUS AMPLITUDE ###
-    plots.plot_2d_histo(at)
-
-    ### COUNT 
-    plots.plot_count_log_amp(at,ct,a_ref,c_ref) 
-    plots.plot_count_speed_radius(at,ct,a_ref,c_ref)
-    plots.plot_count_lifetime(at,ct,a_ref,c_ref)
+       ### COUNT 
+       plots.plot_count_log_amp(at,ct,a_ref,c_ref) 
+       plots.plot_count_speed_radius(at,ct,a_ref,c_ref)
+       plots.plot_count_lifetime(at,ct,a_ref,c_ref)
 
 
-    ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
-    plots.plot_histo_hits_false(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
-    plots.plot_histo_lisse(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
+       ### HISTOGRAM HITS MISSES & FALSE ALARMS BY RADIUS (KM) ###
+       #plots.plot_histo_hits_false(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
+       plots.plot_histo_lisse(radius_AR_hits, radius_AR_misses, radius_AR_falarm)
 
     
-    ### POD & FAR BY AMPLITUDE (CM) ###
-    plots.plot_pod_far_amplitude(POD_AR, FAR_AR)
+       ### POD & FAR BY AMPLITUDE (CM) ###
+       plots.plot_pod_far_amplitude(POD_AR, FAR_AR)
 
-    ### POD & FAR BY TIME ###
-    plots.plot_pod_far_time(AR_POD, AR_FAR)
+       ### POD & FAR BY TIME ###
+       plots.plot_pod_far_time(AR_POD, AR_FAR)
 
-    ### PERFORMANCE DIAGRAM ###
-    plots.perf_diag(SR, AR_POD)
-
+       ### PERFORMANCE DIAGRAM ###
+       #plots.perf_diag(SR, AR_POD)
 
 if __name__ == "__main__":
     main()

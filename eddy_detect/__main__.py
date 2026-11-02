@@ -17,6 +17,7 @@
 #
 import os
 import sys
+import argparse
 import glob
 import re
 from datetime import datetime
@@ -49,20 +50,25 @@ def main():
    # --------------------
    #
    #    - Main parameters in arguments
-   #  
-   if (len(sys.argv)==4):
-      # Considered period (in arguments)
-      mode = str(sys.argv[1])
-      data_acro = str(sys.argv[2])
-      data_dir = str(sys.argv[3])
-      print ("Input data = ", data_acro)
-      print ("Input data directory = ", data_dir)
-   else:
-      print ("!!! ERROR: 3 arguments to be chosen !!!")
-      print ("Argument 1 = NRT or MY datasets") 
-      print ("Argument 2 = Input data acronym (GLO, IBI, AVISO, AVISO_EU)")
-      print ("Argument 3 = Idata directory")
-      sys.exit()
+   #
+   # Create the parser
+   parser = argparse.ArgumentParser()
+   # Add arguments
+   parser.add_argument('--mode', type=str, required=True, help='mode: Near Real Time (NRT) or Reanalysis (MY)') 
+   parser.add_argument('--acro', type=str, required=True, help='Analysis & Forecasting system acronyme (eg.: GLO, IBI, MED, BAL, BLK, NWS, ORCA36) or altimetry data acronyme (eg.: AVISO, AVISO_EU)')
+   parser.add_argument('--area', type=str, help='Area name you defined according to your coord lon0, lon1, lat0, lat1') 
+   parser.add_argument('--folder', type=str, required=True, help='Downloaded file directory')
+   # Parse the argument
+   args = parser.parse_args()
+   #
+   mode = args.mode
+   data_acro = args.acro
+   area = args.area
+   data_dir = args.folder
+   print ("mode = ",mode)
+   print ("Analysis & Forecasting system or altimetry data = ",data_acro)
+   print ("Area name = ",area)
+   print ("Inut data directory = ",data_dir)
    #
    #    - Var name depending on the kind of data (model or obs) ==> !!! to be updated following the Copernicus MDS updates for AVISO data !!!
    # 
@@ -91,8 +97,8 @@ def main():
    # Make data directories
    # ---------------------
    #
-   INPUT_DIR = data_dir+"/"+data_acro+"/"
-   OUTPUT_DIR = data_dir+"/"+data_acro+"/DETECT/"
+   INPUT_DIR = data_dir+"/"+data_acro+"/"+area+"/"
+   OUTPUT_DIR = INPUT_DIR+"DETECT/"
    if not os.path.exists(INPUT_DIR):
       os.mkdir(INPUT_DIR)
    if not os.path.exists(OUTPUT_DIR):

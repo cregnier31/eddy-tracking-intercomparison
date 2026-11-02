@@ -157,7 +157,27 @@ data_mod_dict_NRT = { "GLO" : [ "cmems_mod_glo_phy-cur_anfc_0.083deg_P1D-m",
                                 "latitude",
                                 "longitude",
                                 1 / 36.
-                              ] }
+                              ],
+                   "GLONET" : [ "https://minio.dive.edito.eu/project-oceanbench/temp/sylvain/glonet",
+                                "https://minio.dive.edito.eu/project-oceanbench/temp/sylvain/glonet",
+                                "uo", 
+                                "vo", 
+                                "zos", 
+                                0.51, 
+                                0.51,
+                                "time",
+                                "depth",
+                                "latitude",
+                                "longitude",
+                                "time",
+                                "depth",
+                                "lat",
+                                "lon",
+                                1 / 4.
+                               ]       }
+#
+#                  "GLONET" : [ "https://minio.dive.edito.eu/project-oceanbench/public/glonet_full_2024", 
+#                                "https://minio.dive.edito.eu/project-oceanbench/public",
 #
 # MFC MY datasets !!! not interim ==> delayed mode from 1993 !!!
 # NB. ssh for BAL isn't available, only sla ==> BAL is remove from this choice for MY datasets
@@ -178,8 +198,8 @@ data_mod_dict_MY = { "GLO" : [ "cmems_mod_glo_phy_my_0.083deg_P1D-m",
                                "longitude",
                                1 / 12.
                              ],
-                     "IBI" : [ "cmems_mod_ibi_phy_my_0.083deg-3D_P1D-m", 
-                               "cmems_mod_ibi_phy_my_0.083deg-3D_P1D-m", 
+                     "IBI" : [ "cmems_mod_ibi_phy-cur_my_0.027deg_P1D-m",
+                               "cmems_mod_ibi_phy-ssh_my_0.027deg_P1D-m",
                                "uo", 
                                "vo", 
                                "zos", 
@@ -262,7 +282,24 @@ data_mod_dict_MY = { "GLO" : [ "cmems_mod_glo_phy_my_0.083deg_P1D-m",
                                "y",
                                "x",
                                1 / 36.
-                             ] }
+                              ],
+                   "GLONET" : [ "https://minio.dive.edito.eu/project-oceanbench/public", 
+                                "https://minio.dive.edito.eu/project-oceanbench/public", 
+                                "uo", 
+                                "vo", 
+                                "zos", 
+                                0.51, 
+                                0.51,
+                                "time",
+                                "depth",
+                                "lat",
+                                "lon",
+                                "time",
+                                "depth",
+                                "lat",
+                                "lon",
+                                1 / 4.
+                               ] }
 #   - attributes
 unit_ssu_attr = "m/s"
 lname_ssu_attr = "Eastward velocity"

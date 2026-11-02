@@ -1,11 +1,12 @@
 # Example pour le tracking par overlap
 PATHS:
-  FILES_PATTERN: /home/jovyan/data//GLO/DETECT//Anticyclonic*.nc
-  SAVE_DIR: /home/jovyan/data//GLO/TRACK/
+  FILES_PATTERN: /home/jovyan/data//AVISO/IBI/DETECT//Anticyclonic*.nc
+  SAVE_DIR: /home/jovyan/data//AVISO/IBI/TRACK/
 # Number of timestep for missing detection
 VIRTUAL_LENGTH_MAX: 2
 # Minimal time to consider as a full track
-TRACK_DURATION_MIN: 10
+TRACK_DURATION_MIN: 5
+#TRACK_DURATION_MIN: 10
 
 CLASS:
     MODULE: py_eddy_tracker.featured_tracking.area_tracker

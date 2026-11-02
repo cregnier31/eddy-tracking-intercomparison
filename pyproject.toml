@@ -12,7 +12,7 @@ build-backend = "hatchling.build"
 # Project descript & metadataion
 # ------------------------------
 [project]
-name = "eddy_intercomparison"
+name = "eddyson" # "EDDY intercompariSON"
 dynamic = ["version"]
 description = "Package to perform regional and global eddy detection and model/obs eddy matching"
 authors = [ { name = "Sylvain Cailleau", email = "scailleau@mercator-ocean.fr" } ]
@@ -21,11 +21,28 @@ dependencies = [
     "numpy<2,>=1.20",
     "matplotlib<3.7",
     "py-eddy-tracker",
-    "pyregrid==1.2.27" ]
-
+    "pyregrid==1.2.27",
+    "copernicusmarine",
+    "numpy<2,>=1.20",
+    "scipy",
+    "netCDF4",
+    "matplotlib-label-lines",
+    "pyyaml",
+    "pint",
+    "polygon3",
+    "pandas",
+    "scikit-image",
+    "scikit-learn",
+    "xarray",
+    "cmocean",
+    "cartopy",
+    "s3fs",
+    "hatch-conda"
+]
 # The Python version required by the project
 #
-
+requires-python = ">=3.10,<3.11"
+#
 # ----------------------------------------
 # Main scripts of the project to be launch
 # ----------------------------------------
@@ -34,9 +51,9 @@ eddy_load = "eddy_load.__main__:main"
 eddy_detect = "eddy_detect.__main__:main"
 eddy_track = "eddy_track.__main__:main"
 eddy_diags = "eddy_diags.__main__:main"
+eddy_compa = "eddy_compa.__main__:main"
 eddy_run = "eddy_run.__main__:main"
 #
-
 # ------------
 # Project URLs
 # ------------
@@ -45,7 +62,6 @@ homepage = "https://gitlab.mercator-ocean.fr/internal-shared-group/validation/ed
 documentation  ="https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
 repository = "https://gitlab.mercator-ocean.fr/internal-shared-group/validation/eddy-tracking-intercomparison.git"
 #
-
 # -------------------------------------
 # Hatch build configuration & metadata
 # ------------------------------------
@@ -60,7 +76,6 @@ commit_message = "[ci skip] Version bump committed by Jenkins"
 tag = true
 tag_message = "Tagged for deployment by Jenkins"
 tag_sign = false
-
 #
 #   - VCS settings for versioning (e.g., Git integration)
 [tool.hatch.vcs]
@@ -68,13 +83,14 @@ enabled = true
 #
 #    - main scrip
 [tool.hatch.build.targets.wheel]
-packages = ["eddy_load", "eddy_detect", "eddy_track", "eddy_diags", "eddy_run"]
+packages = ["eddy_load", "eddy_detect", "eddy_track", "eddy_diags", "eddy_compa", "eddy_run"]
 
 [tool.hatch.script]
 eddy_load = "eddy_load.__main__:main"
 eddy_detect = "eddy_detect.__main__:main"
 eddy_track = "eddy_track.__main__:main"
 eddy_diags = "eddy_diags.__main__:main"
+eddy_compa = "eddy_compa.__main__:main"
 eddy_run = "eddy_run.__main__:main"
 #
 # ================================================

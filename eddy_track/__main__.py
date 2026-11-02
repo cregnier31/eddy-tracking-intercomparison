@@ -21,6 +21,7 @@
 #
 import os
 import sys
+import argparse
 import shutil
 from pathlib import Path
 #
@@ -32,17 +33,21 @@ def main():
    #
    #    - Main parameters in arguments
    #  
-   if (len(sys.argv)==3):
-      # Considered period (in arguments)
-      data_acro = str(sys.argv[1])
-      data_dir = str(sys.argv[2])
-      print ("Input data = ", data_acro)
-      print ("Input data directory = ", data_dir)
-   else:
-      print ("!!! ERROR: 2 arguments to be chosen !!!")
-      print ("Argument 1 = Input data acronym (GLO, IBI, AVISO, AVISO_EU)")
-      print ("Argument 2 = data directory")
-      sys.exit()
+   # Create the parser
+   parser = argparse.ArgumentParser()
+   # Add arguments
+   parser.add_argument('--acro', type=str, required=True, help='Analysis & Forecasting system acronyme (eg.: GLO, IBI, MED, BAL, BLK, NWS, ORCA36) or altimetry data acronyme (eg.: AVISO, AVISO_EU)')
+   parser.add_argument('--area', type=str, help='Area name you defined according to your coord lon0, lon1, lat0, lat1')
+   parser.add_argument('--folder', type=str, required=True, help='Input file directory')
+   # Parse the argument
+   args = parser.parse_args()
+   #
+   data_acro = args.acro
+   area = args.area
+   data_dir = args.folder
+   print ("Input data = ",data_acro)
+   print ("Area name = ",area)
+   print ("Input data directory = ",data_dir)
    #
    # ---------------
    # 
@@ -54,8 +59,8 @@ def main():
    conf_file = os.path.join(os.path.dirname(__file__), str(tracking_method+".yaml"))
    #conf_file = f"eddy_track/{tracking_method}.yaml"
 
-   DIR_IN = data_dir+"/"+data_acro+"/DETECT/"
-   DIR_OUT = data_dir+"/"+data_acro+"/TRACK/"
+   DIR_IN = data_dir+"/"+data_acro+"/"+area+"/DETECT/"
+   DIR_OUT = data_dir+"/"+data_acro+"/"+area+"/TRACK/"
 
    for eddy_type in eddy_types:
       # Préparer le fichier de config YAML
