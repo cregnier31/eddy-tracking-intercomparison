@@ -117,6 +117,8 @@ def regularize_ssh(ssh, longitude, latitude, lon_regular, lat_regular,
         attrs={"note": "SSH scalar interpolation; east/north geostrophic currents derived from SSH"},
     )
     result["zos"].attrs["units"] = "m"
+    result["uo"].attrs["units"] = "m/s"
+    result["vo"].attrs["units"] = "m/s"
     return result
 
 
