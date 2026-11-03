@@ -3,7 +3,7 @@
 Example:
   python -m eddy_plot.gloens_detection_animation ./data --format gif
 
-Uses only matplotlib, numpy and xarray; no Cartopy or ffmpeg needed for GIF.
+Uses Cartopy for land, coastlines, and labeled map gridlines. GIF uses Pillow.
 """
 from __future__ import annotations
 
@@ -12,6 +12,9 @@ from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as pe
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import numpy as np
 import xarray as xr
 from matplotlib.animation import FuncAnimation, PillowWriter, FFMpegWriter
@@ -87,20 +90,59 @@ def animate_detections(
             f"{polarity}={len(centers[polarity])}" for polarity, _ in POLARITIES
         ), flush=True)
 
-    fig, ax = plt.subplots(figsize=(11, 7))
-    ax.set_xlim(lon_min, lon_max)
-    ax.set_ylim(lat_min, lat_max)
-    ax.set_xlabel("Longitude (degrees east)")
-    ax.set_ylabel("Latitude (degrees north)")
-    ax.grid(alpha=0.25)
-    ax.set_aspect("auto")
+    # Static cartographic layers are drawn once and reused across frames.
+    projection = ccrs.PlateCarree()
+    fig = plt.figure(figsize=(13.5, 8), facecolor="#07182e")
+    ax = fig.add_axes((0.055, 0.105, 0.89, 0.77), projection=projection)
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=projection)
+    ax.set_facecolor("#092b4b")
+    ax.add_feature(cfeature.OCEAN.with_scale("110m"),
+                   facecolor="#0b3556", zorder=0)
+    ax.add_feature(cfeature.LAND.with_scale("110m"),
+                   facecolor="#d5dfcc", edgecolor="none", zorder=1)
+    ax.add_feature(cfeature.LAKES.with_scale("110m"),
+                   facecolor="#81b7cc", zorder=2)
+    ax.coastlines(resolution="110m", linewidth=0.8,
+                  color="#f5f8f3", zorder=5)
+    ax.add_feature(cfeature.BORDERS.with_scale("110m"),
+                   linewidth=0.35, edgecolor="#647f7c", zorder=3)
+    gridlines = ax.gridlines(crs=projection, draw_labels=True,
+                             linewidth=0.5, alpha=0.35,
+                             color="#e6efff", linestyle="--")
+    gridlines.top_labels = False
+    gridlines.right_labels = False
+    gridlines.xlabel_style = {"size": 9, "color": "#cbdcf0"}
+    gridlines.ylabel_style = {"size": 9, "color": "#cbdcf0"}
+    for spine in ax.spines.values():
+        spine.set_edgecolor("#91b4d0")
+    fig.text(0.055, 0.94, "GLOENS  |  ENSEMBLE EDDY DETECTIONS",
+             fontsize=20, fontweight="bold", color="white")
+    fig.text(0.055, 0.905,
+             f"28-day forecast  •  {last_member - first_member + 1} members"
+             "  •  Cyclonic vs anticyclonic",
+             fontsize=11, color="#a9c8df")
+    fig.text(0.055, 0.035,
+             "Daily eddy centers from independent ensemble members  |  "
+             "Opacity reveals overlapping detections",
+             fontsize=9, color="#9ab5ce")
     scatters = {
-        polarity: ax.scatter([], [], s=8, alpha=0.30, c=color, label=polarity,
-                             edgecolors="none")
+        polarity: ax.scatter([], [], s=12, alpha=0.34, c=color, label=polarity,
+                             edgecolors="none", transform=projection, zorder=7)
         for polarity, color in POLARITIES
     }
-    ax.legend(loc="lower left")
-    title = ax.set_title("")
+    legend = ax.legend(loc="lower left", facecolor="#0b2540",
+                       edgecolor="#81a6c5", framealpha=0.94,
+                       fontsize=10, labelcolor="white")
+    for handle in legend.legend_handles:
+        handle.set_alpha(1.0)
+    title = ax.text(
+        0.985, 0.975, "", transform=ax.transAxes,
+        ha="right", va="top", fontsize=12, color="white",
+        fontweight="bold",
+        bbox=dict(boxstyle="round,pad=0.55", facecolor="#07182e",
+                  edgecolor="#6b9bbd", alpha=0.94),
+        zorder=12,
+    )
 
     def update(i):
         centers = frames[i]
