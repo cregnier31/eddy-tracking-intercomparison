@@ -1,4 +1,4 @@
-"""Animate daily GLOENS detections across ensemble members.
+"""Animate observed daily GLOENS eddy boundaries across ensemble members.
 
 Example:
   python -m eddy_plot.gloens_detection_animation ./data --format gif
@@ -12,6 +12,7 @@ from collections import defaultdict
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import numpy as np
@@ -49,6 +50,43 @@ def read_centers(path):
     return np.column_stack((lon, lat))
 
 
+def read_contours(path):
+    """Return observed eddy contour vertices (not center marker circles).
+
+    Prefer effective contours, falling back to speed contours when needed.
+    """
+    with xr.open_dataset(path) as ds:
+        names = (
+            ("effective_contour_longitude", "effective_contour_latitude"),
+            ("speed_contour_longitude", "speed_contour_latitude"),
+        )
+        pair = next(((x, y) for x, y in names if x in ds and y in ds), None)
+        if pair is None:
+            raise KeyError(
+                f"{path}: no contour coordinates found; expected one of {names}. "
+                f"Available variables: {list(ds.data_vars)}"
+            )
+        lons = np.asarray(ds[pair[0]].values, dtype=float)
+        lats = np.asarray(ds[pair[1]].values, dtype=float)
+    if lons.shape != lats.shape or lons.ndim != 2:
+        raise ValueError(f"{path}: contour coordinates must have shape (eddy, vertex)")
+    contours = []
+    for lon, lat in zip(lons, lats):
+        valid = np.isfinite(lon) & np.isfinite(lat)
+        if valid.sum() < 3:
+            continue
+        lon = ((lon[valid] + 180) % 360) - 180
+        lat = lat[valid]
+        # Avoid spurious lines across the longitude seam.
+        if np.any(np.abs(np.diff(lon)) > 180):
+            continue
+        vertices = np.column_stack((lon, lat))
+        if not np.allclose(vertices[0], vertices[-1]):
+            vertices = np.vstack((vertices, vertices[0]))
+        contours.append(vertices)
+    return contours
+
+
 def animate_detections(
     data_dir, output=None, first_member=1, last_member=50,
     lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
@@ -77,19 +115,19 @@ def animate_detections(
                 f"Incomplete detections on {date}: {found}/{expected} {polarity} files"
             )
 
-    # Load only small eddy-center arrays, not the SSH fields.
+    # Load only the saved eddy contours, not the SSH fields.
     frames = []
     for date in dates:
         centers = {}
         for polarity, _ in POLARITIES:
-            chunks = [read_centers(path) for path in inventory[date].get(polarity, [])]
-            centers[polarity] = np.concatenate(chunks) if chunks else np.empty((0, 2))
+            centers[polarity] = [contour for path in inventory[date].get(polarity, [])
+                                 for contour in read_contours(path)]
         frames.append(centers)
         print(f"{date}: " + ", ".join(
             f"{polarity}={len(centers[polarity])}" for polarity, _ in POLARITIES
         ), flush=True)
 
-    # White scientific map: hollow eddy circles and subtle continental outlines.
+    # White scientific map with actual observed eddy boundaries.
     projection = ccrs.PlateCarree()
     fig = plt.figure(figsize=(13.5, 8), facecolor="white")
     ax = fig.add_axes((0.065, 0.12, 0.88, 0.75), projection=projection)
@@ -113,14 +151,15 @@ def animate_detections(
     fig.text(0.065, 0.90,
              f"{len(dates)} forecast days | {last_member - first_member + 1} members",
              fontsize=11, color="#555555")
-    scatters = {
-        polarity: ax.scatter(
-            [], [], s=17, alpha=0.55, facecolors="none",
-            edgecolors=color, linewidths=0.75, label=polarity,
-            transform=projection, zorder=7,
+    contours_artists = {
+        polarity: LineCollection(
+            [], colors=[color], linewidths=0.65, alpha=0.55,
+            transform=projection, zorder=7, label=polarity,
         )
         for polarity, color in POLARITIES
     }
+    for artist in contours_artists.values():
+        ax.add_collection(artist)
     ax.legend(loc="lower left", facecolor="white",
               edgecolor="#cccccc", framealpha=0.95, fontsize=10)
     title = ax.text(
@@ -134,7 +173,7 @@ def animate_detections(
     def update(i):
         centers = frames[i]
         for polarity, _ in POLARITIES:
-            scatters[polarity].set_offsets(centers[polarity])
+            contours_artists[polarity].set_segments(centers[polarity])
         title.set_text(
             f"GLOENS ensemble detections | {dates[i]} | "
             f"members {first_member:03d}–{last_member:03d}\n"
@@ -143,7 +182,7 @@ def animate_detections(
                 for polarity, _ in POLARITIES
             )
         )
-        return (*scatters.values(), title)
+        return (*contours_artists.values(), title)
 
     animation = FuncAnimation(fig, update, frames=len(dates),
                               interval=1000 / fps, blit=False, repeat=True)
