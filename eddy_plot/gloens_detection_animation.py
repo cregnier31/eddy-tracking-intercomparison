@@ -90,9 +90,11 @@ def read_contours(path):
 def animate_detections(
     data_dir, output=None, first_member=1, last_member=50,
     lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
-    fps=2, dpi=130, fmt="gif", strict=True,
+    fps=2, dpi=130, fmt="gif", strict=True, mode="shape",
 ):
     """Create one animation frame per date, aggregating member detections."""
+    if mode not in ("center", "shape"):
+        raise ValueError("mode must be center or shape")
     if fps <= 0:
         raise ValueError("fps must be positive")
     if fmt not in ("gif", "mp4"):
@@ -115,13 +117,17 @@ def animate_detections(
                 f"Incomplete detections on {date}: {found}/{expected} {polarity} files"
             )
 
-    # Load only the saved eddy contours, not the SSH fields.
+    # Load only the selected observation geometry, not SSH fields.
     frames = []
     for date in dates:
         centers = {}
         for polarity, _ in POLARITIES:
-            centers[polarity] = [contour for path in inventory[date].get(polarity, [])
-                                 for contour in read_contours(path)]
+            if mode == "shape":
+                centers[polarity] = [contour for path in inventory[date].get(polarity, [])
+                                     for contour in read_contours(path)]
+            else:
+                chunks = [read_centers(path) for path in inventory[date].get(polarity, [])]
+                centers[polarity] = np.concatenate(chunks) if chunks else np.empty((0, 2))
         frames.append(centers)
         print(f"{date}: " + ", ".join(
             f"{polarity}={len(centers[polarity])}" for polarity, _ in POLARITIES
@@ -133,10 +139,11 @@ def animate_detections(
     ax = fig.add_axes((0.065, 0.12, 0.88, 0.75), projection=projection)
     ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=projection)
     ax.set_facecolor("white")
-    ax.add_feature(cfeature.LAND.with_scale("110m"),
-                   facecolor="#eeeeee", edgecolor="none", zorder=1)
-    ax.coastlines(resolution="110m", linewidth=0.75,
-                  color="#777777", zorder=5)
+    # Land is drawn ABOVE eddy artists, hiding offshore contours over land.
+    ax.add_feature(cfeature.LAND.with_scale("10m"),
+                   facecolor="#eeeeee", edgecolor="none", zorder=9)
+    ax.coastlines(resolution="10m", linewidth=0.75,
+                  color="#777777", zorder=10)
     gridlines = ax.gridlines(crs=projection, draw_labels=True,
                              linewidth=0.5, alpha=0.35,
                              color="#999999", linestyle="--")
@@ -151,15 +158,25 @@ def animate_detections(
     fig.text(0.065, 0.90,
              f"{len(dates)} forecast days | {last_member - first_member + 1} members",
              fontsize=11, color="#555555")
-    contours_artists = {
-        polarity: LineCollection(
-            [], colors=[color], linewidths=0.65, alpha=0.55,
-            transform=projection, zorder=7, label=polarity,
-        )
-        for polarity, color in POLARITIES
-    }
-    for artist in contours_artists.values():
-        ax.add_collection(artist)
+    if mode == "shape":
+        artists = {
+            polarity: LineCollection(
+                [], colors=[color], linewidths=0.65, alpha=0.55,
+                transform=projection, zorder=7, label=polarity,
+            )
+            for polarity, color in POLARITIES
+        }
+        for artist in artists.values():
+            ax.add_collection(artist)
+    else:
+        artists = {
+            polarity: ax.scatter(
+                [], [], s=5, alpha=0.65, c=color, marker="o",
+                edgecolors="none", transform=projection, zorder=7,
+                label=polarity,
+            )
+            for polarity, color in POLARITIES
+        }
     ax.legend(loc="lower left", facecolor="white",
               edgecolor="#cccccc", framealpha=0.95, fontsize=10)
     title = ax.text(
@@ -173,7 +190,10 @@ def animate_detections(
     def update(i):
         centers = frames[i]
         for polarity, _ in POLARITIES:
-            contours_artists[polarity].set_segments(centers[polarity])
+            if mode == "shape":
+                artists[polarity].set_segments(centers[polarity])
+            else:
+                artists[polarity].set_offsets(centers[polarity])
         title.set_text(
             f"GLOENS ensemble detections | {dates[i]} | "
             f"members {first_member:03d}–{last_member:03d}\n"
@@ -182,12 +202,12 @@ def animate_detections(
                 for polarity, _ in POLARITIES
             )
         )
-        return (*contours_artists.values(), title)
+        return (*artists.values(), title)
 
     animation = FuncAnimation(fig, update, frames=len(dates),
                               interval=1000 / fps, blit=False, repeat=True)
     if output is None:
-        output = Path(data_dir) / "GLOENS" / f"gloens_detection_ensemble.{fmt}"
+        output = Path(data_dir) / "GLOENS" / f"gloens_detection_ensemble_{mode}.{fmt}"
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -212,13 +232,14 @@ def main(argv=None):
     parser.add_argument("--fps", type=float, default=2)
     parser.add_argument("--dpi", type=int, default=130)
     parser.add_argument("--format", choices=("gif", "mp4"), default="gif")
+    parser.add_argument("--mode", choices=("center", "shape"), default="shape")
     parser.add_argument("--allow-incomplete", action="store_true")
     args = parser.parse_args(argv)
     animate_detections(
         args.data_dir, output=args.output, first_member=args.first_member,
         last_member=args.last_member, lon_min=args.lon_min, lon_max=args.lon_max,
         lat_min=args.lat_min, lat_max=args.lat_max, fps=args.fps, dpi=args.dpi,
-        fmt=args.format, strict=not args.allow_incomplete,
+        fmt=args.format, strict=not args.allow_incomplete, mode=args.mode,
     )
 
 
