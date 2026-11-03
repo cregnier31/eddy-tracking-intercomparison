@@ -133,7 +133,10 @@ def animate_detections(
     legend = ax.legend(loc="lower left", facecolor="#0b2540",
                        edgecolor="#81a6c5", framealpha=0.94,
                        fontsize=10, labelcolor="white")
-    for handle in legend.legend_handles:
+    handles = getattr(legend, "legend_handles", None)
+    if handles is None:
+        handles = legend.legendHandles  # Matplotlib < 3.7
+    for handle in handles:
         handle.set_alpha(1.0)
     title = ax.text(
         0.985, 0.975, "", transform=ax.transAxes,
