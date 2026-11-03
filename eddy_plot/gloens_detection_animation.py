@@ -87,10 +87,85 @@ def read_contours(path):
     return contours
 
 
+
+def read_persistent_tracks(data_dir, dates, first_member, last_member, mode, min_days):
+    """Read tracked observations; never count virtual observations as detections."""
+    frames = {date: {polarity: [] for polarity, _ in POLARITIES} for date in dates}
+    forecast_days = np.array([np.datetime64(date[:4] + "-" + date[4:6] + "-" + date[6:]) for date in dates], dtype="datetime64[D]")
+    for member in range(first_member, last_member + 1):
+        folder = Path(data_dir) / "GLOENS" / "MEMBERS" / f"member_{member:03d}" / "TRACK"
+        for polarity, _ in POLARITIES:
+            path = folder / f"{polarity}.nc"
+            if not path.exists():
+                raise FileNotFoundError(f"Missing tracked observations: {path}")
+            with xr.open_dataset(path) as ds:
+                for name in ("track", "time", "observation_flag"):
+                    if name not in ds:
+                        raise KeyError(f"{path}: missing required variable {name}")
+                tracks = np.asarray(ds["track"].values)
+                times = np.asarray(ds["time"].values).astype("datetime64[D]")
+                flags = np.asarray(ds["observation_flag"].values)
+                observed = (flags == 0) & np.isin(times, forecast_days)
+                keep = np.zeros(len(tracks), dtype=bool)
+                for track_id in np.unique(tracks[observed]):
+                    indices = np.flatnonzero(observed & (tracks == track_id))
+                    days = np.unique(times[indices])
+                    if len(days) < min_days:
+                        continue
+                    # A trajectory must contain at least min_days uninterrupted observations.
+                    day_ints = days.astype("int64")
+                    run = 1
+                    longest = 1
+                    for delta in np.diff(day_ints):
+                        run = run + 1 if delta == 1 else 1
+                        longest = max(longest, run)
+                    if longest >= min_days:
+                        keep[indices] = True
+                if not np.any(keep):
+                    print(f"member {member:03d} {polarity}: no qualifying tracks", flush=True)
+                    continue
+                if mode == "center":
+                    lon = np.asarray(ds["longitude"].values, dtype=float)
+                    lat = np.asarray(ds["latitude"].values, dtype=float)
+                    for date in dates:
+                        day = np.datetime64(date[:4] + "-" + date[4:6] + "-" + date[6:])
+                        idx = keep & (times == day) & np.isfinite(lon) & np.isfinite(lat)
+                        frames[date][polarity].extend(
+                            np.column_stack((((lon[idx] + 180) % 360) - 180, lat[idx]))
+                        )
+                else:
+                    pairs = (("effective_contour_longitude", "effective_contour_latitude"),
+                             ("speed_contour_longitude", "speed_contour_latitude"))
+                    pair = next(((x, y) for x, y in pairs if x in ds and y in ds), None)
+                    if pair is None:
+                        raise KeyError(f"{path}: missing effective/speed contour variables")
+                    lons = np.asarray(ds[pair[0]].values, dtype=float)
+                    lats = np.asarray(ds[pair[1]].values, dtype=float)
+                    for i in np.flatnonzero(keep):
+                        valid = np.isfinite(lons[i]) & np.isfinite(lats[i])
+                        if valid.sum() < 3:
+                            continue
+                        lon = ((lons[i, valid] + 180) % 360) - 180
+                        if np.any(np.abs(np.diff(lon)) > 180):
+                            continue
+                        vertices = np.column_stack((lon, lats[i, valid]))
+                        if not np.allclose(vertices[0], vertices[-1]):
+                            vertices = np.vstack((vertices, vertices[0]))
+                        date = np.datetime_as_string(times[i], unit="D").replace("-", "")
+                        frames[date][polarity].append(vertices)
+    return [
+        {polarity: (np.asarray(frames[date][polarity]).reshape(-1, 2)
+                    if mode == "center" else frames[date][polarity])
+         for polarity, _ in POLARITIES}
+        for date in dates
+    ]
+
+
 def animate_detections(
     data_dir, output=None, first_member=1, last_member=50,
     lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
     fps=2, dpi=130, fmt="gif", strict=True, mode="shape",
+    min_consecutive_days=0,
 ):
     """Create one animation frame per date, aggregating member detections."""
     if mode not in ("center", "shape"):
@@ -117,9 +192,15 @@ def animate_detections(
                 f"Incomplete detections on {date}: {found}/{expected} {polarity} files"
             )
 
-    # Load only the selected observation geometry, not SSH fields.
+    # Filtered mode reads geometry directly from tracked observations.
     frames = []
-    for date in dates:
+    if min_consecutive_days:
+        if min_consecutive_days < 1:
+            raise ValueError("min_consecutive_days must be positive")
+        frames = read_persistent_tracks(data_dir, dates, first_member, last_member,
+                                        mode, min_consecutive_days)
+    else:
+      for date in dates:
         centers = {}
         for polarity, _ in POLARITIES:
             if mode == "shape":
@@ -208,7 +289,8 @@ def animate_detections(
     animation = FuncAnimation(fig, update, frames=len(dates),
                               interval=1000 / fps, blit=False, repeat=True)
     if output is None:
-        output = Path(data_dir) / "GLOENS" / f"gloens_detection_ensemble_{mode}.{fmt}"
+        suffix = f"_min{min_consecutive_days}d" if min_consecutive_days else ""
+        output = Path(data_dir) / "GLOENS" / f"gloens_detection_ensemble_{mode}{suffix}.{fmt}"
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -235,12 +317,15 @@ def main(argv=None):
     parser.add_argument("--format", choices=("gif", "mp4"), default="gif")
     parser.add_argument("--mode", choices=("center", "shape"), default="shape")
     parser.add_argument("--allow-incomplete", action="store_true")
+    parser.add_argument("--min-consecutive-days", type=int, default=0,
+                        help="Keep only tracked eddies with this many consecutive real daily observations")
     args = parser.parse_args(argv)
     animate_detections(
         args.data_dir, output=args.output, first_member=args.first_member,
         last_member=args.last_member, lon_min=args.lon_min, lon_max=args.lon_max,
         lat_min=args.lat_min, lat_max=args.lat_max, fps=args.fps, dpi=args.dpi,
         fmt=args.format, strict=not args.allow_incomplete, mode=args.mode,
+        min_consecutive_days=args.min_consecutive_days,
     )
 
 
