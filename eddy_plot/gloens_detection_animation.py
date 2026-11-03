@@ -177,12 +177,12 @@ def animate_detections(
             )
             for polarity, color in POLARITIES
         }
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.065),
+    ax.legend(loc="upper left", bbox_to_anchor=(0.0, -0.065),
               ncol=2, facecolor="white", edgecolor="none",
               frameon=False, fontsize=11)
     title = ax.text(
-        0.985, 0.975, "", transform=ax.transAxes,
-        ha="right", va="top", fontsize=11, color="#222222",
+        0.985, -0.065, "", transform=ax.transAxes,
+        ha="right", va="top", fontsize=10, color="#222222",
         bbox=dict(boxstyle="round,pad=0.45", facecolor="white",
                   edgecolor="#cccccc", alpha=0.96),
         zorder=12,
