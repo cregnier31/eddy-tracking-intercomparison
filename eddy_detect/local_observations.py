@@ -85,6 +85,9 @@ def detect_local(data_dir, source, start, end, lon_min=-80, lon_max=0,
         print(f"Detecting {date} from {file}", flush=True)
         with tempfile.TemporaryDirectory(prefix="obs-local-") as tmp:
             input_file = Path(tmp) / f"OBS_{date}.nc"
+            grid["zos"].attrs["units"] = "m"
+            grid["uo"].attrs["units"] = "m/s"
+            grid["vo"].attrs["units"] = "m/s"
             grid.to_netcdf(input_file)
             compute_eddy(
                 str(input_file), "OBS", tmp, str(output) + "/",
