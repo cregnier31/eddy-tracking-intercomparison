@@ -94,6 +94,9 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
             print(f"Detecting OBS {date}", flush=True)
             with tempfile.TemporaryDirectory(prefix="obs-detect-") as tmp:
                 input_path = Path(tmp) / f"OBS_{date}.nc"
+                grid["zos"].attrs["units"] = "m"
+                grid["uo"].attrs["units"] = "m/s"
+                grid["vo"].attrs["units"] = "m/s"
                 grid.to_netcdf(input_path)
                 compute_eddy(
                     str(input_path), "OBS", tmp, str(output) + "/",
