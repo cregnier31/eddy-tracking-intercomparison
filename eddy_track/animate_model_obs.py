@@ -2,7 +2,7 @@
 
 Uses detection contours (effective contour when available), with connecting
 segments from existing fixed-track matches. No matching is recomputed.
-Writes GIFs via PillowWriter; no ffmpeg or cartopy required.
+Writes GIFs via PillowWriter and uses Cartopy for land and coastlines.
 """
 from __future__ import annotations
 
@@ -17,6 +17,13 @@ from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+try:
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+except ImportError:
+    ccrs = None
+    cfeature = None
 
 MODELS = {
     "GLONET": ("GLONET/20240717/DETECT", "GLONET", "2024-07-17", 10, "GLONET_20240717"),
@@ -91,7 +98,11 @@ def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
                 per_day[(polarity, "model")] = read_detection(model_file)
                 per_day[(polarity, "obs")] = read_detection(obs_file)
             frames.append(per_day)
-        fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True)
+        if ccrs is None:
+            raise ImportError("Cartopy is required for coastline maps. Check the existing environment with: python -c 'import cartopy'")
+        projection = ccrs.PlateCarree()
+        fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True,
+                               subplot_kw={"projection": projection})
         legend = [
             Line2D([0], [0], color=COLORS[p], linewidth=2, label=p)
             for p in POLARITIES
@@ -115,12 +126,15 @@ def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
                         [row.obs_lat, row.model_lat],
                         color=COLORS[row.polarity], linestyle=":",
                         linewidth=.85, alpha=.6, zorder=4)
-            ax.set_xlim(lon_min, lon_max)
-            ax.set_ylim(lat_min, lat_max)
-            ax.set_aspect("auto")
-            ax.set_xlabel("Longitude (°E)")
-            ax.set_ylabel("Latitude (°N)")
-            ax.grid(alpha=.2)
+            ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=projection)
+            ax.add_feature(cfeature.LAND.with_scale("110m"),
+                           facecolor="#eeeeee", edgecolor="none", zorder=0)
+            ax.coastlines(resolution="110m", linewidth=.65,
+                          color="#777777", zorder=1)
+            gl = ax.gridlines(draw_labels=True, linewidth=.45,
+                              alpha=.35, linestyle=":")
+            gl.top_labels = False
+            gl.right_labels = False
             ax.legend(handles=legend, loc="upper right", fontsize=8,
                       framealpha=.93, ncol=2)
             ax.set_title(f"{model} vs Copernicus ADT | {date:%Y-%m-%d} | "
