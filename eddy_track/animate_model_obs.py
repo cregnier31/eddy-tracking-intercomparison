@@ -68,10 +68,6 @@ def draw_eddies(ax, data, polarity, observed):
                             linewidth=1.1 if observed else .8,
                             linestyle="-" if observed else "--",
                             alpha=.8 if observed else .55, zorder=2)
-    ax.scatter(lon, lat, s=18 if observed else 11, c="none" if observed else color,
-               edgecolors=color, linewidths=1.05 if observed else .3,
-               marker="o" if observed else "x", alpha=.9 if observed else .7,
-               zorder=3 if observed else 2)
 
 
 def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
@@ -109,7 +105,6 @@ def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
         ] + [
             Line2D([0], [0], color="#444", linestyle="-", label="Observation contour"),
             Line2D([0], [0], color="#444", linestyle="--", label="Model contour"),
-            Line2D([0], [0], color="#777", linestyle=":", label="Matched track centers"),
         ]
 
         def update(i):
@@ -119,13 +114,6 @@ def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
             for polarity in POLARITIES:
                 draw_eddies(ax, day[(polarity, "model")], polarity, False)
                 draw_eddies(ax, day[(polarity, "obs")], polarity, True)
-            subset = matched[matched.date == date.strftime("%Y-%m-%d")]
-            valid = subset.dropna(subset=["obs_lon", "obs_lat", "model_lon", "model_lat"])
-            for row in valid.itertuples(index=False):
-                ax.plot([row.obs_lon, row.model_lon],
-                        [row.obs_lat, row.model_lat],
-                        color=COLORS[row.polarity], linestyle=":",
-                        linewidth=.85, alpha=.6, zorder=4)
             ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=projection)
             ax.add_feature(cfeature.LAND.with_scale("110m"),
                            facecolor="#eeeeee", edgecolor="none", zorder=0)
@@ -139,8 +127,7 @@ def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
                       framealpha=.93, ncol=2)
             ax.set_title(f"{model} vs Copernicus ADT | {date:%Y-%m-%d} | "
                          f"forecast day {i+1}/{days}\n"
-                         f"{len(valid)} matched tracked-eddy pairs visible "
-                         f"(lines; all detections shown)", fontsize=12)
+                         "Detected eddy contours (no center markers)", fontsize=12)
             return []
 
         animation = FuncAnimation(fig, update, frames=days,
