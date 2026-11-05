@@ -12,10 +12,11 @@ def main():
     parser.add_argument("model", choices=("GLONET", "GLOW", "GLO12"))
     parser.add_argument("init_date")
     parser.add_argument("data_dir")
-    parser.add_argument("--expected-days", type=int, default=9)
+    parser.add_argument("--expected-days", type=int, default=None, help="Default: GLONET/GLO12 10, GLOW 9")
     parser.add_argument("--template", type=Path, default=DEFAULT_TEMPLATE)
     args = parser.parse_args()
-    if args.expected_days < 1:
+    expected_days = args.expected_days if args.expected_days is not None else (9 if args.model == "GLOW" else 10)
+    if expected_days < 1:
         parser.error("--expected-days must be positive")
     executable = shutil.which("EddyTracking")
     if not executable:
@@ -24,8 +25,8 @@ def main():
     detect_dir, track_dir = root / "DETECT", root / "TRACK"
     for polarity in POLARITIES:
         files = sorted(detect_dir.glob(f"{polarity}_{args.model}_*.nc"))
-        if len(files) != args.expected_days:
-            raise ValueError(f"{polarity}: found {len(files)} daily files in {detect_dir}; expected {args.expected_days}")
+        if len(files) != expected_days:
+            raise ValueError(f"{polarity}: found {len(files)} daily files in {detect_dir}; expected {expected_days}")
         track_dir.mkdir(parents=True, exist_ok=True)
         config = tracking_config(args.template, detect_dir, track_dir, polarity)
         with tempfile.TemporaryDirectory(prefix="zarr-track-") as tmp:
