@@ -24,13 +24,13 @@ MODELS = {
 BUCKET = "oceanbench-bucket"
 
 
-def detect(model, init_date, data_dir, first_day=0, last_day=9,
+def detect(model, init_date, data_dir, first_day=0, last_day=None,
            lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
            resolution=0.25, endpoint=ENDPOINT, assume_ssh_metres=False):
     model = model.upper()
     if model not in MODELS:
         raise ValueError(f"Unknown model {model}; choose {list(MODELS)}")
-    if not 0 <= first_day < last_day or resolution <= 0:
+    if first_day < 0 or (last_day is not None and last_day <= first_day) or resolution <= 0:
         raise ValueError("Invalid lead-day range or resolution")
     if not lon_min < lon_max or not lat_min < lat_max:
         raise ValueError("Invalid geographic bounds")
@@ -58,10 +58,10 @@ def detect(model, init_date, data_dir, first_day=0, last_day=9,
             raise ValueError(f"Unexpected SSH units: {ds['zos'].attrs.get('units')}")
         if ds["zos"].attrs.get("units") is None and not assume_ssh_metres:
             raise ValueError("SSH units missing; verify metres and pass --assume-ssh-metres")
-        stop = min(last_day, ds.sizes["time"])
+        stop = ds.sizes["time"] if last_day is None else min(last_day, ds.sizes["time"])
         if stop <= first_day:
             raise ValueError(f"Only {ds.sizes['time']} forecast days available")
-        if stop < last_day:
+        if last_day is not None and stop < last_day:
             print(f"Warning: requested {last_day} days, only {stop} available", flush=True)
         # Normalize 0..360 longitude into -180..180, avoiding global loads.
         src_lon = np.asarray(ds[lon_name].values)
@@ -124,7 +124,7 @@ def main():
     parser.add_argument("init_date", help="Forecast initialization YYYYMMDD")
     parser.add_argument("data_dir")
     parser.add_argument("--first-day", type=int, default=0)
-    parser.add_argument("--last-day", type=int, default=9, help="Exclusive lead index")
+    parser.add_argument("--last-day", type=int, default=None, help="Exclusive lead index; default: all available days")
     parser.add_argument("--lon-min", type=float, default=-80)
     parser.add_argument("--lon-max", type=float, default=0)
     parser.add_argument("--lat-min", type=float, default=20)
