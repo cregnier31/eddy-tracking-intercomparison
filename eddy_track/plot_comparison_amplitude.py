@@ -112,7 +112,7 @@ def plot(data_dir, comparison_dir, output_dir):
                 median_bias_m=("amplitude_bias_m", "median"),
             ).reset_index()
             x = (np.arange(len(agg), dtype=float) if kind == "common_valid_dates"
-                 else agg["forecast_lead_day"].to_numpy(dtype=float))
+                 else agg["forecast_lead_day"].to_numpy(dtype=float) + 1)
             agg["model"] = model
             stats.append(agg)
             ax.plot(x, 100 * agg["median"].to_numpy(), color=COLORS[model],
@@ -126,12 +126,12 @@ def plot(data_dir, comparison_dir, output_dir):
             ax.set_xticks(np.arange(len(dates)))
             ax.set_xticklabels([str(d)[5:] for d in dates])
             ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12, fontsize=15)
-            ax.set_title("Eddy amplitude absolute error — common valid dates (18–25 July 2024)", pad=14)
+            ax.set_title("Eddy amplitude absolute error — common valid dates (18–25 July 2024)", fontsize=19, pad=14)
         else:
-            ax.set_xlabel("Forecast lead time (days since model initialization)", labelpad=12, fontsize=15)
-            ax.set_title("Eddy amplitude absolute error — full forecast horizons", pad=14)
-            ax.set_xlim(left=0, right=27)
-            ax.set_xticks([0, 3, 6, 9, 13, 17, 20, 24, 27])
+            ax.set_xlabel("Forecast day (day 1 = initialization date)", labelpad=12, fontsize=15)
+            ax.set_title("Eddy amplitude absolute error — full forecast horizons", fontsize=19, pad=14)
+            ax.set_xlim(left=1, right=28)
+            ax.set_xticks([1, 4, 7, 10, 14, 18, 21, 25, 28])
         ax.set_ylabel("Absolute amplitude error (cm)", fontsize=15)
         ax.tick_params(axis="both", which="major", labelsize=13)
         ax.set_ylim(bottom=0)
