@@ -78,7 +78,7 @@ def plot(data_dir, comparison_dir, output_dir):
     }
     for kind in sources:
         fig, ax = plt.subplots(figsize=(12, 7.2))
-        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.17)
+        fig.subplots_adjust(left=.13, right=.97, top=.91, bottom=.24)
         stats = []
         paired = []
         for model in MODELS:
@@ -125,21 +125,21 @@ def plot(data_dir, comparison_dir, output_dir):
                            .date.dropna().unique())
             ax.set_xticks(np.arange(len(dates)))
             ax.set_xticklabels([str(d)[5:] for d in dates])
-            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12, fontsize=15)
-            ax.set_title("Eddy amplitude absolute error — common valid dates (18–25 July 2024)", fontsize=19, pad=14)
+            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12, fontsize=20)
+            ax.set_title("Eddy amplitude absolute error — common valid dates (18–25 July 2024)", fontsize=22, pad=14)
         else:
-            ax.set_xlabel("Forecast day (day 1 = initialization date)", labelpad=12, fontsize=15)
-            ax.set_title("Eddy amplitude absolute error — full forecast horizons", fontsize=19, pad=14)
+            ax.set_xlabel("Forecast day (day 1 = initialization date)", labelpad=12, fontsize=20)
+            ax.set_title("Eddy amplitude absolute error — full forecast horizons", fontsize=22, pad=14)
             ax.set_xlim(left=1, right=28)
             ax.set_xticks([1, 4, 7, 10, 14, 18, 21, 25, 28])
-        ax.set_ylabel("Absolute amplitude error (cm)", fontsize=15)
-        ax.tick_params(axis="both", which="major", labelsize=13)
+        ax.set_ylabel("Absolute amplitude error (cm)", fontsize=20)
+        ax.tick_params(axis="both", which="major", labelsize=20)
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=12)
+        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=16)
         fig.text(.5, .025, "Lines: median absolute error. Bands: 25th–75th percentiles. "
                  "Same initially matched eddy pairs (50 km threshold).",
-                 ha="center", fontsize=9, color="#555555")
+                 ha="center", fontsize=16, color="#555555")
         stem = output_dir / f"eddy_amplitude_error_{kind}"
         fig.savefig(stem.with_suffix(".png"), dpi=250, bbox_inches="tight")
         plt.close(fig)
