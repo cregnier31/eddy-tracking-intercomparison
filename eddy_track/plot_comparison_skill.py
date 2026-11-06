@@ -94,11 +94,10 @@ def plot(root: Path, output: Path):
                  ha="center", fontsize=8, color="#555555")
         stem = output / f"eddy_error_{kind}"
         fig.savefig(stem.with_suffix(".png"), dpi=250, bbox_inches="tight")
-        fig.savefig(stem.with_suffix(".pdf"), bbox_inches="tight")
         plt.close(fig)
         pd.concat(stats_rows, ignore_index=True).to_csv(
             output / f"eddy_error_{kind}.csv", index=False)
-        print(f"Saved {stem}.png and {stem}.pdf")
+        print(f"Saved {stem}.png")
     print("Note: bands are IQR, not uncertainty in the estimated median.")
 
 
