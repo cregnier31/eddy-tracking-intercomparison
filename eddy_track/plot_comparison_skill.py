@@ -45,7 +45,7 @@ def plot(root: Path, output: Path):
         ("full_forecast", full),
     ):
         fig, ax = plt.subplots(figsize=(12, 7.2))
-        fig.subplots_adjust(left=.09, right=.97, top=.87, bottom=.19)
+        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.24)
         stats_rows = []
         for model in MODELS:
             data = datasets[model].copy()
@@ -88,9 +88,8 @@ def plot(root: Path, output: Path):
         ax.set_ylabel("Eddy-center position error (km)")
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="lower left", bbox_to_anchor=(0, 1.01), frameon=False,
-                  ncol=4, fontsize=12, columnspacing=1.5, handlelength=2.5)
-        fig.text(.5, .045,
+        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=9)
+        fig.text(.5, .025,
                  "Lines: median across valid matched pairs. Bands: 25th–75th percentiles. "
                  "Initial matching threshold: 50 km.",
                  ha="center", fontsize=9, color="#555555")
