@@ -1,7 +1,6 @@
 """Animate daily model and observed eddy detections for four forecasts.
 
-Uses detection contours (effective contour when available), with connecting
-segments from existing fixed-track matches. No matching is recomputed.
+Uses detection contours (effective contour when available); no center markers.
 Writes GIFs via PillowWriter and uses Cartopy for land and coastlines.
 """
 from __future__ import annotations
@@ -36,38 +35,58 @@ COLORS = {"Cyclonic": "#2878b5", "Anticyclonic": "#d24a38"}
 
 
 def read_detection(path: Path):
+    """Return a list of valid contour polygons; fail if layout is unsupported."""
     if not path.is_file():
         raise FileNotFoundError(f"Missing detection file: {path}")
     with xr.open_dataset(path) as ds:
-        if "longitude" not in ds or "latitude" not in ds:
-            raise KeyError(f"{path}: missing longitude/latitude center coordinates")
-        lon = np.asarray(ds["longitude"].values, dtype=float).ravel()
-        lat = np.asarray(ds["latitude"].values, dtype=float).ravel()
-        contour = None
-        for xname, yname in (
+        names = set(ds.variables)
+        candidates = (
             ("contour_lon_e", "contour_lat_e"),
             ("contour_lon_s", "contour_lat_s"),
-        ):
-            if xname in ds and yname in ds:
-                contour = (np.asarray(ds[xname].values, dtype=float),
-                           np.asarray(ds[yname].values, dtype=float))
-                break
-    return lon, lat, contour
+        )
+        pair = next(((x, y) for x, y in candidates if x in names and y in names), None)
+        if pair is None:
+            raise ValueError(
+                f"{path}: no recognized contour coordinates. "
+                f"Available variables: {sorted(names)}"
+            )
+        xvar, yvar = ds[pair[0]], ds[pair[1]]
+        x = np.asarray(xvar.values, dtype=float)
+        y = np.asarray(yvar.values, dtype=float)
+        if x.shape != y.shape:
+            raise ValueError(f"{path}: contour longitude/latitude shapes differ: "
+                             f"{x.shape} vs {y.shape}")
+        if x.ndim == 1:
+            x, y = x[None, :], y[None, :]
+        elif x.ndim == 2:
+            # py_eddy_tracker typically stores (observation, contour_sample).
+            # Use dimension names when available to identify transposed arrays.
+            first, second = xvar.dims
+            if ("sample" in first.lower() or "point" in first.lower()
+                    or "contour" in first.lower()) and (
+                    "obs" in second.lower() or "eddy" in second.lower()):
+                x, y = x.T, y.T
+        else:
+            raise ValueError(f"{path}: unsupported contour dimensions "
+                             f"{xvar.dims} with shape {x.shape}")
+        polygons = []
+        for px, py in zip(x, y):
+            good = np.isfinite(px) & np.isfinite(py)
+            if good.sum() >= 3:
+                polygons.append((px[good], py[good]))
+        print(f"{path.name}: {len(polygons)} drawable contours "
+              f"({pair[0]}, dims={xvar.dims}, shape={xvar.shape})", flush=True)
+        return polygons
 
 
-def draw_eddies(ax, data, polarity, observed):
-    lon, lat, contour = data
+def draw_eddies(ax, polygons, polarity, observed):
     color = COLORS[polarity]
-    if contour is not None:
-        cx, cy = contour
-        if cx.ndim == 2 and cy.ndim == 2 and len(cx) == len(lon):
-            for x, y in zip(cx, cy):
-                good = np.isfinite(x) & np.isfinite(y)
-                if good.sum() >= 3:
-                    ax.plot(x[good], y[good], color=color,
-                            linewidth=1.1 if observed else .8,
-                            linestyle="-" if observed else "--",
-                            alpha=.8 if observed else .55, zorder=2)
+    for x, y in polygons:
+        ax.plot(x, y, color=color, transform=ccrs.PlateCarree(),
+                linewidth=1.1 if observed else .8,
+                linestyle="-" if observed else "--",
+                alpha=.85 if observed else .65, zorder=3)
+
 
 
 def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
@@ -93,6 +112,8 @@ def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
                             f"{polarity}_OBS_{date_text}.nc")
                 per_day[(polarity, "model")] = read_detection(model_file)
                 per_day[(polarity, "obs")] = read_detection(obs_file)
+            if not any(per_day.values()):
+                raise ValueError(f"{model} {date_text}: no drawable contours in either dataset")
             frames.append(per_day)
         if ccrs is None:
             raise ImportError("Cartopy is required for coastline maps. Check the existing environment with: python -c 'import cartopy'")
