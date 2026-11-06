@@ -136,7 +136,7 @@ def plot(data_dir, comparison_dir, output_dir):
         ax.tick_params(axis="both", which="major", labelsize=13)
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=9)
+        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=12)
         fig.text(.5, .025, "Lines: median absolute error. Bands: 25th–75th percentiles. "
                  "Same initially matched eddy pairs (50 km threshold).",
                  ha="center", fontsize=9, color="#555555")
