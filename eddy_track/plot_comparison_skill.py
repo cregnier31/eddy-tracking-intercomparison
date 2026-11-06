@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 MODELS = ("GLONET", "GLOW", "GLO12", "GLOENS_MEAN")
-LABELS = {"GLONET": "GLONET", "GLOW": "GLOW", "GLO12": "GLO12",
+LABELS = {"GLONET": "GLONET", "GLOW": "GLONET3", "GLO12": "GLO12",
           "GLOENS_MEAN": "GLOENS ensemble mean"}
 COLORS = {"GLONET": "#377eb8", "GLOW": "#4daf4a", "GLO12": "#984ea3",
           "GLOENS_MEAN": "#e41a1c"}
