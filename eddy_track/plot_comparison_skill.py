@@ -89,7 +89,7 @@ def plot(root: Path, output: Path):
         ax.tick_params(axis="both", which="major", labelsize=13)
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=9)
+        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=12)
         fig.text(.5, .025,
                  "Lines: median across valid matched pairs. Bands: 25th–75th percentiles. "
                  "Initial matching threshold: 50 km.",
