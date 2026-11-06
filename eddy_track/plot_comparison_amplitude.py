@@ -78,7 +78,7 @@ def plot(data_dir, comparison_dir, output_dir):
     }
     for kind in sources:
         fig, ax = plt.subplots(figsize=(12, 7.2))
-        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.24)
+        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.17)
         stats = []
         paired = []
         for model in MODELS:
