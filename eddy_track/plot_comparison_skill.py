@@ -45,7 +45,7 @@ def plot(root: Path, output: Path):
         ("full_forecast", full),
     ):
         fig, ax = plt.subplots(figsize=(12, 7.2))
-        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.24)
+        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.17)
         stats_rows = []
         for model in MODELS:
             data = datasets[model].copy()
