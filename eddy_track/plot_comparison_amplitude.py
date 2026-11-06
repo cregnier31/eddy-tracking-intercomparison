@@ -78,7 +78,7 @@ def plot(data_dir, comparison_dir, output_dir):
     }
     for kind in sources:
         fig, ax = plt.subplots(figsize=(12, 7.2))
-        fig.subplots_adjust(left=.09, right=.97, top=.87, bottom=.19)
+        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.24)
         stats = []
         paired = []
         for model in MODELS:
@@ -135,9 +135,8 @@ def plot(data_dir, comparison_dir, output_dir):
         ax.set_ylabel("Absolute amplitude error (cm)")
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="lower left", bbox_to_anchor=(0, 1.01), frameon=False,
-                  ncol=4, fontsize=12, columnspacing=1.5, handlelength=2.5)
-        fig.text(.5, .045, "Lines: median absolute error. Bands: 25th–75th percentiles. "
+        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=9)
+        fig.text(.5, .025, "Lines: median absolute error. Bands: 25th–75th percentiles. "
                  "Same initially matched eddy pairs (50 km threshold).",
                  ha="center", fontsize=9, color="#555555")
         stem = output_dir / f"eddy_amplitude_error_{kind}"
