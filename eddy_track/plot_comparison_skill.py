@@ -45,7 +45,7 @@ def plot(root: Path, output: Path):
         ("full_forecast", full),
     ):
         fig, ax = plt.subplots(figsize=(12, 7.2))
-        fig.subplots_adjust(left=.09, right=.97, top=.92, bottom=.17)
+        fig.subplots_adjust(left=.13, right=.97, top=.91, bottom=.24)
         stats_rows = []
         for model in MODELS:
             data = datasets[model].copy()
@@ -75,25 +75,25 @@ def plot(root: Path, output: Path):
             dates = sorted(common.date.dropna().unique())
             ax.set_xticks(np.arange(len(dates)))
             ax.set_xticklabels([str(date)[5:] for date in dates])
-            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12, fontsize=15)
+            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12, fontsize=20)
             ax.set_title("Eddy position error — common valid dates (18–25 July 2024)", pad=14)
             ax.text(.01, .01,
                     "GLOENS initialized 18 July; other forecasts initialized 17 July",
                     transform=ax.transAxes, fontsize=8, color="#555555")
         else:
-            ax.set_xlabel("Forecast day (day 1 = initialization date)", labelpad=12, fontsize=15)
-            ax.set_title("Eddy position error — full forecast horizons", fontsize=19, pad=14)
+            ax.set_xlabel("Forecast day (day 1 = initialization date)", labelpad=12, fontsize=20)
+            ax.set_title("Eddy position error — full forecast horizons", fontsize=22, pad=14)
             ax.set_xlim(left=1, right=28)
             ax.set_xticks([1, 4, 7, 10, 14, 18, 21, 25, 28])
-        ax.set_ylabel("Eddy-center position error (km)", fontsize=15)
-        ax.tick_params(axis="both", which="major", labelsize=13)
+        ax.set_ylabel("Eddy-center position error (km)", fontsize=20)
+        ax.tick_params(axis="both", which="major", labelsize=20)
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=12)
+        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=16)
         fig.text(.5, .025,
                  "Lines: median across valid matched pairs. Bands: 25th–75th percentiles. "
                  "Initial matching threshold: 50 km.",
-                 ha="center", fontsize=9, color="#555555")
+                 ha="center", fontsize=16, color="#555555")
         stem = output / f"eddy_error_{kind}"
         fig.savefig(stem.with_suffix(".png"), dpi=250, bbox_inches="tight")
         plt.close(fig)
