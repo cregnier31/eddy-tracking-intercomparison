@@ -62,7 +62,7 @@ def plot(root: Path, output: Path):
                 x = np.arange(len(agg), dtype=float)
                 agg["x"] = x
             else:
-                x = agg.forecast_lead_day.to_numpy(dtype=float)
+                x = agg.forecast_lead_day.to_numpy(dtype=float) + 1
                 agg["x"] = x
             agg["model"] = model
             stats_rows.append(agg)
@@ -81,10 +81,10 @@ def plot(root: Path, output: Path):
                     "GLOENS initialized 18 July; other forecasts initialized 17 July",
                     transform=ax.transAxes, fontsize=8, color="#555555")
         else:
-            ax.set_xlabel("Forecast lead time (days since model initialization)", labelpad=12, fontsize=15)
-            ax.set_title("Eddy position error — full forecast horizons", pad=14)
-            ax.set_xlim(left=0, right=27)
-            ax.set_xticks([0, 3, 6, 9, 13, 17, 20, 24, 27])
+            ax.set_xlabel("Forecast day (day 1 = initialization date)", labelpad=12, fontsize=15)
+            ax.set_title("Eddy position error — full forecast horizons", fontsize=19, pad=14)
+            ax.set_xlim(left=1, right=28)
+            ax.set_xticks([1, 4, 7, 10, 14, 18, 21, 25, 28])
         ax.set_ylabel("Eddy-center position error (km)", fontsize=15)
         ax.tick_params(axis="both", which="major", labelsize=13)
         ax.set_ylim(bottom=0)
