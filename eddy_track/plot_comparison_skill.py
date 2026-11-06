@@ -44,7 +44,8 @@ def plot(root: Path, output: Path):
         ("common_valid_dates", {model: common[common.model == model] for model in MODELS}),
         ("full_forecast", full),
     ):
-        fig, ax = plt.subplots(figsize=(10.5, 6.2), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(12, 7.2))
+        fig.subplots_adjust(left=.09, right=.97, top=.87, bottom=.19)
         stats_rows = []
         for model in MODELS:
             data = datasets[model].copy()
@@ -74,27 +75,30 @@ def plot(root: Path, output: Path):
             dates = sorted(common.date.dropna().unique())
             ax.set_xticks(np.arange(len(dates)))
             ax.set_xticklabels([str(date)[5:] for date in dates])
-            ax.set_xlabel("Valid date (2024, MM-DD)")
-            ax.set_title("Eddy position error — common valid dates (18–25 July 2024)")
+            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12)
+            ax.set_title("Eddy position error — common valid dates (18–25 July 2024)", pad=14)
             ax.text(.01, .01,
                     "GLOENS initialized 18 July; other forecasts initialized 17 July",
                     transform=ax.transAxes, fontsize=8, color="#555555")
         else:
-            ax.set_xlabel("Forecast lead time (days since model initialization)")
-            ax.set_title("Eddy position error — full forecast horizons")
+            ax.set_xlabel("Forecast lead time (days since model initialization)", labelpad=12)
+            ax.set_title("Eddy position error — full forecast horizons", pad=14)
             ax.set_xlim(left=0, right=27)
             ax.set_xticks([0, 3, 6, 9, 13, 17, 20, 24, 27])
         ax.set_ylabel("Eddy-center position error (km)")
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
-        ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=9)
-        fig.text(.5, .008,
+        ax.legend(loc="lower left", bbox_to_anchor=(0, 1.01), frameon=False,
+                  ncol=4, fontsize=12, columnspacing=1.5, handlelength=2.5)
+        fig.text(.5, .045,
                  "Lines: median across valid matched pairs. Bands: 25th–75th percentiles. "
                  "Initial matching threshold: 50 km.",
-                 ha="center", fontsize=8, color="#555555")
+                 ha="center", fontsize=9, color="#555555")
         stem = output / f"eddy_error_{kind}"
         fig.savefig(stem.with_suffix(".png"), dpi=250, bbox_inches="tight")
         plt.close(fig)
+        if not stats_rows:
+            raise ValueError(f"No valid position errors for {kind}; check matched_positions.csv")
         pd.concat(stats_rows, ignore_index=True).to_csv(
             output / f"eddy_error_{kind}.csv", index=False)
         print(f"Saved {stem}.png")
