@@ -1,184 +1,133 @@
-"""Animate daily model and observed eddy detections for four forecasts.
+"""Four model-vs-observation contour animations using the project's existing map style.
 
-Uses detection contours (effective contour when available); no center markers.
-Writes GIFs via PillowWriter and uses Cartopy for land and coastlines.
+Uses eddy_plot.gloens_detection_animation.read_contours and
+eddy_plot.obs_detection_animation.frames_from_tracks for identical shape handling.
+No center markers or correspondence lines.
 """
 from __future__ import annotations
-
 import argparse
 from pathlib import Path
-
-import matplotlib
-matplotlib.use("Agg")
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
+from matplotlib.collections import LineCollection
 from matplotlib.lines import Line2D
 import numpy as np
-import pandas as pd
 import xarray as xr
-
-try:
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-except ImportError:
-    ccrs = None
-    cfeature = None
+from eddy_plot.gloens_detection_animation import read_contours, POLARITIES
+from eddy_plot.obs_detection_animation import frames_from_tracks
 
 MODELS = {
-    "GLONET": ("GLONET/20240717/DETECT", "GLONET", "2024-07-17", 10, "GLONET_20240717"),
-    "GLOW": ("GLOW/20240717/DETECT", "GLOW", "2024-07-17", 9, "GLOW_20240717"),
-    "GLO12": ("GLO12/20240717/DETECT", "GLO12", "2024-07-17", 10, "GLO12_20240717"),
-    "GLOENS_MEAN": ("GLOENS/DETECT", "GLOENS", "2024-07-18", 28, "20240718_28d"),
+    "GLONET": ("GLONET/20240717", "GLONET", "2024-07-17", 10),
+    "GLOW": ("GLOW/20240717", "GLOW", "2024-07-17", 9),
+    "GLO12": ("GLO12/20240717", "GLO12", "2024-07-17", 10),
+    "GLOENS_MEAN": ("GLOENS", "GLOENS", "2024-07-18", 28),
 }
-POLARITIES = ("Cyclonic", "Anticyclonic")
-COLORS = {"Cyclonic": "#2878b5", "Anticyclonic": "#d24a38"}
 
 
-def read_detection(path: Path):
-    """Return a list of valid contour polygons; fail if layout is unsupported."""
-    if not path.is_file():
-        raise FileNotFoundError(f"Missing detection file: {path}")
-    with xr.open_dataset(path) as ds:
-        names = set(ds.variables)
-        candidates = (
-            ("contour_lon_e", "contour_lat_e"),
-            ("contour_lon_s", "contour_lat_s"),
-        )
-        pair = next(((x, y) for x, y in candidates if x in names and y in names), None)
-        if pair is None:
-            raise ValueError(
-                f"{path}: no recognized contour coordinates. "
-                f"Available variables: {sorted(names)}"
-            )
-        xvar, yvar = ds[pair[0]], ds[pair[1]]
-        x = np.asarray(xvar.values, dtype=float)
-        y = np.asarray(yvar.values, dtype=float)
-        if x.shape != y.shape:
-            raise ValueError(f"{path}: contour longitude/latitude shapes differ: "
-                             f"{x.shape} vs {y.shape}")
-        if x.ndim == 1:
-            x, y = x[None, :], y[None, :]
-        elif x.ndim == 2:
-            # py_eddy_tracker typically stores (observation, contour_sample).
-            # Use dimension names when available to identify transposed arrays.
-            first, second = xvar.dims
-            if ("sample" in first.lower() or "point" in first.lower()
-                    or "contour" in first.lower()) and (
-                    "obs" in second.lower() or "eddy" in second.lower()):
-                x, y = x.T, y.T
-        else:
-            raise ValueError(f"{path}: unsupported contour dimensions "
-                             f"{xvar.dims} with shape {x.shape}")
-        polygons = []
-        for px, py in zip(x, y):
-            good = np.isfinite(px) & np.isfinite(py)
-            if good.sum() >= 3:
-                polygons.append((px[good], py[good]))
-        print(f"{path.name}: {len(polygons)} drawable contours "
-              f"({pair[0]}, dims={xvar.dims}, shape={xvar.shape})", flush=True)
-        return polygons
+def model_frames(root, dates, polarity, min_days):
+    """Extract shapes from tracked observations, requiring consecutive real days."""
+    from eddy_plot.obs_detection_animation import frames_from_tracks
+    return frames_from_tracks(root, dates, "shape", min_days)
 
 
-def draw_eddies(ax, polygons, polarity, observed):
-    color = COLORS[polarity]
-    for x, y in polygons:
-        ax.plot(x, y, color=color, transform=ccrs.PlateCarree(),
-                linewidth=1.1 if observed else .8,
-                linestyle="-" if observed else "--",
-                alpha=.85 if observed else .65, zorder=3)
-
-
-
-def animate(data_dir: Path, comparison_dir: Path, output_dir: Path,
-            models, fps: int, lon_min: float, lon_max: float,
-            lat_min: float, lat_max: float):
+def animate(data_dir, models, output_dir, min_days, fps, dpi, bounds):
+    projection = ccrs.PlateCarree()
     output_dir.mkdir(parents=True, exist_ok=True)
     for model in models:
-        model_relative, model_tag, first_date, days, comparison_name = MODELS[model]
-        matches_path = comparison_dir / comparison_name / "matched_positions.csv"
-        if not matches_path.is_file():
-            raise FileNotFoundError(f"Missing {matches_path}; run full-period comparison first")
-        matched = pd.read_csv(matches_path)
-        matched = matched[matched.model == model]
-        dates = pd.date_range(first_date, periods=days, freq="D")
-        frames = []
-        for date in dates:
-            date_text = date.strftime("%Y%m%d")
-            per_day = {}
-            for polarity in POLARITIES:
-                model_file = (data_dir / model_relative /
-                              f"{polarity}_{model_tag}_{date_text}.nc")
-                obs_file = (data_dir / "GLOENS/OBS/DETECT" /
-                            f"{polarity}_OBS_{date_text}.nc")
-                per_day[(polarity, "model")] = read_detection(model_file)
-                per_day[(polarity, "obs")] = read_detection(obs_file)
-            if not any(per_day.values()):
-                raise ValueError(f"{model} {date_text}: no drawable contours in either dataset")
-            frames.append(per_day)
-        if ccrs is None:
-            raise ImportError("Cartopy is required for coastline maps. Check the existing environment with: python -c 'import cartopy'")
-        projection = ccrs.PlateCarree()
-        fig, ax = plt.subplots(figsize=(11, 7), constrained_layout=True,
-                               subplot_kw={"projection": projection})
-        legend = [
-            Line2D([0], [0], color=COLORS[p], linewidth=2, label=p)
-            for p in POLARITIES
-        ] + [
-            Line2D([0], [0], color="#444", linestyle="-", label="Observation contour"),
-            Line2D([0], [0], color="#444", linestyle="--", label="Model contour"),
-        ]
-
+        relative, tag, start, days = MODELS[model]
+        root = data_dir / relative
+        dates = [(np.datetime64(start) + np.timedelta64(i, "D")).astype(str).replace("-", "")
+                 for i in range(days)]
+        if min_days > days:
+            raise ValueError(f"{model} only has {days} days; --min-consecutive-days {min_days} is impossible")
+        obs_root = data_dir / "GLOENS/OBS"
+        if min_days:
+            model_data = model_frames(root, dates, None, min_days)
+            obs_data = frames_from_tracks(obs_root, dates, "shape", min_days)
+        else:
+            model_data, obs_data = [], []
+            for date in dates:
+                model_data.append({p: read_contours(root / "DETECT" / f"{p}_{tag}_{date}.nc")
+                                   for p, _ in POLARITIES})
+                obs_data.append({p: read_contours(obs_root / "DETECT" / f"{p}_OBS_{date}.nc")
+                                 for p, _ in POLARITIES})
+        if not any(model_data[0][p] or obs_data[0][p] for p, _ in POLARITIES):
+            raise ValueError(f"{model}: no shapes in first frame; inspect detection/track files")
+        fig = plt.figure(figsize=(13.5, 8), facecolor="white")
+        ax = fig.add_axes((0.065, 0.12, 0.88, 0.75), projection=projection)
+        ax.set_extent(bounds, crs=projection)
+        ax.set_facecolor("white")
+        ax.add_feature(cfeature.LAND.with_scale("10m"), facecolor="#eeeeee",
+                       edgecolor="none", zorder=9)
+        ax.coastlines(resolution="10m", linewidth=.75, color="#777777", zorder=10)
+        gl = ax.gridlines(crs=projection, draw_labels=True, linewidth=.5,
+                          alpha=.35, color="#999999", linestyle="--")
+        gl.top_labels = False
+        gl.right_labels = False
+        gl.xlabel_style = {"size": 9, "color": "#444444"}
+        gl.ylabel_style = {"size": 9, "color": "#444444"}
+        fig.text(.065, .94, f"{model} | Model vs Observed Eddy Shapes",
+                 fontsize=19, fontweight="bold", color="#222222")
+        fig.text(.065, .90, f"{start} | {days} forecast days | "
+                 f"minimum persistence {min_days} days", fontsize=11, color="#555555")
+        artists = {}
+        for p, color in POLARITIES:
+            for source, linestyle, alpha, width in (
+                ("OBS", "solid", .85, 1.0), ("MODEL", "dashed", .65, .8)
+            ):
+                artist = LineCollection([], colors=[color], linestyles=linestyle,
+                                        linewidths=width, alpha=alpha,
+                                        transform=projection, zorder=7)
+                ax.add_collection(artist)
+                artists[(p, source)] = artist
+        legend = [Line2D([0], [0], color=color, label=p) for p, color in POLARITIES]
+        legend += [Line2D([0], [0], color="#555555", linestyle="solid", label="OBS"),
+                   Line2D([0], [0], color="#555555", linestyle="dashed", label="Model")]
+        ax.legend(handles=legend, loc="upper left", bbox_to_anchor=(0, -.065),
+                  ncol=4, facecolor="white", edgecolor="none", frameon=False, fontsize=11)
+        label = ax.text(.985, -.065, "", transform=ax.transAxes, ha="right", va="top",
+                        fontsize=10, color="#222222",
+                        bbox=dict(boxstyle="round,pad=0.45", facecolor="white",
+                                  edgecolor="#cccccc", alpha=.96), zorder=12)
         def update(i):
-            ax.clear()
-            date = dates[i]
-            day = frames[i]
-            for polarity in POLARITIES:
-                draw_eddies(ax, day[(polarity, "model")], polarity, False)
-                draw_eddies(ax, day[(polarity, "obs")], polarity, True)
-            ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=projection)
-            ax.add_feature(cfeature.LAND.with_scale("110m"),
-                           facecolor="#eeeeee", edgecolor="none", zorder=0)
-            ax.coastlines(resolution="110m", linewidth=.65,
-                          color="#777777", zorder=1)
-            gl = ax.gridlines(draw_labels=True, linewidth=.45,
-                              alpha=.35, linestyle=":")
-            gl.top_labels = False
-            gl.right_labels = False
-            ax.legend(handles=legend, loc="upper right", fontsize=8,
-                      framealpha=.93, ncol=2)
-            ax.set_title(f"{model} vs Copernicus ADT | {date:%Y-%m-%d} | "
-                         f"forecast day {i+1}/{days}\n"
-                         "Detected eddy contours (no center markers)", fontsize=12)
-            return []
-
-        animation = FuncAnimation(fig, update, frames=days,
-                                  interval=1000 / fps, blit=False, repeat=True)
-        destination = output_dir / f"{model}_vs_OBS.gif"
-        animation.save(destination, writer=PillowWriter(fps=fps), dpi=110)
-        plt.close(fig)
-        print(f"Saved {destination} ({days} frames)", flush=True)
+            for p, _ in POLARITIES:
+                artists[(p, "OBS")].set_segments(obs_data[i][p])
+                artists[(p, "MODEL")].set_segments(model_data[i][p])
+            label.set_text(f"{model} vs OBS | {dates[i]}\n" +
+                           "  ".join(f"{p}: model {len(model_data[i][p])} / "
+                                    f"obs {len(obs_data[i][p])}" for p, _ in POLARITIES))
+            return (*artists.values(), label)
+        animation = FuncAnimation(fig, update, frames=days, interval=1000/fps,
+                                  blit=False, repeat=True)
+        path = output_dir / f"{model}_vs_OBS_shapes.gif"
+        try:
+            animation.save(path, writer=PillowWriter(fps=fps), dpi=dpi)
+        finally:
+            plt.close(fig)
+        print(f"Saved {days} frames to {path}", flush=True)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("data_dir", type=Path)
-    parser.add_argument("--comparison-dir", type=Path)
+    parser.add_argument("--models", nargs="+", choices=tuple(MODELS), default=list(MODELS))
     parser.add_argument("--output-dir", type=Path)
-    parser.add_argument("--models", nargs="+", choices=tuple(MODELS),
-                        default=list(MODELS))
-    parser.add_argument("--fps", type=int, default=2)
+    parser.add_argument("--min-consecutive-days", type=int, default=0)
+    parser.add_argument("--fps", type=float, default=2)
+    parser.add_argument("--dpi", type=int, default=130)
     parser.add_argument("--lon-min", type=float, default=-80)
     parser.add_argument("--lon-max", type=float, default=0)
     parser.add_argument("--lat-min", type=float, default=20)
     parser.add_argument("--lat-max", type=float, default=65)
     args = parser.parse_args()
-    if args.fps < 1 or args.lon_min >= args.lon_max or args.lat_min >= args.lat_max:
-        parser.error("Invalid fps or map bounds")
-    animate(args.data_dir,
-            args.comparison_dir or args.data_dir / "COMPARISON",
+    if args.fps <= 0 or args.min_consecutive_days < 0:
+        parser.error("fps must be positive and min-consecutive-days nonnegative")
+    animate(args.data_dir, args.models,
             args.output_dir or args.data_dir / "COMPARISON/ANIMATIONS",
-            args.models, args.fps, args.lon_min, args.lon_max,
-            args.lat_min, args.lat_max)
+            args.min_consecutive_days, args.fps, args.dpi,
+            [args.lon_min, args.lon_max, args.lat_min, args.lat_max])
 
 
 if __name__ == "__main__":
