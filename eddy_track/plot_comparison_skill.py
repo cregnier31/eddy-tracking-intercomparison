@@ -75,17 +75,18 @@ def plot(root: Path, output: Path):
             dates = sorted(common.date.dropna().unique())
             ax.set_xticks(np.arange(len(dates)))
             ax.set_xticklabels([str(date)[5:] for date in dates])
-            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12)
+            ax.set_xlabel("Valid date (2024, MM-DD)", labelpad=12, fontsize=15)
             ax.set_title("Eddy position error — common valid dates (18–25 July 2024)", pad=14)
             ax.text(.01, .01,
                     "GLOENS initialized 18 July; other forecasts initialized 17 July",
                     transform=ax.transAxes, fontsize=8, color="#555555")
         else:
-            ax.set_xlabel("Forecast lead time (days since model initialization)", labelpad=12)
+            ax.set_xlabel("Forecast lead time (days since model initialization)", labelpad=12, fontsize=15)
             ax.set_title("Eddy position error — full forecast horizons", pad=14)
             ax.set_xlim(left=0, right=27)
             ax.set_xticks([0, 3, 6, 9, 13, 17, 20, 24, 27])
-        ax.set_ylabel("Eddy-center position error (km)")
+        ax.set_ylabel("Eddy-center position error (km)", fontsize=15)
+        ax.tick_params(axis="both", which="major", labelsize=13)
         ax.set_ylim(bottom=0)
         ax.grid(alpha=.22)
         ax.legend(loc="upper left", frameon=False, ncol=2, fontsize=9)
