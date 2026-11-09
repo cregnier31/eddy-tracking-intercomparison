@@ -70,6 +70,9 @@ def main():
                  if args.s3 or root.startswith("s3://")
                  else local_items(root, args.recursive))
         for path, kind in items:
+            # Retain only 3DU and 3DV forecast products.
+            if not re.search(r"(?<![A-Z0-9])3D[UV](?![A-Z0-9])", path.upper()):
+                continue
             if path in seen:
                 continue
             seen.add(path)
