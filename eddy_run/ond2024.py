@@ -84,7 +84,7 @@ def link(source, target, dry_run):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output_root", type=Path, help="e.g. ./data_ond2024")
-    parser.add_argument("--stage", choices=("plan", "detect", "track", "compare"),
+    parser.add_argument("--stage", choices=("plan", "check", "detect", "track", "compare"),
                         default="plan")
     parser.add_argument("--execute", action="store_true",
                         help="Required for detect/track/compare; otherwise print commands")
@@ -114,7 +114,7 @@ def main():
                          "verify_days": days,
                          "source": gloens_store(thu) if model == "GLOENS_MEAN"
                          else f"oceanbench-bucket/{'dev/ml-forecast-outputs/glowcascade_v5_ring' if model == 'GLOW' else 'public/GLO12' if model == 'GLO12' else 'public/ml-forecast-outputs/glonet'}/{wed:%Y%m%d}.zarr"})
-    if args.stage == "plan":
+    if args.stage in ("plan", "check"):
         root.mkdir(parents=True, exist_ok=True)
         path = root / "ond2024_plan.csv"
         with path.open("w", newline="") as f:
@@ -124,6 +124,19 @@ def main():
         print(f"Saved {len(rows)} model-cycle entries: {path}")
         print("NOTE: paths are inferred from the provided inventory; Zarr contents are not yet verified.")
         print("NOTE: model and OBS SSH units, available lead days and ADT dataset coverage must be checked.")
+        if args.stage == "check":
+            import s3fs
+            fs = s3fs.S3FileSystem(anon=True, client_kwargs={"endpoint_url": ENDPOINT})
+            missing = []
+            for row in rows:
+                store = row["source"].removeprefix("s3://")
+                exists = fs.exists(store)
+                print(f"{'OK' if exists else 'MISSING'} {row['model']} {row['init_date']} {store}", flush=True)
+                if not exists:
+                    missing.append(store)
+            if missing:
+                raise SystemExit(f"{len(missing)} forecast stores missing; do not launch the full experiment.")
+            print("All forecast store paths found; variables, lead lengths and ADT still need verification.")
         return
     if args.stage in ("detect", "track") and not args.skip_obs:
         obs_root = root / "OBS_SHARED"
