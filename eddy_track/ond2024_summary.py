@@ -45,8 +45,8 @@ def summarize(root: Path):
          "Absolute amplitude error (cm)", "ond2024_amplitude_error"),
     ):
         frame = frame[np.isfinite(frame[metric])].copy()
-        # Day 1 is initialization. GLOENS initializes on Thursday, others Wednesday.
-        frame["forecast_day"] = frame["forecast_lead_day"].astype(int) + 1
+        # Common valid-date window: day 1 is Thursday for all systems.
+        frame["forecast_day"] = frame["comparison_day"].astype(int) + 1
         rows = []
         fig, ax = plt.subplots(figsize=(12, 7.2))
         fig.subplots_adjust(left=.13, right=.97, top=.88, bottom=.24)
@@ -70,8 +70,10 @@ def summarize(root: Path):
                             color=COLORS[model], alpha=.12, linewidth=0)
         if not rows:
             raise ValueError(f"No valid data for {metric}")
+        if not any(((r.forecast_day >= 1) & (r.forecast_day <= 8)).any() for r in rows):
+            raise ValueError(f"{metric}: no samples in common verification days 1..8")
         ax.set_title(title, fontsize=22, pad=14)
-        ax.set_xlabel("Forecast day (day 1 = initialization)", fontsize=20, labelpad=12)
+        ax.set_xlabel("Common verification day (day 1 = Thursday)", fontsize=20, labelpad=12)
         ax.set_ylabel(ylabel, fontsize=20)
         ax.tick_params(axis="both", labelsize=20)
         ax.set_ylim(bottom=0)
