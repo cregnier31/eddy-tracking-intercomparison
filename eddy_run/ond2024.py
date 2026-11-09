@@ -181,7 +181,8 @@ def main():
             out = root / "COMPARISON" / wed.strftime("%Y%m%d")
             run([python, "-m", "eddy_track.compare_forecasts_obs",
                  str(cycle_root), "--start", thu.isoformat(),
-                 "--days", str(days), "--output-dir", str(out)], dry)
+                 "--days", str(days), "--init-wednesday", wed.isoformat(),
+                 "--output-dir", str(out)], dry)
     print(f"Stage {args.stage} finished (dry_run={dry})", flush=True)
 
 
