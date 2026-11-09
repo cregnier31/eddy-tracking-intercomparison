@@ -30,7 +30,7 @@ def main():
             if not f.is_file():
                 p.error(f"Missing observed track file: {f}")
     for week in range(52):
-        wed=date(2024,10,2)+timedelta(days=7*week)
+        wed=date(2024,1,3)+timedelta(days=7*week)
         thu=wed+timedelta(days=1)
         cycle=root/"CYCLES"/wed.strftime("%Y%m%d")
         for model in a.models:
