@@ -88,6 +88,8 @@ def summarize(root: Path):
         print(f"Saved {output / (stem + '.png')}", flush=True)
     pos.to_csv(output / "ond2024_matched_positions.csv", index=False)
     amp.to_csv(output / "ond2024_matched_amplitudes.csv", index=False)
+    from eddy_track.ond2024_capture import plot_capture
+    plot_capture(root)
     print("Note: pooled matched observations are not statistically independent across cycles.")
 
 
