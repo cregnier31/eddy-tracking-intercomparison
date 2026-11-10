@@ -17,11 +17,11 @@ def main():
     p.add_argument("output_root",type=Path)
     a=p.parse_args()
     root=a.output_root
-    out=root/"COMPARISON/FIGURES"
+    out=root/"COMPARISON_FULL/FIGURES"
     out.mkdir(parents=True,exist_ok=True)
     position=[]
     amplitude=[]
-    for csv in sorted(root.glob("COMPARISON/20??????/*/matched_positions.csv")):
+    for csv in sorted(root.glob("COMPARISON_FULL/20??????/*/matched_positions.csv")):
         model=csv.parent.name
         cycle=csv.parent.parent.name
         if model not in MODELS: continue
@@ -37,16 +37,16 @@ def main():
         for pol in ("Cyclonic","Anticyclonic"):
             sub=df[(df.polarity==pol)&df.position_error_km.notna()].copy()
             if sub.empty: continue
-            obs_path=cycle_root/"GLOENS/OBS/TRACK"/f"{pol}.nc"
-            model_path=(cycle_root/"GLOENS/TRACK"/f"{pol}.nc" if model=="GLOENS_MEAN"
-                        else cycle_root/model/init/"TRACK"/f"{pol}.nc")
+            obs_path=root/"OBS_FULL/GLOENS/OBS/TRACK"/f"{pol}.nc"
+            model_path=(cycle_root/"GLOENS/TRACK_FULL"/f"{pol}.nc" if model=="GLOENS_MEAN"
+                        else cycle_root/model/init/"TRACK_FULL"/f"{pol}.nc")
             obs=amplitudes(obs_path,"obs")
             mod=amplitudes(model_path,"model")
             sub=sub.merge(obs,on=["obs_track","date"],how="left",validate="many_to_one")
             sub=sub.merge(mod,on=["model_track","date"],how="left",validate="many_to_one")
             sub["amplitude_abs_error_m"]=(sub.model_amplitude_m-sub.obs_amplitude_m).abs()
             amplitude.append(sub)
-    if not position: raise ValueError("No full-horizon comparison CSVs found")
+    if len(position)!=52: raise ValueError(f"Expected 52 full-horizon model-cycle CSVs (13 x 4); found {len(position)}")
     pos=pd.concat(position,ignore_index=True)
     amp=pd.concat(amplitude,ignore_index=True) if amplitude else pd.DataFrame()
     for metric,frame,stem,ylabel,scale in (
