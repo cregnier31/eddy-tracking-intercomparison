@@ -32,7 +32,7 @@ def date_strings(start, end):
 
 
 def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
-           lat_max=65, resolution=0.25, dataset_id=DATASET_ID):
+           lat_max=65, resolution=0.25, dataset_id=DATASET_ID, source_file=None):
     """Cache ADT subset and detect daily eddies on the matching 0.25-degree grid."""
     import copernicusmarine
     from eddy_detect.my_functions import compute_eddy
@@ -49,6 +49,11 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
     output.mkdir(parents=True, exist_ok=True)
     dates = date_strings(start, end)
 
+    if source_file is not None:
+        source = Path(source_file)
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        raw = source
     if not raw.exists():
         print(f"Downloading {dataset_id} ADT for {start}..{end}", flush=True)
         with tempfile.TemporaryDirectory(prefix="obs-download-") as tmp:
@@ -142,10 +147,11 @@ def main(argv=None):
     parser.add_argument("--lat-max", type=float, default=65)
     parser.add_argument("--resolution", type=float, default=0.25)
     parser.add_argument("--dataset-id", default=DATASET_ID)
+    parser.add_argument("--source-file", type=Path, help="Local NetCDF with ADT and requested observation dates")
     args = parser.parse_args(argv)
     if args.command == "detect":
         detect(args.data_dir, args.start, args.end, args.lon_min, args.lon_max,
-               args.lat_min, args.lat_max, args.resolution, args.dataset_id)
+               args.lat_min, args.lat_max, args.resolution, args.dataset_id, args.source_file)
     else:
         track(args.data_dir, args.start, args.end)
 
