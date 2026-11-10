@@ -8,7 +8,7 @@ import argparse
 from datetime import date,timedelta
 from pathlib import Path
 import subprocess,sys
-from eddy_run.ond2024 import gloens_store,link,FORECAST_DAYS
+from eddy_run.ond2024 import gloens_store,FORECAST_DAYS
 from eddy_track.gloens_members import DEFAULT_TEMPLATE, tracking_config
 import shutil,tempfile
 
@@ -72,7 +72,6 @@ def main():
             print("+ "+" ".join(cmd),flush=True)
             if a.execute: subprocess.run(cmd,check=True)
         if a.stage=="compare":
-            link(a.obs_root/"GLOENS/OBS",cycle/"GLOENS/OBS",not a.execute)
             for model in a.models:
                 init=thu if model=="GLOENS_MEAN" else wed
                 days=FORECAST_DAYS[model]
@@ -80,7 +79,8 @@ def main():
                 out=root/"COMPARISON_FULL"/wed.strftime("%Y%m%d")/model
                 cmd=[sys.executable,"-m","eddy_track.compare_forecasts_obs",
                      str(cycle),"--start",init.isoformat(),"--days",str(days),
-                     "--init-wednesday",wed.isoformat(),"--track-subdir","TRACK_FULL","--models",model,
+                     "--init-wednesday",wed.isoformat(),"--track-subdir","TRACK_FULL",
+                     "--obs-track-dir",str(a.obs_root.resolve()/"GLOENS/OBS/TRACK"),"--models",model,
                      "--output-dir",str(out)]
                 print("+ "+" ".join(cmd),flush=True)
                 if a.execute: subprocess.run(cmd,check=True)
