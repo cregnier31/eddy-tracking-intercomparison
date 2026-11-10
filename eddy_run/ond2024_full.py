@@ -8,7 +8,23 @@ import argparse
 from datetime import date,timedelta
 from pathlib import Path
 import subprocess,sys
-from eddy_run.ond2024 import gloens_store,track_gloens,link,FORECAST_DAYS
+from eddy_run.ond2024 import gloens_store,link,FORECAST_DAYS
+from eddy_track.gloens_members import DEFAULT_TEMPLATE, tracking_config
+import shutil,tempfile
+
+def track_gloens_full(cycle, days, execute):
+    detect_dir=cycle/"GLOENS/DETECT"
+    track_dir=cycle/"GLOENS/TRACK_FULL"
+    for pol in ("Cyclonic","Anticyclonic"):
+        files=sorted(detect_dir.glob(f"{pol}_GLOENS_*.nc"))
+        if len(files)!=days: raise ValueError(f"{detect_dir}: {len(files)} {pol} files, expected {days}")
+        exe=shutil.which("EddyTracking")
+        if not exe: raise FileNotFoundError("EddyTracking")
+        track_dir.mkdir(parents=True,exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix="full-gloens-") as tmp:
+            yaml=Path(tmp)/f"{pol}.yaml"
+            yaml.write_text(tracking_config(DEFAULT_TEMPLATE,detect_dir,track_dir,pol))
+            subprocess.run([exe,str(yaml)],check=True)
 
 MODELS=("GLONET","GLOW","GLO12","GLOENS_MEAN")
 BOUNDS=["--lon-min","-80","--lon-max","0","--lat-min","20","--lat-max","65","--resolution","0.25"]
@@ -24,7 +40,7 @@ def main():
     root=a.output_root
     if a.stage=="compare" and set(a.models)!=set(MODELS):
         p.error("Compare requires all four models")
-    if a.execute and a.stage in ("track","compare"):
+    if a.execute and a.stage=="compare":
         for pol in ("Cyclonic","Anticyclonic"):
             f=a.obs_root/"GLOENS/OBS/TRACK"/f"{pol}.nc"
             if not f.is_file():
@@ -47,10 +63,10 @@ def main():
             elif a.stage=="track":
                 if model=="GLOENS_MEAN":
                     print(f"+ Track {model} {init}",flush=True)
-                    if a.execute: track_gloens(cycle,days,False)
+                    if a.execute: track_gloens_full(cycle,days,True)
                     continue
                 cmd=[sys.executable,"-m","eddy_track.zarr_forecasts",model,
-                     init.strftime("%Y%m%d"),str(cycle),"--expected-days",str(days)]
+                     init.strftime("%Y%m%d"),str(cycle),"--expected-days",str(days),"--track-subdir","TRACK_FULL"]
             else:
                 continue
             print("+ "+" ".join(cmd),flush=True)
@@ -61,10 +77,10 @@ def main():
                 init=thu if model=="GLOENS_MEAN" else wed
                 days=FORECAST_DAYS[model]
                 # Match on each system's actual initialization day.
-                out=root/"COMPARISON"/wed.strftime("%Y%m%d")/model
+                out=root/"COMPARISON_FULL"/wed.strftime("%Y%m%d")/model
                 cmd=[sys.executable,"-m","eddy_track.compare_forecasts_obs",
                      str(cycle),"--start",init.isoformat(),"--days",str(days),
-                     "--init-wednesday",wed.isoformat(),"--models",model,
+                     "--init-wednesday",wed.isoformat(),"--track-subdir","TRACK_FULL","--models",model,
                      "--output-dir",str(out)]
                 print("+ "+" ".join(cmd),flush=True)
                 if a.execute: subprocess.run(cmd,check=True)
