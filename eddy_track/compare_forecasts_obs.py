@@ -26,7 +26,7 @@ MODELS = {
 
 
 def compare(data_dir: Path, start: str, days: int, max_distance_km: float,
-            output_dir: Path, models: tuple[str, ...], init_dates=None):
+            output_dir: Path, models: tuple[str, ...], init_dates=None, track_subdir="TRACK"):
     if days < 1 or max_distance_km <= 0:
         raise ValueError("days must be positive and max-distance-km > 0")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -44,6 +44,8 @@ def compare(data_dir: Path, start: str, days: int, max_distance_km: float,
             relative_dir = ("GLOENS/TRACK" if model == "GLOENS_MEAN"
                             else f"{model}/{init_date.replace('-', '')}/TRACK")
         model_dir = data_dir / relative_dir
+        if track_subdir != "TRACK":
+            model_dir = model_dir.parent / track_subdir
         init_day = np.datetime64(init_date, "D")
         for polarity in POLARITIES:
             obs = observations[polarity]
@@ -130,6 +132,7 @@ def main():
     parser.add_argument("--models", nargs="+", choices=tuple(MODELS),
                         default=list(MODELS))
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--track-subdir", default="TRACK", choices=("TRACK", "TRACK_FULL"))
     parser.add_argument("--init-wednesday", help="Cycle Wednesday YYYY-MM-DD")
     args = parser.parse_args()
     output = args.output_dir or args.data_dir / "COMPARISON" / (
@@ -142,7 +145,8 @@ def main():
         init_dates = {model: str(thu if model == "GLOENS_MEAN" else wed)
                       for model in args.models}
     compare(args.data_dir, args.start, args.days, args.max_distance_km,
-            output, tuple(args.models), init_dates=init_dates)
+            output, tuple(args.models), init_dates=init_dates,
+            track_subdir=args.track_subdir)
 
 
 if __name__ == "__main__":
