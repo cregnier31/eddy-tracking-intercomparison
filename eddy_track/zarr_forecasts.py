@@ -13,6 +13,7 @@ def main():
     parser.add_argument("init_date")
     parser.add_argument("data_dir")
     parser.add_argument("--expected-days", type=int, default=None, help="Default: GLONET/GLO12 10, GLOW 9")
+    parser.add_argument("--track-subdir", default="TRACK", choices=("TRACK", "TRACK_FULL"))
     parser.add_argument("--template", type=Path, default=DEFAULT_TEMPLATE)
     args = parser.parse_args()
     expected_days = args.expected_days if args.expected_days is not None else (9 if args.model == "GLOW" else 10)
@@ -22,7 +23,7 @@ def main():
     if not executable:
         raise FileNotFoundError("EddyTracking not found in PATH")
     root = Path(args.data_dir) / args.model / args.init_date
-    detect_dir, track_dir = root / "DETECT", root / "TRACK"
+    detect_dir, track_dir = root / "DETECT", root / args.track_subdir
     for polarity in POLARITIES:
         files = sorted(detect_dir.glob(f"{polarity}_{args.model}_*.nc"))
         if len(files) != expected_days:
