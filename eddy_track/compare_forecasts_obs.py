@@ -26,12 +26,12 @@ MODELS = {
 
 
 def compare(data_dir: Path, start: str, days: int, max_distance_km: float,
-            output_dir: Path, models: tuple[str, ...], init_dates=None, track_subdir="TRACK"):
+            output_dir: Path, models: tuple[str, ...], init_dates=None, track_subdir="TRACK", obs_track_dir=None):
     if days < 1 or max_distance_km <= 0:
         raise ValueError("days must be positive and max-distance-km > 0")
     output_dir.mkdir(parents=True, exist_ok=True)
     start_day = np.datetime64(start, "D")
-    obs_dir = data_dir / "GLOENS/OBS/TRACK"
+    obs_dir = Path(obs_track_dir) if obs_track_dir is not None else data_dir / "GLOENS/OBS/TRACK"
     observations = {
         pol: read_tracks(obs_dir / f"{pol}.nc", start, days)
         for pol in POLARITIES
@@ -132,6 +132,7 @@ def main():
     parser.add_argument("--models", nargs="+", choices=tuple(MODELS),
                         default=list(MODELS))
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--obs-track-dir", type=Path, help="Override observed track directory without modifying cycle symlinks")
     parser.add_argument("--track-subdir", default="TRACK", choices=("TRACK", "TRACK_FULL"))
     parser.add_argument("--init-wednesday", help="Cycle Wednesday YYYY-MM-DD")
     args = parser.parse_args()
@@ -146,7 +147,7 @@ def main():
                       for model in args.models}
     compare(args.data_dir, args.start, args.days, args.max_distance_km,
             output, tuple(args.models), init_dates=init_dates,
-            track_subdir=args.track_subdir)
+            track_subdir=args.track_subdir, obs_track_dir=args.obs_track_dir)
 
 
 if __name__ == "__main__":
