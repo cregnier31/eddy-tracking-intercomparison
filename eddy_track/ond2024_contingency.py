@@ -94,9 +94,11 @@ def classify_radius(value):
     return None
 
 
-def verify(root, max_distance_km=50):
+def verify(root, max_distance_km=50, max_days=9):
     if max_distance_km <= 0:
         raise ValueError("max_distance_km must be positive")
+    if not 1 <= max_days <= min(HORIZONS.values()):
+        raise ValueError("max_days must be between 1 and 9 for a common four-model horizon")
     obs_dir = root / "OBS_FULL/GLOENS/OBS/TRACK"
     obs_cache = {}
     rows, event_rows = []
@@ -104,7 +106,8 @@ def verify(root, max_distance_km=50):
         wed = date(2024, 10, 2) + timedelta(days=7 * week)
         thu = wed + timedelta(days=1)
         cycle = wed.strftime("%Y%m%d")
-        for model, days in HORIZONS.items():
+        for model, horizon in HORIZONS.items():
+            days = min(horizon, max_days)
             init = thu if model == "GLOENS_MEAN" else wed
             start = init.isoformat()
             model_dir = (root / "CYCLES" / cycle / "GLOENS/TRACK_FULL"
@@ -174,7 +177,7 @@ def size_statistics(events):
     return table
 
 
-def plot_scores(by_day, output):
+def plot_scores(by_day, output, max_days=9):
     for metric, ylabel in (
         ("pod", "Probability of detection (POD)"),
         ("far", "False alarm ratio (FAR)"),
@@ -190,8 +193,8 @@ def plot_scores(by_day, output):
         ax.set_xlabel("Forecast day (day 1 = initialization)")
         ax.set_ylabel(ylabel)
         ax.set_title("OND 2024 — Daily eddy contingency: " + metric.upper())
-        ax.set_xlim(1, 28)
-        ax.set_xticks([1, 4, 7, 10, 14, 18, 21, 25, 28])
+        ax.set_xlim(1, max_days)
+        ax.set_xticks(range(1, max_days + 1))
         if metric != "frequency_bias":
             ax.set_ylim(0, 1.02)
         else:
@@ -214,11 +217,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output_root", type=Path)
     parser.add_argument("--max-distance-km", type=float, default=50)
+    parser.add_argument("--max-days", type=int, default=9,
+                        help="Common forecast horizon, 1–9 days (default: 9)")
     args = parser.parse_args(argv)
     root = args.output_root
     out = root / "COMPARISON_FULL/FIGURES"
     # Verify all inputs before writing any results.
-    daily, events = verify(root, args.max_distance_km)
+    daily, events = verify(root, args.max_distance_km, args.max_days)
     out.mkdir(parents=True, exist_ok=True)
     daily.to_csv(out / "ond2024_full_contingency_daily.csv", index=False)
     aggregate(daily, ["model", "polarity", "forecast_day"]).to_csv(
@@ -231,8 +236,8 @@ def main(argv=None):
     overall.to_csv(out / "ond2024_full_contingency_summary.csv", index=False)
     events.to_csv(out / "ond2024_full_contingency_events.csv", index=False)
     size_statistics(events).to_csv(out / "ond2024_full_contingency_by_radius.csv", index=False)
-    plot_scores(by_day, out)
-    print("\nPooled full-horizon contingency counts and scores:")
+    plot_scores(by_day, out, args.max_days)
+    print(f"\nPooled contingency scores for common {args.max_days}-day horizon:")
     print(overall.to_string(index=False))
     print(f"\nSaved contingency outputs to {out}")
 
