@@ -94,16 +94,16 @@ def classify_radius(value):
     return None
 
 
-def verify(root, max_distance_km=50, max_days=9):
+def verify(root, max_distance_km=50, max_days=9, year2024=False, obs_root=None):
     if max_distance_km <= 0:
         raise ValueError("max_distance_km must be positive")
     if not 1 <= max_days <= min(HORIZONS.values()):
         raise ValueError("max_days must be between 1 and 9 for a common four-model horizon")
-    obs_dir = root / "OBS_FULL/GLOENS/OBS/TRACK"
+    obs_dir = (Path(obs_root) if obs_root is not None else root / "OBS_FULL") / "GLOENS/OBS/TRACK"
     obs_cache = {}
     rows, event_rows = [], []
-    for week in range(13):
-        wed = date(2024, 10, 2) + timedelta(days=7 * week)
+    for week in range(52 if year2024 else 13):
+        wed = date(2024, 1, 3) + timedelta(days=7 * week) if year2024 else date(2024, 10, 2) + timedelta(days=7 * week)
         thu = wed + timedelta(days=1)
         cycle = wed.strftime("%Y%m%d")
         for model, horizon in HORIZONS.items():
@@ -217,13 +217,15 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output_root", type=Path)
     parser.add_argument("--max-distance-km", type=float, default=50)
+    parser.add_argument("--year2024", action="store_true", help="Verify all 52 weekly cycles of 2024")
+    parser.add_argument("--obs-root", type=Path, help="Root containing GLOENS/OBS/TRACK; defaults to output_root/OBS_FULL")
     parser.add_argument("--max-days", type=int, default=9,
                         help="Common forecast horizon, 1–9 days (default: 9)")
     args = parser.parse_args(argv)
     root = args.output_root
     out = root / "COMPARISON_FULL/FIGURES"
     # Verify all inputs before writing any results.
-    daily, events = verify(root, args.max_distance_km, args.max_days)
+    daily, events = verify(root, args.max_distance_km, args.max_days, args.year2024, args.obs_root)
     out.mkdir(parents=True, exist_ok=True)
     daily.to_csv(out / "ond2024_full_contingency_daily.csv", index=False)
     aggregate(daily, ["model", "polarity", "forecast_day"]).to_csv(
@@ -237,7 +239,7 @@ def main(argv=None):
     events.to_csv(out / "ond2024_full_contingency_events.csv", index=False)
     size_statistics(events).to_csv(out / "ond2024_full_contingency_by_radius.csv", index=False)
     plot_scores(by_day, out, args.max_days)
-    print(f"\nPooled contingency scores for common {args.max_days}-day horizon:")
+    print(f"\nPooled contingency scores for {52 if args.year2024 else 13} cycles, common {args.max_days}-day horizon:")
     print(overall.to_string(index=False))
     print(f"\nSaved contingency outputs to {out}")
 
