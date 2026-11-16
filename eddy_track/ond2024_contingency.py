@@ -101,7 +101,7 @@ def verify(root, max_distance_km=50, max_days=9):
         raise ValueError("max_days must be between 1 and 9 for a common four-model horizon")
     obs_dir = root / "OBS_FULL/GLOENS/OBS/TRACK"
     obs_cache = {}
-    rows, event_rows = []
+    rows, event_rows = [], []
     for week in range(13):
         wed = date(2024, 10, 2) + timedelta(days=7 * week)
         thu = wed + timedelta(days=1)
