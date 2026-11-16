@@ -38,7 +38,7 @@ def grouped_scores(daily, keys):
     return counts
 
 
-def plot_leads(daily, out, max_days):
+def plot_leads(daily, out, max_days, period="OND 2024"):
     pooled = grouped_scores(daily, ["model", "forecast_day"])
     polarity = grouped_scores(daily, ["model", "polarity", "forecast_day"])
     pooled.to_csv(out / "ond2024_contingency_9d_lead_scores.csv", index=False)
@@ -64,7 +64,7 @@ def plot_leads(daily, out, max_days):
         axes[0].set_ylabel(label)
         handles, labels = axes[0].get_legend_handles_labels()
         fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False)
-        fig.suptitle(f"OND 2024 — {label} by lead day and polarity", fontsize=15)
+        fig.suptitle(f"{period} — {label} by lead day and polarity", fontsize=15)
         fig.tight_layout(rect=(0, .11, 1, .94))
         path = out / f"ond2024_contingency_9d_{metric}_polarity.png"
         fig.savefig(path, dpi=220)
@@ -72,7 +72,7 @@ def plot_leads(daily, out, max_days):
         print(f"Saved {path}")
 
 
-def plot_radius(events, out):
+def plot_radius(events, out, period="OND 2024"):
     needed = {"model", "polarity", "radius_km", "event"}
     if not needed.issubset(events.columns):
         raise ValueError(f"Event CSV missing columns: {needed - set(events.columns)}")
@@ -114,7 +114,7 @@ def plot_radius(events, out):
     axes[0].set_ylabel("Probability of detection")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False)
-    fig.suptitle("OND 2024 — POD by observed eddy radius (days 1–9)", fontsize=15)
+    fig.suptitle(f"{period} — POD by observed eddy radius (days 1–9)", fontsize=15)
     fig.tight_layout(rect=(0, .11, 1, .94))
     path = out / "ond2024_contingency_9d_radius_pod.png"
     fig.savefig(path, dpi=220)
@@ -137,9 +137,10 @@ def main(argv=None):
         raise ValueError(f"Expected exactly days 1–9, got {days}")
     if set(daily.model.unique()) != set(MODELS):
         raise ValueError("Expected all four models in daily contingency CSV")
-    plot_leads(daily, out, 9)
+    period = "Full year 2024" if daily.cycle.nunique() > 13 else "OND 2024"
+    plot_leads(daily, out, 9, period)
     events = pd.read_csv(event_path)
-    plot_radius(events, out)
+    plot_radius(events, out, period)
     print(f"Diagnostics saved in {out}")
 
 
