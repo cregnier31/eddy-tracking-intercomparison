@@ -21,7 +21,7 @@ def compute(root:Path):
     base=root/"COMPARISON_FULL"
     records=[]
     cycles=sorted(p.name for p in base.glob("20??????") if p.is_dir())
-    if len(cycles)!=13:raise ValueError(f"Expected 52 weekly cycles, found {len(cycles)}")
+    if len(cycles)!=52:raise ValueError(f"Expected 52 weekly cycles, found {len(cycles)}")
     for cycle in cycles:
         for model in MODELS:
             folder=base/cycle/model
