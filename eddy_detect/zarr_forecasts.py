@@ -125,7 +125,7 @@ BUCKET = "oceanbench-bucket"
 def detect(model, init_date, data_dir, first_day=0, last_day=None,
            lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
            resolution=0.25, endpoint=ENDPOINT, assume_ssh_metres=False,
-           gaussian_sigma_km=None, regrid_method="linear"):
+           gaussian_sigma_km=None, regrid_method="linear", native_grid=False):
     model = model.upper()
     if model not in MODELS:
         raise ValueError(f"Unknown model {model}; choose {list(MODELS)}")
@@ -135,6 +135,12 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
         raise ValueError("Invalid geographic bounds")
     if gaussian_sigma_km is not None and (model != "GLO12" or gaussian_sigma_km <= 0):
         raise ValueError("--gaussian-sigma-km requires GLO12 and a positive scale")
+    if native_grid and model != "GLO12":
+        raise ValueError("--native-grid is supported for GLO12 only")
+    if native_grid and gaussian_sigma_km is not None:
+        raise ValueError("--native-grid baseline must not use Gaussian filtering")
+    if native_grid and regrid_method != "linear":
+        raise ValueError("--native-grid cannot be combined with a regrid method")
     if regrid_method not in ("linear", "conservative"):
         raise ValueError("Unknown regrid method")
     if regrid_method == "conservative" and model != "GLO12":
@@ -201,21 +207,27 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
             source = xr.DataArray(ssh, dims=("latitude", "longitude"),
                                   coords={"latitude": src_lat[lat_idx][lat_order],
                                           "longitude": src_lon_subset})
-            if regrid_method == "conservative":
+            if native_grid:
+                # Preserve the native GLO12 grid and SSH values without regridding.
+                target = ssh
+                grid_lon, grid_lat = src_lon_subset, src_lat[lat_idx][lat_order]
+            elif regrid_method == "conservative":
                 target = conservative_regrid_ssh(ssh, src_lon_subset,
                                                  src_lat[lat_idx][lat_order], lon, lat)
+                grid_lon, grid_lat = lon, lat
             else:
                 target = source.interp(longitude=lon, latitude=lat).values
-            u, v = geostrophic_velocity(target, lon, lat)
+                grid_lon, grid_lat = lon, lat
+            u, v = geostrophic_velocity(target, grid_lon, grid_lat)
             grid = xr.Dataset(
                 {"zos": (("latitude", "longitude"), target.astype("float32")),
                  "uo": (("latitude", "longitude"), u.astype("float32")),
                  "vo": (("latitude", "longitude"), v.astype("float32"))},
-                coords={"longitude": lon, "latitude": lat},
+                coords={"longitude": grid_lon, "latitude": grid_lat},
                 attrs={"source_model": model, "source_store": store,
                        "forecast_timestamp": str(timestamp),
                        "gaussian_lowpass_sigma_km": (float(gaussian_sigma_km) if gaussian_sigma_km is not None else 0.0),
-                       "regrid_method": regrid_method},
+                       "regrid_method": ("native" if native_grid else regrid_method)},
             )
             grid.zos.attrs["units"] = "m"
             grid.uo.attrs["units"] = "m/s"
@@ -243,6 +255,8 @@ def main():
     parser.add_argument("--lat-min", type=float, default=20)
     parser.add_argument("--lat-max", type=float, default=65)
     parser.add_argument("--resolution", type=float, default=0.25)
+    parser.add_argument("--native-grid",action="store_true",
+                        help="GLO12 native-resolution baseline: no SSH interpolation or Gaussian filter")
     parser.add_argument("--regrid-method",choices=("linear","conservative"),default="linear",
                         help="GLO12: area-weighted conservative regridding or existing linear interpolation")
     parser.add_argument("--gaussian-sigma-km", type=float, default=None,
@@ -254,7 +268,7 @@ def main():
     detect(args.model, args.init_date, args.data_dir, args.first_day, args.last_day,
            args.lon_min, args.lon_max, args.lat_min, args.lat_max,
            args.resolution, args.endpoint, args.assume_ssh_metres,
-           args.gaussian_sigma_km, args.regrid_method)
+           args.gaussian_sigma_km, args.regrid_method, args.native_grid)
 
 
 if __name__ == "__main__":
