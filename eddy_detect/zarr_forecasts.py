@@ -12,6 +12,43 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 import s3fs
+from scipy.ndimage import gaussian_filter1d
+
+
+def gaussian_lowpass_ssh(ssh, longitude, latitude, sigma_km):
+    """NaN-normalized separable Gaussian in physical kilometres on a regular lat/lon grid.
+
+    Longitude kernel varies by latitude; latitude kernel uses constant meridional spacing.
+    Original land mask is retained. This smooths SSH, not derived currents.
+    """
+    if sigma_km <= 0:
+        raise ValueError("sigma_km must be positive")
+    z = np.asarray(ssh, dtype=np.float64)
+    lon = np.asarray(longitude, dtype=float)
+    lat = np.asarray(latitude, dtype=float)
+    if z.shape != (len(lat), len(lon)) or len(lat) < 3 or len(lon) < 3:
+        raise ValueError("SSH and coordinates have incompatible dimensions")
+    if not (np.all(np.diff(lat) > 0) and np.all(np.diff(lon) > 0)):
+        raise ValueError("Coordinates must be increasing")
+    dx_deg = float(np.median(np.diff(lon)))
+    dy_km = 111.195 * float(np.median(np.diff(lat)))
+    valid = np.isfinite(z)
+    numerator = np.where(valid, z, 0.0)
+    weights = valid.astype(float)
+    # Row-wise zonal smoothing with latitude-dependent physical grid spacing.
+    for j, latitude in enumerate(lat):
+        dx_km = 111.195 * dx_deg * np.cos(np.deg2rad(latitude))
+        if dx_km <= 0:
+            raise ValueError("Invalid latitude for zonal filtering")
+        sx = sigma_km / dx_km
+        numerator[j] = gaussian_filter1d(numerator[j], sx, mode="nearest", truncate=4)
+        weights[j] = gaussian_filter1d(weights[j], sx, mode="nearest", truncate=4)
+    sy = sigma_km / dy_km
+    numerator = gaussian_filter1d(numerator, sy, axis=0, mode="nearest", truncate=4)
+    weights = gaussian_filter1d(weights, sy, axis=0, mode="nearest", truncate=4)
+    out = np.divide(numerator, weights, out=np.full_like(z, np.nan), where=weights >= 0.5)
+    out[~valid] = np.nan
+    return out
 
 from eddy_detect.gloens_grid import geostrophic_velocity
 
@@ -26,7 +63,8 @@ BUCKET = "oceanbench-bucket"
 
 def detect(model, init_date, data_dir, first_day=0, last_day=None,
            lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
-           resolution=0.25, endpoint=ENDPOINT, assume_ssh_metres=False):
+           resolution=0.25, endpoint=ENDPOINT, assume_ssh_metres=False,
+           gaussian_sigma_km=None):
     model = model.upper()
     if model not in MODELS:
         raise ValueError(f"Unknown model {model}; choose {list(MODELS)}")
@@ -34,6 +72,8 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
         raise ValueError("Invalid lead-day range or resolution")
     if not lon_min < lon_max or not lat_min < lat_max:
         raise ValueError("Invalid geographic bounds")
+    if gaussian_sigma_km is not None and (model != "GLO12" or gaussian_sigma_km <= 0):
+        raise ValueError("--gaussian-sigma-km requires GLO12 and a positive scale")
     if model == "GLOW" and not assume_ssh_metres:
         raise ValueError("GLOW zos has no units metadata; verify metres and pass --assume-ssh-metres")
     from eddy_detect.my_functions import compute_eddy
@@ -91,6 +131,8 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
                 lon_name: lon_idx, lat_name: lat_idx,
             }).transpose(lat_name, lon_name).values
             ssh = np.asarray(ssh)[lat_order][:, lon_order]
+            if gaussian_sigma_km is not None:
+                ssh = gaussian_lowpass_ssh(ssh, src_lon_subset, src_lat[lat_idx][lat_order], gaussian_sigma_km)
             source = xr.DataArray(ssh, dims=("latitude", "longitude"),
                                   coords={"latitude": src_lat[lat_idx][lat_order],
                                           "longitude": src_lon_subset})
@@ -102,7 +144,8 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
                  "vo": (("latitude", "longitude"), v.astype("float32"))},
                 coords={"longitude": lon, "latitude": lat},
                 attrs={"source_model": model, "source_store": store,
-                       "forecast_timestamp": str(timestamp)},
+                       "forecast_timestamp": str(timestamp),
+                       "gaussian_lowpass_sigma_km": (float(gaussian_sigma_km) if gaussian_sigma_km is not None else 0.0)},
             )
             grid.zos.attrs["units"] = "m"
             grid.uo.attrs["units"] = "m/s"
@@ -130,13 +173,16 @@ def main():
     parser.add_argument("--lat-min", type=float, default=20)
     parser.add_argument("--lat-max", type=float, default=65)
     parser.add_argument("--resolution", type=float, default=0.25)
+    parser.add_argument("--gaussian-sigma-km", type=float, default=None,
+                        help="GLO12 only: NaN-aware Gaussian SSH low-pass on native grid, before regridding (km)")
     parser.add_argument("--endpoint", default=ENDPOINT)
     parser.add_argument("--assume-ssh-metres", action="store_true",
                         help="Explicitly confirm missing SSH units are metres")
     args = parser.parse_args()
     detect(args.model, args.init_date, args.data_dir, args.first_day, args.last_day,
            args.lon_min, args.lon_max, args.lat_min, args.lat_max,
-           args.resolution, args.endpoint, args.assume_ssh_metres)
+           args.resolution, args.endpoint, args.assume_ssh_metres,
+           args.gaussian_sigma_km)
 
 
 if __name__ == "__main__":
