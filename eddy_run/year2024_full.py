@@ -36,8 +36,13 @@ def main():
     p.add_argument("--execute",action="store_true")
     p.add_argument("--obs-root",type=Path,required=True,help="Directory containing GLOENS/OBS/TRACK with full observation period")
     p.add_argument("--models",nargs="+",choices=MODELS,default=list(MODELS))
+    p.add_argument("--glo12-gaussian-sigma-km",type=float,default=None,
+                   help="GLO12 detect stage: native-grid Gaussian SSH low-pass before 0.25-degree interpolation")
     a=p.parse_args()
     root=a.output_root
+    if a.glo12_gaussian_sigma_km is not None:
+        if a.glo12_gaussian_sigma_km <= 0 or a.stage != "detect" or a.models != ["GLO12"]:
+            p.error("--glo12-gaussian-sigma-km requires --stage detect --models GLO12 and positive sigma")
     if a.stage=="compare" and set(a.models)!=set(MODELS):
         p.error("Compare requires all four models")
     if a.execute and a.stage=="compare":
@@ -60,6 +65,8 @@ def main():
                     cmd=[sys.executable,"-m","eddy_detect.zarr_forecasts",model,
                          init.strftime("%Y%m%d"),str(cycle),*BOUNDS,
                          "--last-day",str(days),"--assume-ssh-metres"]
+                    if model=="GLO12" and a.glo12_gaussian_sigma_km is not None:
+                        cmd.extend(["--gaussian-sigma-km",str(a.glo12_gaussian_sigma_km)])
             elif a.stage=="track":
                 if model=="GLOENS_MEAN":
                     print(f"+ Track {model} {init}",flush=True)
