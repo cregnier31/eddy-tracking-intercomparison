@@ -36,12 +36,18 @@ def main():
     p.add_argument("--execute",action="store_true")
     p.add_argument("--obs-root",type=Path,required=True,help="Directory containing GLOENS/OBS/TRACK with full observation period")
     p.add_argument("--models",nargs="+",choices=MODELS,default=list(MODELS))
+    p.add_argument("--glo12-native-grid",action="store_true",
+                   help="Detect unfiltered GLO12 on its native 1/12-degree grid")
     p.add_argument("--glo12-regrid-method",choices=("linear","conservative"),default="linear",
                    help="GLO12 detect stage: choose SSH interpolation method")
     p.add_argument("--glo12-gaussian-sigma-km",type=float,default=None,
                    help="GLO12 detect stage: native-grid Gaussian SSH low-pass before 0.25-degree interpolation")
     a=p.parse_args()
     root=a.output_root
+    if a.glo12_native_grid and (a.stage != "detect" or a.models != ["GLO12"] or
+                                 a.glo12_gaussian_sigma_km is not None or
+                                 a.glo12_regrid_method != "linear"):
+        p.error("--glo12-native-grid requires GLO12-only detection without filtering or regridding")
     if a.glo12_regrid_method != "linear" and (a.stage != "detect" or a.models != ["GLO12"]):
         p.error("--glo12-regrid-method conservative requires --stage detect --models GLO12")
     if a.glo12_gaussian_sigma_km is not None:
@@ -70,6 +76,8 @@ def main():
                          init.strftime("%Y%m%d"),str(cycle),*BOUNDS,
                          "--last-day",str(days),"--assume-ssh-metres"]
                     if model=="GLO12":
+                        if a.glo12_native_grid:
+                            cmd.append("--native-grid")
                         cmd.extend(["--regrid-method",a.glo12_regrid_method])
                         if a.glo12_gaussian_sigma_km is not None:
                             cmd.extend(["--gaussian-sigma-km",str(a.glo12_gaussian_sigma_km)])
