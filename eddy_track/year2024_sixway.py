@@ -35,8 +35,8 @@ LABELS = {
 PALETTE = {
     **{k: COLORS.get(k, "gray") for k in ("GLONET", "GLOENS_MEAN")},
     "GLONET3": COLORS.get("GLOW", "tab:orange"),
-    "GLO12_025": "tab:gray", "GLO12_NATIVE": "tab:purple",
-    "GLO12_LP15_CONS": "tab:green",
+    "GLO12_025": "#E68613", "GLO12_NATIVE": "#4B176B",
+    "GLO12_LP15_CONS": "#B85CBB",
 }
 
 def cycle_dates():
