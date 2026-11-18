@@ -55,6 +55,8 @@ def main():
     p.add_argument("--base-root", type=Path, default=Path("data_2024"))
     p.add_argument("--native-root", type=Path, default=Path("data_2024_glo12_native"))
     p.add_argument("--filtered-root", type=Path, default=Path("data_2024_lp15_cons"))
+    p.add_argument("--conservative-root", type=Path, default=None,
+                   help="Include seventh configuration: GLO12 conservative 0.25-degree without Gaussian filtering")
     p.add_argument("--obs-root", type=Path, default=None)
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sixway"))
     p.add_argument("--max-distance-km", type=float, default=50)
@@ -63,6 +65,11 @@ def main():
     if args.max_distance_km <= 0:
         p.error("--max-distance-km must be positive")
     roots = {"base": args.base_root, "native": args.native_root, "filtered": args.filtered_root}
+    if args.conservative_root is not None:
+        roots["conservative"] = args.conservative_root
+        SOURCES["GLO12_CONS"] = ("conservative", "GLO12", 10)
+        LABELS["GLO12_CONS"] = "GLO12 conservative 0.25° (no Gaussian)"
+        PALETTE["GLO12_CONS"] = "#008C95"
     obs_root = args.obs_root or args.base_root / "OBS_FULL"
     obs_dir = obs_root / "GLOENS/OBS/TRACK"
     out = args.output_root / "COMPARISON_FULL"
@@ -171,7 +178,7 @@ def main():
                                 color=PALETTE[label], alpha=.10)
             ax.set_xlabel("Forecast day (day 1 = initialization)")
             ax.set_ylabel("Eddy-center position error (km)")
-            ax.set_title("2024: six-configuration position error " +
+            ax.set_title("2024: configuration position error " +
                          ("(common 9 days)" if common else "(full horizons)"))
             ax.set_xlim(1, 9 if common else 28)
             ax.set_ylim(bottom=0)
@@ -192,7 +199,7 @@ def main():
                             label=LABELS[label], color=PALETTE[label])
                 ax.set_xlabel("Forecast day")
                 ax.set_ylabel(metric.upper())
-                ax.set_title("2024 six-configuration contingency: " + metric.upper())
+                ax.set_title("2024 configuration contingency: " + metric.upper())
                 ax.set_xlim(1, 9)
                 ax.set_xticks(range(1, 10))
                 ax.grid(alpha=.2)
