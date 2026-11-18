@@ -14,6 +14,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+try:
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+except ImportError:
+    ccrs = None
+    cfeature = None
 from eddy_track.ond2024_contingency import load_daily
 from eddy_track.match_obs_gloens import POLARITIES
 from eddy_track.year2024_sixway import SOURCES, LABELS, PALETTE, cycle_dates, track_path
@@ -56,15 +62,39 @@ def save_maps(data, output, cell_deg):
         count, _, _ = np.histogram2d(sub.latitude, sub.longitude, bins=[yedges, xedges])
         density[label] = count / (52 * 9)
     vmax = max(np.nanmax(a) for a in density.values())
-    fig, axes = plt.subplots(3, 3, figsize=(17, 15), sharex=True, sharey=True)
+    if ccrs is not None:
+        projection = ccrs.PlateCarree()
+        fig, axes = plt.subplots(3, 3, figsize=(17, 15),
+                                 subplot_kw={"projection": projection})
+    else:
+        print("WARNING: Cartopy is not installed; geographic panels will lack coastlines. "
+              "Install cartopy in eddy_gloens for publication-style maps.")
+        fig, axes = plt.subplots(3, 3, figsize=(17, 15), sharex=True, sharey=True)
     for ax, label in zip(axes.flat, names):
+        kw = {"transform": ccrs.PlateCarree()} if ccrs is not None else {}
         im = ax.pcolormesh(xedges, yedges, density[label], cmap="viridis",
-                           vmin=0, vmax=max(vmax, 1e-9), shading="auto")
-        ax.set_title(LABELS.get(label, label))
-        ax.set_aspect("auto")
+                           vmin=0, vmax=max(vmax, 1e-9), shading="auto", **kw)
+        if ccrs is not None:
+            ax.set_extent([-80, 0, 20, 65], crs=ccrs.PlateCarree())
+            ax.add_feature(cfeature.LAND.with_scale("110m"), facecolor="#e5e3dd",
+                           edgecolor="none", zorder=3)
+            ax.coastlines(resolution="110m", color="#343b45", linewidth=0.65, zorder=4)
+            ax.add_feature(cfeature.BORDERS.with_scale("110m"), edgecolor="#888888",
+                           linewidth=0.35, zorder=4)
+            grid = ax.gridlines(draw_labels={"bottom": True, "left": True},
+                                linewidth=0.4, color="gray", alpha=0.35,
+                                linestyle="--")
+            grid.top_labels = False
+            grid.right_labels = False
+            grid.xlabel_style = {"size": 7}
+            grid.ylabel_style = {"size": 7}
+        else:
+            ax.set_xlim(-80, 0)
+            ax.set_ylim(20, 65)
+            ax.set_xlabel("Longitude (°)")
+            ax.set_ylabel("Latitude (°)")
+        ax.set_title(LABELS.get(label, label), fontsize=10)
     for ax in list(axes.flat)[len(names):]: ax.axis("off")
-    for ax in axes[-1]: ax.set_xlabel("Longitude (°)")
-    for ax in axes[:, 0]: ax.set_ylabel("Latitude (°)")
     fig.colorbar(im, ax=axes.ravel().tolist(), label="Mean tracked eddy-day instances per grid cell per forecast day", shrink=.7)
     fig.suptitle("2024 eddy geographic density — 52 cycles, common 9 days", fontsize=16)
     fig.savefig(output / "year2024_2d_geographic_density.png", dpi=200, bbox_inches="tight")
