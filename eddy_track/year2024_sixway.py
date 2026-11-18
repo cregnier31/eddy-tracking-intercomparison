@@ -58,7 +58,7 @@ def main():
     p.add_argument("--obs-root", type=Path, default=None)
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sixway"))
     p.add_argument("--max-distance-km", type=float, default=50)
-    p.add_argument("--stage", choices=("all", "compare", "contingency", "plots"), default="all")
+    p.add_argument("--stage", choices=("all", "compare", "contingency", "plots", "retention"), default="all")
     args = p.parse_args()
     if args.max_distance_km <= 0:
         p.error("--max-distance-km must be positive")
@@ -201,6 +201,9 @@ def main():
                 fig.savefig(figdir / f"year2024_sixway_{metric}.png", dpi=220)
                 plt.close(fig)
         print(f"Saved six-way diagnostics to {figdir}", flush=True)
+    if args.stage in ("all", "retention"):
+        from eddy_track.year2024_sixway_retention import run as run_retention
+        run_retention(args.output_root)
 
 if __name__ == "__main__":
     main()
