@@ -209,6 +209,13 @@ def main():
                 plt.close(fig)
         print(f"Saved six-way diagnostics to {figdir}", flush=True)
     if args.stage in ("all", "retention"):
+        # When launched with python -m, this file runs as __main__, while the
+        # retention module imports eddy_track.year2024_sixway by its canonical
+        # name. Synchronize optional configurations across those module objects.
+        import eddy_track.year2024_sixway as canonical
+        canonical.SOURCES.update(SOURCES)
+        canonical.LABELS.update(LABELS)
+        canonical.PALETTE.update(PALETTE)
         from eddy_track.year2024_sixway_retention import run as run_retention
         run_retention(args.output_root)
 
