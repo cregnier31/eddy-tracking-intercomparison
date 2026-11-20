@@ -52,6 +52,8 @@ def main():
     p.add_argument("--native-root", type=Path, default=Path("data_2024_glo12_native"))
     p.add_argument("--filtered-root", type=Path, default=Path("data_2024_lp15_cons"))
     p.add_argument("--conservative-root", type=Path)
+    p.add_argument("--native45-root", type=Path, default=None,
+                   help="Include native GLO12 with minimum 45 pixels")
     p.add_argument("--obs-root", type=Path, default=Path("data_2024/OBS_FULL"))
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sevenway"))
     p.add_argument("--cell-deg", type=float, default=2.0)
@@ -73,6 +75,10 @@ def main():
         roots["conservative"] = args.conservative_root
         sources["GLO12_CONS"] = ("conservative", "GLO12", 10)
         labels["GLO12_CONS"] = "GLO12 conservative 0.25° (no Gaussian)"
+    if args.native45_root is not None:
+        roots["native45"] = args.native45_root
+        sources["GLO12_NATIVE45"] = ("native45", "GLO12", 10)
+        labels["GLO12_NATIVE45"] = "GLO12 native 1/12° (45 pixels)"
     labels["OBS_WED"] = "AVISO / OBS (Wednesday)"
     labels["OBS_THU"] = "AVISO / OBS (Thursday)"
     names = list(sources) + ["OBS_WED", "OBS_THU"]
@@ -181,7 +187,9 @@ def main():
                 raise ValueError(f"No valid detection values for {prefix}")
             max_value = max(finite_max)
         max_value = max(max_value, 1e-12)
-        fig, axes = plt.subplots(3, 3, figsize=(18, 13),
+        ncols = 3
+    nrows = int(np.ceil(len(names) / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(18, 4.4*nrows),
                                  subplot_kw={"projection": projection})
         for ax, name in zip(axes.flat, names):
             im = ax.pcolormesh(lon_edges, lat_edges, values[name], cmap=cmap,
