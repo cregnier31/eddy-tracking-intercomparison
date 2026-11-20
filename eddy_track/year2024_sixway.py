@@ -57,6 +57,8 @@ def main():
     p.add_argument("--filtered-root", type=Path, default=Path("data_2024_lp15_cons"))
     p.add_argument("--conservative-root", type=Path, default=None,
                    help="Include seventh configuration: GLO12 conservative 0.25-degree without Gaussian filtering")
+    p.add_argument("--native45-root", type=Path, default=None,
+                   help="Include GLO12 native 1/12-degree experiment with PIXEL_MIN=45")
     p.add_argument("--obs-root", type=Path, default=None)
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sixway"))
     p.add_argument("--max-distance-km", type=float, default=50)
@@ -70,6 +72,11 @@ def main():
         SOURCES["GLO12_CONS"] = ("conservative", "GLO12", 10)
         LABELS["GLO12_CONS"] = "GLO12 conservative 0.25° (no Gaussian)"
         PALETTE["GLO12_CONS"] = "#008C95"
+    if args.native45_root is not None:
+        roots["native45"] = args.native45_root
+        SOURCES["GLO12_NATIVE45"] = ("native45", "GLO12", 10)
+        LABELS["GLO12_NATIVE45"] = "GLO12 native 1/12° (45 pixels)"
+        PALETTE["GLO12_NATIVE45"] = "#D65F30"
     obs_root = args.obs_root or args.base_root / "OBS_FULL"
     obs_dir = obs_root / "GLOENS/OBS/TRACK"
     out = args.output_root / "COMPARISON_FULL"
