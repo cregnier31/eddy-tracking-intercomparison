@@ -21,19 +21,24 @@ POLARITIES = ("Cyclonic", "Anticyclonic")
 BOUNDS = (-80., 0., 20., 65.)
 
 def read_centers(path):
+    """Return longitude, latitude, effective radius (km), amplitude (cm)."""
     try:
         with xr.open_dataset(path) as ds:
-            if "longitude" not in ds or "latitude" not in ds:
-                raise ValueError(f"{path}: longitude/latitude variables missing")
+            required = ("longitude", "latitude", "effective_radius", "amplitude")
+            for variable in required:
+                if variable not in ds:
+                    raise ValueError(f"{path}: missing {variable}")
             lon = np.asarray(ds["longitude"].values).ravel()
             lat = np.asarray(ds["latitude"].values).ravel()
+            radius = np.asarray(ds["effective_radius"].values).ravel() / 1000.
+            amplitude = np.asarray(ds["amplitude"].values).ravel() * 100.
     except Exception as exc:
         raise RuntimeError(f"Cannot read detection file {path}") from exc
-    if lon.size != lat.size:
-        raise ValueError(f"{path}: inconsistent longitude/latitude sizes")
+    if len({lon.size, lat.size, radius.size, amplitude.size}) != 1:
+        raise ValueError(f"{path}: inconsistent detection variable lengths")
     lon = ((lon + 180.) % 360.) - 180.
-    ok = np.isfinite(lon) & np.isfinite(lat)
-    return lon[ok], lat[ok]
+    valid = np.isfinite(lon) & np.isfinite(lat)
+    return lon[valid], lat[valid], radius[valid], amplitude[valid]
 
 def detect_dir(root, cycle, model, init):
     base = root / "CYCLES" / cycle
@@ -76,22 +81,42 @@ def main():
     lat_edges = np.linspace(20, 65, int(np.ceil(45 / args.cell_deg)) + 1)
     counts = {name: np.zeros((len(lat_edges)-1, len(lon_edges)-1), dtype=float)
               for name in names}
+    radius_sums = {name: np.zeros_like(counts[name]) for name in names}
+    radius_counts = {name: np.zeros_like(counts[name]) for name in names}
+    amplitude_sums = {name: np.zeros_like(counts[name]) for name in names}
+    amplitude_counts = {name: np.zeros_like(counts[name]) for name in names}
     exposures = {name: 0 for name in names}
     obs_dir = args.obs_root / "GLOENS" / "OBS" / "DETECT"
 
     def add_day(name, folder, prefix, date):
-        lon_parts, lat_parts = [], []
+        lon_parts, lat_parts, radius_parts, amplitude_parts = [], [], [], []
         for polarity in POLARITIES:
             file = folder / f"{polarity}_{prefix}_{date}.nc"
             if not file.is_file():
                 raise FileNotFoundError(f"Missing detection: {file}")
-            lon, lat = read_centers(file)
+            lon, lat, radius, amplitude = read_centers(file)
             lon_parts.append(lon)
             lat_parts.append(lat)
+            radius_parts.append(radius)
+            amplitude_parts.append(amplitude)
         lon = np.concatenate(lon_parts)
         lat = np.concatenate(lat_parts)
+        radius = np.concatenate(radius_parts)
+        amplitude = np.concatenate(amplitude_parts)
         histogram, _, _ = np.histogram2d(lat, lon, bins=(lat_edges, lon_edges))
         counts[name][:] += histogram
+        for values, sums, valid_counts in (
+            (radius, radius_sums, radius_counts),
+            (amplitude, amplitude_sums, amplitude_counts),
+        ):
+            valid = np.isfinite(values) & (values >= 0)
+            weighted, _, _ = np.histogram2d(
+                lat[valid], lon[valid], bins=(lat_edges, lon_edges),
+                weights=values[valid])
+            n_valid, _, _ = np.histogram2d(
+                lat[valid], lon[valid], bins=(lat_edges, lon_edges))
+            sums[name][:] += weighted
+            valid_counts[name][:] += n_valid
         exposures[name] += 1
 
     for cycle, wed, thu in cycle_dates():
@@ -108,15 +133,27 @@ def main():
         print(f"Detection heatmaps: processed {cycle}", flush=True)
 
     density = {name: counts[name] / exposures[name] for name in names}
-    maximum = args.max_color or max(float(np.max(x)) for x in density.values())
-    maximum = max(maximum, 1e-12)
+    def cell_means(sums, valid_counts):
+        return {
+            name: np.divide(sums[name], valid_counts[name],
+                            out=np.full_like(sums[name], np.nan),
+                            where=valid_counts[name] > 0)
+            for name in names
+        }
+    mean_radius = cell_means(radius_sums, radius_counts)
+    mean_amplitude = cell_means(amplitude_sums, amplitude_counts)
     output = args.output_root / "COMPARISON_FULL" / "FIGURES"
     output.mkdir(parents=True, exist_ok=True)
     lon_centers = (lon_edges[:-1] + lon_edges[1:]) / 2
     lat_centers = (lat_edges[:-1] + lat_edges[1:]) / 2
-    for name in names:
-        pd.DataFrame(density[name], index=lat_centers, columns=lon_centers).to_csv(
-            output / f"year2024_detection_heatmap_{name}.csv")
+    for prefix, values in (
+        ("year2024_detection_heatmap", density),
+        ("year2024_detection_radius", mean_radius),
+        ("year2024_detection_amplitude", mean_amplitude),
+    ):
+        for name in names:
+            pd.DataFrame(values[name], index=lat_centers, columns=lon_centers).to_csv(
+                output / f"{prefix}_{name}.csv")
 
     def decorate(ax):
         ax.set_extent(BOUNDS, crs=ccrs.PlateCarree())
@@ -133,38 +170,60 @@ def main():
     cmap = plt.get_cmap("jet").copy()
     cmap.set_bad("#f2e9dd")
     projection = ccrs.PlateCarree()
-    fig, axes = plt.subplots(3, 3, figsize=(18, 13),
-                             subplot_kw={"projection": projection})
-    for ax, name in zip(axes.flat, names):
-        im = ax.pcolormesh(lon_edges, lat_edges, density[name], cmap=cmap,
-                           vmin=0, vmax=maximum, transform=projection,
-                           shading="auto", rasterized=True)
-        decorate(ax)
-        ax.set_title(labels.get(name, name), fontsize=10)
-    for ax in list(axes.flat)[len(names):]:
-        ax.set_visible(False)
-    fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.67, pad=0.025,
-                 label="Mean detected eddy centers per grid cell per day")
-    fig.suptitle("2024 North Atlantic eddy detection density — 52 cycles, 9 common days",
-                 fontsize=16)
-    fig.savefig(output / "year2024_detection_heatmaps_all.png",
-                dpi=200, bbox_inches="tight")
-    plt.close(fig)
 
-    for name in names:
-        fig, ax = plt.subplots(figsize=(12, 7), subplot_kw={"projection": projection})
-        im = ax.pcolormesh(lon_edges, lat_edges, density[name], cmap=cmap,
-                           vmin=0, vmax=maximum, transform=projection,
-                           shading="auto", rasterized=True)
-        decorate(ax)
-        ax.set_title(f"2024 eddy detection density — {labels.get(name, name)}")
-        fig.colorbar(im, ax=ax, shrink=0.75,
-                     label="Mean detected eddy centers per grid cell per day")
-        fig.savefig(output / f"year2024_detection_heatmap_{name}.png",
-                    dpi=220, bbox_inches="tight")
+    def plot_maps(values, prefix, title, color_label, max_value=None):
+        if max_value is None:
+            finite_max = [
+                float(np.nanmax(a)) for a in values.values()
+                if np.isfinite(a).any()
+            ]
+            if not finite_max:
+                raise ValueError(f"No valid detection values for {prefix}")
+            max_value = max(finite_max)
+        max_value = max(max_value, 1e-12)
+        fig, axes = plt.subplots(3, 3, figsize=(18, 13),
+                                 subplot_kw={"projection": projection})
+        for ax, name in zip(axes.flat, names):
+            im = ax.pcolormesh(lon_edges, lat_edges, values[name], cmap=cmap,
+                               vmin=0, vmax=max_value, transform=projection,
+                               shading="auto", rasterized=True)
+            decorate(ax)
+            ax.set_title(labels.get(name, name), fontsize=10)
+        for ax in list(axes.flat)[len(names):]:
+            ax.set_visible(False)
+        fig.colorbar(im, ax=[ax for ax in axes.flat if ax.get_visible()],
+                     shrink=0.67, pad=0.025, label=color_label)
+        fig.suptitle(f"2024 North Atlantic {title} — 52 cycles, 9 common days",
+                     fontsize=16)
+        fig.savefig(output / f"{prefix}_all.png", dpi=200, bbox_inches="tight")
         plt.close(fig)
-    print(f"Saved {len(names)} heatmaps + comparison panel to {output}")
+        for name in names:
+            fig, ax = plt.subplots(figsize=(12, 7),
+                                   subplot_kw={"projection": projection})
+            im = ax.pcolormesh(lon_edges, lat_edges, values[name], cmap=cmap,
+                               vmin=0, vmax=max_value, transform=projection,
+                               shading="auto", rasterized=True)
+            decorate(ax)
+            ax.set_title(f"2024 {title} — {labels.get(name, name)}")
+            fig.colorbar(im, ax=ax, shrink=0.75, label=color_label)
+            fig.savefig(output / f"{prefix}_{name}.png", dpi=220,
+                        bbox_inches="tight")
+            plt.close(fig)
+        print(f"Saved {prefix}: {len(names)} maps and one comparison panel")
+
+    plot_maps(density, "year2024_detection_heatmaps",
+              "eddy detection density",
+              "Mean detected eddy centers per grid cell per day",
+              max_value=args.max_color)
+    plot_maps(mean_radius, "year2024_detection_radius",
+              "mean detected eddy effective radius",
+              "Mean effective radius (km)")
+    plot_maps(mean_amplitude, "year2024_detection_amplitude",
+              "mean detected eddy amplitude",
+              "Mean amplitude (cm)")
+    print(f"All outputs saved to {output}")
     print("Each configuration uses 468 detection days (52 cycles x 9 days).")
+    print("Radius and amplitude averages use valid detections within each cell.")
     print("OBS days are repeated across overlapping forecast windows by design.")
 
 if __name__ == "__main__":
