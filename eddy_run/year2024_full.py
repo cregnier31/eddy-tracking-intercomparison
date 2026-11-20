@@ -36,6 +36,8 @@ def main():
     p.add_argument("--execute",action="store_true")
     p.add_argument("--obs-root",type=Path,required=True,help="Directory containing GLOENS/OBS/TRACK with full observation period")
     p.add_argument("--models",nargs="+",choices=MODELS,default=list(MODELS))
+    p.add_argument("--glo12-pixel-min",type=int,default=None,
+                   help="GLO12 detection minimum pixel count; e.g. 45 for native area sensitivity")
     p.add_argument("--glo12-native-grid",action="store_true",
                    help="Detect unfiltered GLO12 on its native 1/12-degree grid")
     p.add_argument("--glo12-regrid-method",choices=("linear","conservative"),default="linear",
@@ -44,6 +46,8 @@ def main():
                    help="GLO12 detect stage: native-grid Gaussian SSH low-pass before 0.25-degree interpolation")
     a=p.parse_args()
     root=a.output_root
+    if a.glo12_pixel_min is not None and (a.glo12_pixel_min < 1 or a.stage != "detect" or a.models != ["GLO12"]):
+        p.error("--glo12-pixel-min requires --stage detect --models GLO12 and a positive integer")
     if a.glo12_native_grid and (a.stage != "detect" or a.models != ["GLO12"] or
                                  a.glo12_gaussian_sigma_km is not None or
                                  a.glo12_regrid_method != "linear"):
@@ -78,6 +82,8 @@ def main():
                     if model=="GLO12":
                         if a.glo12_native_grid:
                             cmd.append("--native-grid")
+                        if a.glo12_pixel_min is not None:
+                            cmd.extend(["--pixel-min",str(a.glo12_pixel_min)])
                         cmd.extend(["--regrid-method",a.glo12_regrid_method])
                         if a.glo12_gaussian_sigma_km is not None:
                             cmd.extend(["--gaussian-sigma-km",str(a.glo12_gaussian_sigma_km)])
