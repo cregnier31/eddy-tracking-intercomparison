@@ -188,8 +188,8 @@ def main():
             max_value = max(finite_max)
         max_value = max(max_value, 1e-12)
         ncols = 3
-    nrows = int(np.ceil(len(names) / ncols))
-    fig, axes = plt.subplots(nrows, ncols, figsize=(18, 4.4*nrows),
+        nrows = int(np.ceil(len(names) / ncols))
+        fig, axes = plt.subplots(nrows, ncols, figsize=(18, 4.4*nrows),
                                  subplot_kw={"projection": projection})
         for ax, name in zip(axes.flat, names):
             im = ax.pcolormesh(lon_edges, lat_edges, values[name], cmap=cmap,
