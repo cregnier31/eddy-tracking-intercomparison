@@ -125,7 +125,8 @@ BUCKET = "oceanbench-bucket"
 def detect(model, init_date, data_dir, first_day=0, last_day=None,
            lon_min=-80, lon_max=0, lat_min=20, lat_max=65,
            resolution=0.25, endpoint=ENDPOINT, assume_ssh_metres=False,
-           gaussian_sigma_km=None, regrid_method="linear", native_grid=False):
+           gaussian_sigma_km=None, regrid_method="linear", native_grid=False,
+           pixel_min=None):
     model = model.upper()
     if model not in MODELS:
         raise ValueError(f"Unknown model {model}; choose {list(MODELS)}")
@@ -152,6 +153,10 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
         SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER,
     )
 
+    if pixel_min is None:
+        pixel_min = PIXEL_MIN
+    if pixel_min < 1 or pixel_min > PIXEL_MAX:
+        raise ValueError(f"pixel_min must be between 1 and {PIXEL_MAX}")
     prefix, lon_name, lat_name = MODELS[model]
     store = f"{BUCKET}/{prefix}/{init_date}.zarr"
     fs = s3fs.S3FileSystem(anon=True, client_kwargs={"endpoint_url": endpoint})
@@ -237,7 +242,7 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
                 grid.to_netcdf(input_path)
                 compute_eddy(
                     str(input_path), model, tmp, str(output) + "/",
-                    "zos", "uo", "vo", SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX,
+                    "zos", "uo", "vo", SHAPE_ERROR, pixel_min, PIXEL_MAX,
                     AMP_MIN, WAVELENGTH, ORDER_FILTER,
                 )
     print(f"Detection complete: {output}", flush=True)
@@ -255,6 +260,8 @@ def main():
     parser.add_argument("--lat-min", type=float, default=20)
     parser.add_argument("--lat-max", type=float, default=65)
     parser.add_argument("--resolution", type=float, default=0.25)
+    parser.add_argument("--pixel-min", type=int, default=None,
+                        help="Minimum number of pixels per detected eddy (default: namelist PIXEL_MIN=5)")
     parser.add_argument("--native-grid",action="store_true",
                         help="GLO12 native-resolution baseline: no SSH interpolation or Gaussian filter")
     parser.add_argument("--regrid-method",choices=("linear","conservative"),default="linear",
@@ -268,7 +275,8 @@ def main():
     detect(args.model, args.init_date, args.data_dir, args.first_day, args.last_day,
            args.lon_min, args.lon_max, args.lat_min, args.lat_max,
            args.resolution, args.endpoint, args.assume_ssh_metres,
-           args.gaussian_sigma_km, args.regrid_method, args.native_grid)
+           args.gaussian_sigma_km, args.regrid_method, args.native_grid,
+           args.pixel_min)
 
 
 if __name__ == "__main__":
