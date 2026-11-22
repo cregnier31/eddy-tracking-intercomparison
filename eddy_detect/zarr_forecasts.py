@@ -138,8 +138,6 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
         raise ValueError("--gaussian-sigma-km requires GLO12 and a positive scale")
     if native_grid and model != "GLO12":
         raise ValueError("--native-grid is supported for GLO12 only")
-    if native_grid and gaussian_sigma_km is not None:
-        raise ValueError("--native-grid baseline must not use Gaussian filtering")
     if native_grid and regrid_method != "linear":
         raise ValueError("--native-grid cannot be combined with a regrid method")
     if regrid_method not in ("linear", "conservative"):
@@ -213,7 +211,8 @@ def detect(model, init_date, data_dir, first_day=0, last_day=None,
                                   coords={"latitude": src_lat[lat_idx][lat_order],
                                           "longitude": src_lon_subset})
             if native_grid:
-                # Preserve the native GLO12 grid and SSH values without regridding.
+                # Preserve native GLO12 coordinates; optional Gaussian filtering
+                # acts on SSH before geostrophic velocities and detection.
                 target = ssh
                 grid_lon, grid_lat = src_lon_subset, src_lat[lat_idx][lat_order]
             elif regrid_method == "conservative":
@@ -263,7 +262,7 @@ def main():
     parser.add_argument("--pixel-min", type=int, default=None,
                         help="Minimum number of pixels per detected eddy (default: namelist PIXEL_MIN=5)")
     parser.add_argument("--native-grid",action="store_true",
-                        help="GLO12 native-resolution baseline: no SSH interpolation or Gaussian filter")
+                        help="GLO12 native-resolution grid: no interpolation (optional Gaussian SSH filtering)")
     parser.add_argument("--regrid-method",choices=("linear","conservative"),default="linear",
                         help="GLO12: area-weighted conservative regridding or existing linear interpolation")
     parser.add_argument("--gaussian-sigma-km", type=float, default=None,
