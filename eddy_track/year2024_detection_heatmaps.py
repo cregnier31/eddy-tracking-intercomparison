@@ -54,6 +54,8 @@ def main():
     p.add_argument("--conservative-root", type=Path)
     p.add_argument("--native45-root", type=Path, default=None,
                    help="Include native GLO12 with minimum 45 pixels")
+    p.add_argument("--native45-lp15-root", type=Path, default=None,
+                   help="Include native GLO12 45 pixels with Gaussian sigma 15 km")
     p.add_argument("--obs-root", type=Path, default=Path("data_2024/OBS_FULL"))
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sevenway"))
     p.add_argument("--cell-deg", type=float, default=2.0)
@@ -79,6 +81,10 @@ def main():
         roots["native45"] = args.native45_root
         sources["GLO12_NATIVE45"] = ("native45", "GLO12", 10)
         labels["GLO12_NATIVE45"] = "GLO12 native 1/12° (45 pixels)"
+    if args.native45_lp15_root is not None:
+        roots["native45_lp15"] = args.native45_lp15_root
+        sources["GLO12_NATIVE45_LP15"] = ("native45_lp15", "GLO12", 10)
+        labels["GLO12_NATIVE45_LP15"] = "GLO12 native 1/12° (45 px, Gaussian 15 km)"
     labels["OBS_WED"] = "AVISO / OBS (Wednesday)"
     labels["OBS_THU"] = "AVISO / OBS (Thursday)"
     names = list(sources) + ["OBS_WED", "OBS_THU"]
