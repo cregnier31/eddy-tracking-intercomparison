@@ -49,7 +49,6 @@ def main():
     if a.glo12_pixel_min is not None and (a.glo12_pixel_min < 1 or a.stage != "detect" or a.models != ["GLO12"]):
         p.error("--glo12-pixel-min requires --stage detect --models GLO12 and a positive integer")
     if a.glo12_native_grid and (a.stage != "detect" or a.models != ["GLO12"] or
-                                 a.glo12_gaussian_sigma_km is not None or
                                  a.glo12_regrid_method != "linear"):
         p.error("--glo12-native-grid requires GLO12-only detection without filtering or regridding")
     if a.glo12_regrid_method != "linear" and (a.stage != "detect" or a.models != ["GLO12"]):
