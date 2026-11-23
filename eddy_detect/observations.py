@@ -24,6 +24,16 @@ from eddy_track.gloens_members import tracking_config, DEFAULT_TEMPLATE
 DATASET_ID = "cmems_obs-sl_glo_phy-ssh_nrt_allsat-l4-duacs-0.125deg_P1D"
 
 
+def daily_aviso_path(source_root, day):
+    day = str(day).replace("-", "")
+    folder = Path(source_root) / day[:4] / day[4:6]
+    paths = sorted(folder.glob("dt_global_allsat_phy_l4_" + day + "_*.nc"))
+    if len(paths) != 1:
+        raise FileNotFoundError(f"{day}: expected one AVISO file in {folder}; found {len(paths)}")
+    return paths[0]
+
+
+
 def date_strings(start, end):
     dates = np.arange(np.datetime64(start, "D"), np.datetime64(end, "D") + np.timedelta64(1, "D"))
     if not len(dates):
@@ -32,9 +42,10 @@ def date_strings(start, end):
 
 
 def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
-           lat_max=65, resolution=0.25, dataset_id=DATASET_ID, source_file=None):
+           lat_max=65, resolution=0.25, dataset_id=DATASET_ID, source_file=None, source_root=None):
     """Cache ADT subset and detect daily eddies on the matching 0.25-degree grid."""
-    import copernicusmarine
+    if source_file is not None and source_root is not None:
+        raise ValueError("Choose source_file or source_root, not both")
     from eddy_detect.my_functions import compute_eddy
     from eddy_detect.namelist_detect import (
         SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX, AMP_MIN, WAVELENGTH, ORDER_FILTER,
@@ -54,7 +65,8 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
         if not source.is_file():
             raise FileNotFoundError(source)
         raw = source
-    if not raw.exists():
+    if source_root is None and not raw.exists():
+        import copernicusmarine
         print(f"Downloading {dataset_id} ADT for {start}..{end}", flush=True)
         with tempfile.TemporaryDirectory(prefix="obs-download-") as tmp:
             result = copernicusmarine.subset(
@@ -72,42 +84,43 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
 
     lon = np.arange(lon_min, lon_max + resolution * 0.25, resolution)
     lat = np.arange(lat_min, lat_max + resolution * 0.25, resolution)
-    with xr.open_dataset(raw) as ds:
-        if "adt" not in ds:
-            raise KeyError(f"{raw}: missing ADT. Variables: {list(ds.data_vars)}")
-        if not {"time", "latitude", "longitude"}.issubset(ds["adt"].dims):
-            raise ValueError(f"{raw}: expected ADT(time, latitude, longitude)")
-        ds = ds.sortby("latitude").sortby("longitude")
-        available = set(np.asarray(ds.time.values).astype("datetime64[D]"))
-        for date in dates:
-            anti = output / f"Anticyclonic_OBS_{date}.nc"
-            cycl = output / f"Cyclonic_OBS_{date}.nc"
-            if anti.exists() and cycl.exists():
-                print(f"{date}: already detected; skipping", flush=True)
-                continue
-            day = np.datetime64(f"{date[:4]}-{date[4:6]}-{date[6:]}")
+    for date in dates:
+        anti = output / f"Anticyclonic_OBS_{date}.nc"
+        cycl = output / f"Cyclonic_OBS_{date}.nc"
+        if anti.exists() and cycl.exists():
+            print(f"{date}: already detected; skipping", flush=True)
+            continue
+        day = np.datetime64(f"{date[:4]}-{date[4:6]}-{date[6:]}")
+        source = daily_aviso_path(source_root, date) if source_root is not None else raw
+        with xr.open_dataset(source) as ds:
+            if "adt" not in ds:
+                raise KeyError(f"{source}: missing ADT")
+            if not {"time", "latitude", "longitude"}.issubset(ds["adt"].dims):
+                raise ValueError(f"{source}: expected ADT(time, latitude, longitude)")
+            ds = ds.sortby("latitude").sortby("longitude")
+            available = set(np.asarray(ds.time.values).astype("datetime64[D]"))
             if day not in available:
-                raise ValueError(f"No ADT observation for {day} in {raw}")
+                raise ValueError(f"No ADT observation for {day} in {source}")
             ssh = ds["adt"].sel(time=day).interp(longitude=lon, latitude=lat).values
-            u, v = geostrophic_velocity(ssh, lon, lat)
-            grid = xr.Dataset(
-                {"zos": (("latitude", "longitude"), ssh.astype("float32")),
-                 "uo": (("latitude", "longitude"), u.astype("float32")),
-                 "vo": (("latitude", "longitude"), v.astype("float32"))},
-                coords={"longitude": lon, "latitude": lat},
+        u, v = geostrophic_velocity(ssh, lon, lat)
+        grid = xr.Dataset(
+            {"zos": (("latitude", "longitude"), ssh.astype("float32")),
+             "uo": (("latitude", "longitude"), u.astype("float32")),
+             "vo": (("latitude", "longitude"), v.astype("float32"))},
+            coords={"longitude": lon, "latitude": lat},
+        )
+        print(f"Detecting OBS {date}", flush=True)
+        with tempfile.TemporaryDirectory(prefix="obs-detect-") as tmp:
+            input_path = Path(tmp) / f"OBS_{date}.nc"
+            grid["zos"].attrs["units"] = "m"
+            grid["uo"].attrs["units"] = "m/s"
+            grid["vo"].attrs["units"] = "m/s"
+            grid.to_netcdf(input_path)
+            compute_eddy(
+                str(input_path), "OBS", tmp, str(output) + "/",
+                "zos", "uo", "vo", SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX,
+                AMP_MIN, WAVELENGTH, ORDER_FILTER,
             )
-            print(f"Detecting OBS {date}", flush=True)
-            with tempfile.TemporaryDirectory(prefix="obs-detect-") as tmp:
-                input_path = Path(tmp) / f"OBS_{date}.nc"
-                grid["zos"].attrs["units"] = "m"
-                grid["uo"].attrs["units"] = "m/s"
-                grid["vo"].attrs["units"] = "m/s"
-                grid.to_netcdf(input_path)
-                compute_eddy(
-                    str(input_path), "OBS", tmp, str(output) + "/",
-                    "zos", "uo", "vo", SHAPE_ERROR, PIXEL_MIN, PIXEL_MAX,
-                    AMP_MIN, WAVELENGTH, ORDER_FILTER,
-                )
     return output
 
 
@@ -148,10 +161,11 @@ def main(argv=None):
     parser.add_argument("--resolution", type=float, default=0.25)
     parser.add_argument("--dataset-id", default=DATASET_ID)
     parser.add_argument("--source-file", type=Path, help="Local NetCDF with ADT and requested observation dates")
+    parser.add_argument("--source-root", type=Path, help="Local MY AVISO daily archive YYYY/MM")
     args = parser.parse_args(argv)
     if args.command == "detect":
         detect(args.data_dir, args.start, args.end, args.lon_min, args.lon_max,
-               args.lat_min, args.lat_max, args.resolution, args.dataset_id, args.source_file)
+               args.lat_min, args.lat_max, args.resolution, args.dataset_id, args.source_file, args.source_root)
     else:
         track(args.data_dir, args.start, args.end)
 
