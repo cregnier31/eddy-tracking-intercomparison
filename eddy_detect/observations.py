@@ -43,7 +43,7 @@ def date_strings(start, end):
 
 def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
            lat_max=65, resolution=0.25, dataset_id=DATASET_ID, source_file=None, source_root=None):
-    """Cache ADT subset and detect daily eddies on the matching 0.25-degree grid."""
+    """Detect daily eddies on a requested regular grid, including periodic longitude halos."""
     if source_file is not None and source_root is not None:
         raise ValueError("Choose source_file or source_root, not both")
     from eddy_detect.my_functions import compute_eddy
@@ -101,7 +101,22 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
             available = set(np.asarray(ds.time.values).astype("datetime64[D]"))
             if day not in available:
                 raise ValueError(f"No ADT observation for {day} in {source}")
-            ssh = ds["adt"].sel(time=day).interp(longitude=lon, latitude=lat).values
+            field = ds["adt"].sel(time=day)
+            # The AVISO longitude centers are in [-180, 180). Repeat only the
+            # narrow edge strips needed for requested out-of-range halo cells.
+            # This also interpolates exactly at +/-180 rather than yielding NaN.
+            source_lon = np.asarray(field.longitude.values, dtype=float)
+            if lon.min() < source_lon.min() or lon.max() > source_lon.max():
+                period = 360.0
+                # Concatenate periodic copies and sort; only three copies
+                # are needed for tile bounds within [-182, 182].
+                field = xr.concat(
+                    [field.assign_coords(longitude=source_lon - period),
+                     field,
+                     field.assign_coords(longitude=source_lon + period)],
+                    dim="longitude",
+                ).sortby("longitude")
+            ssh = field.interp(longitude=lon, latitude=lat).values
         u, v = geostrophic_velocity(ssh, lon, lat)
         grid = xr.Dataset(
             {"zos": (("latitude", "longitude"), ssh.astype("float32")),
