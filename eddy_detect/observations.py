@@ -41,6 +41,18 @@ def date_strings(start, end):
     return [np.datetime_as_string(d, unit="D").replace("-", "") for d in dates]
 
 
+def valid_eddy_file(path):
+    """Only resume past files that can be opened and contain eddy coordinates."""
+    if not path.is_file() or path.stat().st_size == 0:
+        return False
+    try:
+        from netCDF4 import Dataset
+        with Dataset(path, "r") as nc:
+            return "longitude" in nc.variables and "latitude" in nc.variables
+    except (OSError, RuntimeError):
+        return False
+
+
 def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
            lat_max=65, resolution=0.25, dataset_id=DATASET_ID, source_file=None, source_root=None):
     """Detect daily eddies on a requested regular grid, including periodic longitude halos."""
@@ -87,7 +99,7 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
     for date in dates:
         anti = output / f"Anticyclonic_OBS_{date}.nc"
         cycl = output / f"Cyclonic_OBS_{date}.nc"
-        if anti.exists() and cycl.exists():
+        if valid_eddy_file(anti) and valid_eddy_file(cycl):
             print(f"{date}: already detected; skipping", flush=True)
             continue
         day = np.datetime64(f"{date[:4]}-{date[4:6]}-{date[6:]}")
