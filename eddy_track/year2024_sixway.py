@@ -33,8 +33,8 @@ LABELS = {
     "GLO12_LP15_CONS": "GLO12 Gaussian 15 km + conservative 0.25°",
 }
 PALETTE = {
-    **{k: COLORS.get(k, "gray") for k in ("GLONET", "GLOENS_MEAN")},
-    "GLONET3": COLORS.get("GLOW", "tab:orange"),
+    "GLONET": "#2CA02C", "GLONET3": "#D62728",
+    "GLOENS_MEAN": "#1F77B4",
     "GLO12_025": "#E68613", "GLO12_NATIVE": "#4B176B",
     "GLO12_LP15_CONS": "#B85CBB",
 }
@@ -85,7 +85,7 @@ def main():
         roots["native45_lp15"] = args.native45_lp15_root
         SOURCES["GLO12_NATIVE45_LP15"] = ("native45_lp15", "GLO12", 10)
         LABELS["GLO12_NATIVE45_LP15"] = "GLO12 native 1/12° (45 px, Gaussian 15 km)"
-        PALETTE["GLO12_NATIVE45_LP15"] = "#2B9C73"
+        PALETTE["GLO12_NATIVE45_LP15"] = "#FF7F0E"
     if args.models is not None:
         unknown = set(args.models) - set(SOURCES)
         if unknown:
