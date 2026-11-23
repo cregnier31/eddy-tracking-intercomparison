@@ -26,15 +26,15 @@ OVERLAP_DEGREES = 2.0
 
 
 def tiles():
-    """Yield core and padded bounds; padded bounds never extend past the domain."""
+    """Yield core and padded bounds, wrapping longitude beyond +/-180 at the seam."""
     for iy, (south, north) in enumerate(zip(LATITUDE_EDGES, LATITUDE_EDGES[1:])):
         for ix, (west, east) in enumerate(zip(LONGITUDE_EDGES, LONGITUDE_EDGES[1:])):
             yield {
                 "tile": f"lat{iy:02d}_lon{ix:02d}",
                 "core_lon_min": west, "core_lon_max": east,
                 "core_lat_min": south, "core_lat_max": north,
-                "read_lon_min": max(-180, west - OVERLAP_DEGREES),
-                "read_lon_max": min(180, east + OVERLAP_DEGREES),
+                "read_lon_min": west - OVERLAP_DEGREES,
+                "read_lon_max": east + OVERLAP_DEGREES,
                 "read_lat_min": max(-70, south - OVERLAP_DEGREES),
                 "read_lat_max": min(70, north + OVERLAP_DEGREES),
                 "crosses_equatorial_mask": south < EQUATORIAL_MASK_DEGREES and north > -EQUATORIAL_MASK_DEGREES,
