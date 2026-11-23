@@ -108,14 +108,19 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
             source_lon = np.asarray(field.longitude.values, dtype=float)
             if lon.min() < source_lon.min() or lon.max() > source_lon.max():
                 period = 360.0
-                # Concatenate periodic copies and sort; only three copies
-                # are needed for tile bounds within [-182, 182].
-                field = xr.concat(
-                    [field.assign_coords(longitude=source_lon - period),
-                     field,
-                     field.assign_coords(longitude=source_lon + period)],
-                    dim="longitude",
-                ).sortby("longitude")
+                # Copy only the narrow strips needed to interpolate across
+                # the seam, not three entire global fields.
+                spacing = float(np.median(np.diff(source_lon)))
+                pieces = [field]
+                if lon.min() < source_lon.min():
+                    indices = np.flatnonzero(source_lon - period <= lon.min() + spacing * 2)
+                    pieces.insert(0, field.isel(longitude=indices).assign_coords(
+                        longitude=source_lon[indices] - period))
+                if lon.max() > source_lon.max():
+                    indices = np.flatnonzero(source_lon + period >= lon.max() - spacing * 2)
+                    pieces.append(field.isel(longitude=indices).assign_coords(
+                        longitude=source_lon[indices] + period))
+                field = xr.concat(pieces, dim="longitude").sortby("longitude")
             ssh = field.interp(longitude=lon, latitude=lat).values
         u, v = geostrophic_velocity(ssh, lon, lat)
         grid = xr.Dataset(
