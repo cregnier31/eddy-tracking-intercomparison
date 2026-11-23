@@ -113,11 +113,11 @@ def detect(data_dir, start, end, lon_min=-80, lon_max=0, lat_min=20,
                 spacing = float(np.median(np.diff(source_lon)))
                 pieces = [field]
                 if lon.min() < source_lon.min():
-                    indices = np.flatnonzero(source_lon - period <= lon.min() + spacing * 2)
+                    indices = np.flatnonzero(source_lon - period >= lon.min() - spacing * 2)
                     pieces.insert(0, field.isel(longitude=indices).assign_coords(
                         longitude=source_lon[indices] - period))
                 if lon.max() > source_lon.max():
-                    indices = np.flatnonzero(source_lon + period >= lon.max() - spacing * 2)
+                    indices = np.flatnonzero(source_lon + period <= lon.max() + spacing * 2)
                     pieces.append(field.isel(longitude=indices).assign_coords(
                         longitude=source_lon[indices] + period))
                 field = xr.concat(pieces, dim="longitude").sortby("longitude")
