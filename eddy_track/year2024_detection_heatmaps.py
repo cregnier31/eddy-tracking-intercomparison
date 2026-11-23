@@ -58,6 +58,8 @@ def main():
                    help="Include native GLO12 45 pixels with Gaussian sigma 15 km")
     p.add_argument("--obs-root", type=Path, default=Path("data_2024/OBS_FULL"))
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sevenway"))
+    p.add_argument("--models", nargs="+", default=None,
+                   help="Select forecast configurations; default: all available configurations")
     p.add_argument("--cell-deg", type=float, default=2.0)
     p.add_argument("--max-color", type=float, default=None,
                    help="Optional fixed upper limit for all maps; default: shared observed maximum")
@@ -85,6 +87,13 @@ def main():
         roots["native45_lp15"] = args.native45_lp15_root
         sources["GLO12_NATIVE45_LP15"] = ("native45_lp15", "GLO12", 10)
         labels["GLO12_NATIVE45_LP15"] = "GLO12 native 1/12° (45 px, Gaussian 15 km)"
+    if args.models is not None:
+        unknown = set(args.models) - set(sources)
+        if unknown:
+            p.error(f"Unknown configurations: {sorted(unknown)}; available: {list(sources)}")
+        if len(set(args.models)) != len(args.models):
+            p.error("--models must not contain duplicates")
+        sources = {name: sources[name] for name in args.models}
     labels["OBS_WED"] = "AVISO / OBS (Wednesday)"
     labels["OBS_THU"] = "AVISO / OBS (Thursday)"
     names = list(sources) + ["OBS_WED", "OBS_THU"]
