@@ -43,7 +43,7 @@ def main(argv=None):
         "--start", args.date.isoformat(), "--end", args.date.isoformat(),
         "--lon-min", str(tile["read_lon_min"]), "--lon-max", str(tile["read_lon_max"]),
         "--lat-min", str(tile["read_lat_min"]), "--lat-max", str(tile["read_lat_max"]),
-        "--resolution", "0.25", "--source-root", str(args.source_root),
+        "--resolution", "0.125", "--source-root", str(args.source_root),
     ]
     print(f"AVISO input: {source}", flush=True)
     print(f"Tile core: {tile['core_lon_min']}..{tile['core_lon_max']} lon, "
