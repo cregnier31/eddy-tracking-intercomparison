@@ -235,20 +235,8 @@ def main():
                 plt.close(fig)
         print(f"Saved six-way diagnostics to {figdir}", flush=True)
     if args.stage in ("all", "retention"):
-        # When launched with python -m, this file runs as __main__, while the
-        # retention module imports eddy_track.year2024_sixway by its canonical
-        # name. Synchronize optional configurations across those module objects.
-        import eddy_track.year2024_sixway as canonical
-        # Replace, rather than update: --models may intentionally omit defaults.
-        # The retention module imports the canonical module, not __main__.
-        canonical.SOURCES.clear()
-        canonical.SOURCES.update(SOURCES)
-        canonical.LABELS.clear()
-        canonical.LABELS.update(LABELS)
-        canonical.PALETTE.clear()
-        canonical.PALETTE.update(PALETTE)
         from eddy_track.year2024_sixway_retention import run as run_retention
-        run_retention(args.output_root)
+        run_retention(args.output_root, sources=SOURCES, labels=LABELS, palette=PALETTE)
 
 if __name__ == "__main__":
     main()
