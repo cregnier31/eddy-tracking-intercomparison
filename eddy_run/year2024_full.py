@@ -87,7 +87,7 @@ def main():
                          gloens_store(init),str(cycle),*bounds,"--last-day",str(days)]
                 else:
                     cmd=[sys.executable,"-m","eddy_detect.zarr_forecasts",model,
-                         init.strftime("%Y%m%d"),str(cycle),*BOUNDS,
+                         init.strftime("%Y%m%d"),str(cycle),*bounds,
                          "--last-day",str(days),"--assume-ssh-metres"]
                     if model=="GLO12":
                         if a.glo12_native_grid:
