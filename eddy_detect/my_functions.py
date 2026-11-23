@@ -6,6 +6,7 @@
 Updated on Wed May 14 2025
 """
 import os
+import tempfile
 import sys
 import glob
 import re
@@ -79,16 +80,32 @@ def compute_eddy(file, DATA, INPUT_DIR, OUTPUT_DIR, var_adt, VAR_U, VAR_V, SHAPE
         ) # Error max (%) between ratio of circle fit and contour)
      
     print("Eddy identification ok")
-    ################# save eddy detcted in netcdf files
-    with Dataset(
-        date.strftime(OUTPUT_DIR + "Anticyclonic_" + DATA + "_" + date_file + ".nc"),
-        "w",
-    ) as h:
-        a.to_netcdf(h)
-    with Dataset(
-        date.strftime(OUTPUT_DIR + "Cyclonic_" + DATA + "_" + date_file + ".nc"), "w"
-    ) as h:
-        c.to_netcdf(h)
+    # Write both polarities to temporary files first. A failed HDF5 write
+    # must never leave a partial final .nc that a resumed batch will skip.
+    targets = [
+        (a, os.path.join(OUTPUT_DIR, f"Anticyclonic_{DATA}_{date_file}.nc")),
+        (c, os.path.join(OUTPUT_DIR, f"Cyclonic_{DATA}_{date_file}.nc")),
+    ]
+    staged = []
+    try:
+        for observations, target in targets:
+            fd, temporary = tempfile.mkstemp(
+                prefix=".eddy-writing-", suffix=".nc", dir=OUTPUT_DIR
+            )
+            os.close(fd)
+            staged.append((temporary, target))
+            with Dataset(temporary, "w") as nc:
+                observations.to_netcdf(nc)
+            # Verify HDF5 can reopen the complete file before publishing.
+            with Dataset(temporary, "r") as nc:
+                if "longitude" not in nc.variables or "latitude" not in nc.variables:
+                    raise IOError(f"Invalid eddy NetCDF output: {temporary}")
+        for temporary, target in staged:
+            os.replace(temporary, target)
+    finally:
+        for temporary, _ in staged:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
     print("write ok")
 #
 # ------------------------------------------------------------------------------
