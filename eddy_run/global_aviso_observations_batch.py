@@ -1,7 +1,6 @@
-"""Batch local AVISO observation detection over non-dateline tiles.
+"""Batch local AVISO observation detection over all 24 periodic-halo tiles.
 
-The existing detector is not periodic at +/-180 degrees. This runner explicitly
-excludes both seam columns. Outputs are tile-local, not globally stitched.
+Outputs are tile-local, not globally deduplicated or stitched.
 """
 from __future__ import annotations
 import argparse
@@ -25,17 +24,17 @@ def main(argv=None):
     args = p.parse_args(argv)
     if args.end < args.start:
         p.error("--end must not precede --start")
-    selected = [t for t in tiles() if not t["touches_dateline"]]
+    selected = list(tiles())
     if args.tile:
         unknown = set(args.tile) - {t["tile"] for t in selected}
         if unknown:
-            p.error(f"Unknown or seam-unsafe tile(s): {sorted(unknown)}")
+            p.error(f"Unknown tile(s): {sorted(unknown)}")
         selected = [t for t in selected if t["tile"] in args.tile]
     if not selected:
-        p.error("No interior tiles selected")
+        p.error("No tiles selected")
     days = (args.end - args.start).days + 1
-    print(f"Interior observation batch: {len(selected)} tiles x {days} days = {len(selected)*days} tile-days", flush=True)
-    print("EXCLUDES date-line tiles and does not deduplicate or stitch eddies", flush=True)
+    print(f"Observation batch: {len(selected)} tiles x {days} days = {len(selected)*days} tile-days", flush=True)
+    print("Includes date-line tiles with periodic longitude halos; does not deduplicate or stitch eddies", flush=True)
     if args.execute:
         from eddy_detect.observations import daily_aviso_path
         for n in range(days):
@@ -56,7 +55,7 @@ def main(argv=None):
         print(f"{tile['tile']}: {' '.join(cmd)}", flush=True)
         if args.execute:
             subprocess.run(cmd, check=True)
-    print("Finished interior tiles; global coverage remains incomplete at +/-180 degrees", flush=True)
+    print("Finished tile detections; global deduplication and track stitching remain required", flush=True)
 
 
 if __name__ == "__main__":
