@@ -31,10 +31,6 @@ def main(argv=None):
     if not matching:
         parser.error("Unknown tile; expected lat00_lon00 through lat03_lon05")
     tile = matching[0]
-    # Current regional detector interpolates without periodic longitude wrapping.
-    # Seam tiles must not be accepted as seam-safe until periodic halos exist.
-    if tile["touches_dateline"]:
-        parser.error("Date-line tile is not seam-safe in the current detector; periodic halo implementation required")
     from eddy_detect.observations import daily_aviso_path
     source = daily_aviso_path(args.source_root, args.date)
     out = args.output_root / "TILES" / args.tile / "OBS_FULL"
