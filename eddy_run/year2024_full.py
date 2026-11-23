@@ -27,13 +27,18 @@ def track_gloens_full(cycle, days, execute):
             subprocess.run([exe,str(yaml)],check=True)
 
 MODELS=("GLONET","GLOW","GLO12","GLOENS_MEAN")
-BOUNDS=["--lon-min","-80","--lon-max","0","--lat-min","20","--lat-max","65","--resolution","0.25"]
+
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("output_root",type=Path,help="Separate output directory, e.g. data_2024")
     p.add_argument("--stage",choices=("detect","track","compare"),required=True)
     p.add_argument("--execute",action="store_true")
+    p.add_argument("--lon-min",type=float,default=-80)
+    p.add_argument("--lon-max",type=float,default=0)
+    p.add_argument("--lat-min",type=float,default=20)
+    p.add_argument("--lat-max",type=float,default=65)
+    p.add_argument("--resolution",type=float,default=0.25)
     p.add_argument("--obs-root",type=Path,required=True,help="Directory containing GLOENS/OBS/TRACK with full observation period")
     p.add_argument("--models",nargs="+",choices=MODELS,default=list(MODELS))
     p.add_argument("--glo12-pixel-min",type=int,default=None,
@@ -46,11 +51,17 @@ def main():
                    help="GLO12 detect stage: native-grid Gaussian SSH low-pass before 0.25-degree interpolation")
     a=p.parse_args()
     root=a.output_root
+    if not (-180 <= a.lon_min < a.lon_max <= 180 and
+            -90 <= a.lat_min < a.lat_max <= 90 and a.resolution > 0):
+        p.error("Invalid geographic bounds or resolution")
+    bounds=["--lon-min",str(a.lon_min),"--lon-max",str(a.lon_max),
+            "--lat-min",str(a.lat_min),"--lat-max",str(a.lat_max),
+            "--resolution",str(a.resolution)]
     if a.glo12_pixel_min is not None and (a.glo12_pixel_min < 1 or a.stage != "detect" or a.models != ["GLO12"]):
         p.error("--glo12-pixel-min requires --stage detect --models GLO12 and a positive integer")
     if a.glo12_native_grid and (a.stage != "detect" or a.models != ["GLO12"] or
                                  a.glo12_regrid_method != "linear"):
-        p.error("--glo12-native-grid requires GLO12-only detection without filtering or regridding")
+        p.error("--glo12-native-grid requires GLO12-only detection without regridding")
     if a.glo12_regrid_method != "linear" and (a.stage != "detect" or a.models != ["GLO12"]):
         p.error("--glo12-regrid-method conservative requires --stage detect --models GLO12")
     if a.glo12_gaussian_sigma_km is not None:
@@ -73,7 +84,7 @@ def main():
             if a.stage=="detect":
                 if model=="GLOENS_MEAN":
                     cmd=[sys.executable,"-m","eddy_detect.gloens_grid",
-                         gloens_store(init),str(cycle),*BOUNDS,"--last-day",str(days)]
+                         gloens_store(init),str(cycle),*bounds,"--last-day",str(days)]
                 else:
                     cmd=[sys.executable,"-m","eddy_detect.zarr_forecasts",model,
                          init.strftime("%Y%m%d"),str(cycle),*BOUNDS,
