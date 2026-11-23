@@ -46,6 +46,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--output-root", type=Path, default=Path("data_2024_global_fourway"))
     p.add_argument("--pilot-cycle", default="20240103", help="Wednesday cycle YYYYMMDD")
+    p.add_argument("--obs-source", type=Path, default=Path("/data/rd_exchange/cregnier/Rappat/SEALEVEL_GLO_PHY_L4_MY_008_047/cmems_obs-sl_glo_phy-ssh_my_allsat-l4-duacs-0.125deg_P1D_202411"), help="Local delayed-time AVISO source (file or directory); availability is not assumed")
     a = p.parse_args()
     try:
         pilot = date.fromisoformat(f"{a.pilot_cycle[:4]}-{a.pilot_cycle[4:6]}-{a.pilot_cycle[6:]}")
@@ -74,6 +75,13 @@ def main():
                 })
     print(f"Saved {len(rows)} tiles and {52 * len(MODELS)} cycle/model entries to {a.output_root}")
     print(f"Pilot cycle: {pilot}; 50 km one-to-one same-polarity matching")
+    print(f"AVISO source: {a.obs_source}")
+    if not a.obs_source.exists():
+        print("WARNING: AVISO source is not accessible on this machine")
+    elif a.obs_source.is_dir():
+        print("AVISO source is a directory: multi-file reader and time coverage checks required")
+    else:
+        print("AVISO source is a file: verify ADT variable and date coverage before processing")
     print("NOT PRODUCTION READY: tiles require seam-aware SSH padding, duplicate removal,")
     print("cross-tile eddy and track stitching, and a common valid-observation mask.")
     print("The global AVISO record must extend into January 2025.")
