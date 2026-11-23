@@ -63,6 +63,8 @@ def main():
                    help="Include native GLO12 PIXEL_MIN=45 and Gaussian sigma=15 km")
     p.add_argument("--obs-root", type=Path, default=None)
     p.add_argument("--output-root", type=Path, default=Path("data_2024_sixway"))
+    p.add_argument("--models", nargs="+", default=None,
+                   help="Select forecast configurations; default: all available configurations")
     p.add_argument("--max-distance-km", type=float, default=50)
     p.add_argument("--stage", choices=("all", "compare", "contingency", "plots", "retention"), default="all")
     args = p.parse_args()
@@ -84,6 +86,16 @@ def main():
         SOURCES["GLO12_NATIVE45_LP15"] = ("native45_lp15", "GLO12", 10)
         LABELS["GLO12_NATIVE45_LP15"] = "GLO12 native 1/12° (45 px, Gaussian 15 km)"
         PALETTE["GLO12_NATIVE45_LP15"] = "#2B9C73"
+    if args.models is not None:
+        unknown = set(args.models) - set(SOURCES)
+        if unknown:
+            p.error(f"Unknown configurations: {sorted(unknown)}; available: {list(SOURCES)}")
+        if len(set(args.models)) != len(args.models):
+            p.error("--models must not contain duplicates")
+        selected = set(args.models)
+        for name in list(SOURCES):
+            if name not in selected:
+                del SOURCES[name]
     obs_root = args.obs_root or args.base_root / "OBS_FULL"
     obs_dir = obs_root / "GLOENS/OBS/TRACK"
     out = args.output_root / "COMPARISON_FULL"
