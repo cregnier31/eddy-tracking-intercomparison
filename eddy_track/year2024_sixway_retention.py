@@ -16,11 +16,12 @@ from eddy_track.year2024_sixway import SOURCES, LABELS, PALETTE, cycle_dates
 
 KEYS = ["polarity", "obs_track", "model_track"]
 
-def compute(output_root):
+def compute(output_root, sources=None):
+    sources = SOURCES if sources is None else sources
     base = Path(output_root) / "COMPARISON_FULL"
     rows = []
     for cycle, _, _ in cycle_dates():
-        for label, (_, _, horizon) in SOURCES.items():
+        for label, (_, _, horizon) in sources.items():
             folder = base / cycle / label
             initial_path = folder / "initial_matches.csv"
             daily_path = folder / "matched_positions.csv"
@@ -69,14 +70,17 @@ def compute(output_root):
         100 * pooled.retained_pairs / pooled.initial_pairs, np.nan)
     return per_cycle, pooled
 
-def plot(pooled, output, common):
+def plot(pooled, output, common, sources=None, labels=None, palette=None):
+    sources = SOURCES if sources is None else sources
+    labels = LABELS if labels is None else labels
+    palette = PALETTE if palette is None else palette
     fig, ax = plt.subplots(figsize=(12, 7))
-    for label in SOURCES:
+    for label in sources:
         sub = pooled[pooled.configuration == label].sort_values("forecast_day")
         if common:
             sub = sub[sub.forecast_day <= 9]
-        ax.plot(sub.forecast_day, sub.retention_percent, color=PALETTE[label],
-                linewidth=2.5, marker="o", markersize=3.5, label=LABELS[label])
+        ax.plot(sub.forecast_day, sub.retention_percent, color=palette[label],
+                linewidth=2.5, marker="o", markersize=3.5, label=labels[label])
     ax.set_xlabel("Forecast day (day 1 = initialization)")
     ax.set_ylabel("Initially matched pairs still tracked (%)")
     ax.set_title("Full year 2024 — Six-configuration tracking retention " +
@@ -97,9 +101,9 @@ def plot(pooled, output, common):
     plt.close(fig)
     print(f"Saved {output / filename}", flush=True)
 
-def run(output_root):
+def run(output_root, sources=None, labels=None, palette=None):
     out = Path(output_root) / "COMPARISON_FULL/FIGURES"
-    per_cycle, pooled = compute(output_root)
+    per_cycle, pooled = compute(output_root, sources=sources)
     out.mkdir(parents=True, exist_ok=True)
     per_cycle.to_csv(out / "year2024_sixway_tracking_retention_by_cycle.csv", index=False)
     pooled.to_csv(out / "year2024_sixway_tracking_retention_by_day.csv", index=False)
@@ -108,8 +112,8 @@ def run(output_root):
     summary.to_csv(out / "year2024_sixway_tracking_retention_summary.csv", index=False)
     common = pooled[pooled.forecast_day == 9].copy()
     common.to_csv(out / "year2024_sixway_tracking_retention_day9.csv", index=False)
-    plot(pooled, out, common=True)
-    plot(pooled, out, common=False)
+    plot(pooled, out, common=True, sources=sources, labels=labels, palette=palette)
+    plot(pooled, out, common=False, sources=sources, labels=labels, palette=palette)
     print("\nDay 9 retention:")
     print(common[["configuration", "initial_pairs", "retained_pairs", "retention_percent"]].to_string(index=False))
     return per_cycle, pooled
